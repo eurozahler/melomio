@@ -33,6 +33,11 @@ Teil A ist das **Entscheidungsprotokoll**. Teil B listet Widersprüche und Lück
 | E16 | **Widerruf:** Vor der Zahlung setzt der Kunde einen eigenen Haken. Damit verlangt er den sofortigen Beginn der Leistung und bestätigt, dass er sein Widerrufsrecht dabei verliert. Der Haken ist nicht vorangekreuzt. | War in M4 schon vorgesehen und wird jetzt verbindlich. Dazu gehört eine Bestätigungs-E-Mail mit Vertragsinhalt und Hinweis auf den Verzicht (dauerhafter Datenträger). ⚠️ Den Wortlaut prüft ein Anwalt. Eine Rückerstattung bei Mängeln (Gewährleistung) bleibt trotzdem möglich. |
 | E17 | **Von der Beispielseite yourmelody.org übernehmen, was funktioniert.** Das Alleinstellungsmerkmal ist die Veröffentlichung über EasyGMV. | Übernommen: Hörprobe, teilbare Song-Seite mit QR-Code, eigener Songtext möglich, Änderungen nach der Lieferung (Zahl einstellbar). Nicht übernommen: Express-Lieferung (unser Song ist in Minuten fertig). Später (Phase D): Plakette mit QR-Code als Druckprodukt. |
 
+### Dritte Runde
+| # | Entscheidung | Folge |
+|---|---|---|
+| E18 | **Markenname und Domain: melomio** (`melomio.de`). F-18 bestätigt, Entwicklungsplan freigegeben (F-4). | Git-Repository: `github.com/eurozahler/melomio` (privat). Hetzner-Projekt: `melomio.de`. Der E-Mail-Absender wird voraussichtlich eine Adresse `@melomio.de` (F-13). |
+
 ### Erklärung zu E8: Zugangsdaten im Admin oder in Umgebungsvariablen?
 Das Pflichtenheft wollte im Admin ein Formular für API-Schlüssel (z. B. den Mollie-Schlüssel). Die Schlüssel lägen dann verschlüsselt in der Datenbank. Deine Vorgabe war: Zugangsdaten nur in Umgebungsvariablen.
 
