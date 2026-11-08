@@ -1,0 +1,13 @@
+# Einheitliche Zeilenenden (LF), weil der Code auf Linux-Servern läuft
+* text=auto eol=lf
+
+# Binärdateien nie verändern
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.mp3 binary
+*.wav binary
+*.mp4 binary
+*.ico binary
+*.woff2 binary
