@@ -1,0 +1,26 @@
+# Abhängigkeiten
+node_modules/
+
+# Build-Ausgaben
+.next/
+out/
+dist/
+build/
+
+# Zugangsdaten – NIE ins Repository
+.env
+.env.*
+!.env.example
+
+# Lokaler Dateispeicher im Testbetrieb
+storage/
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# System und Editor
+.DS_Store
+Thumbs.db
+*.log
