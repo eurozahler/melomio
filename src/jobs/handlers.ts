@@ -7,7 +7,7 @@ import type { MediaTools } from "@/media/ffmpeg";
 import type { MusicProvider } from "@/music/types";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
-import { sendOrderConfirmation } from "./order-paid";
+import { sendOrderConfirmation, sendSongReady } from "./order-paid";
 import { renderCustomerVideo, startVideo } from "./video";
 import { transitionOrder } from "@/orders/service";
 import { enqueue } from "./enqueue";
@@ -187,8 +187,21 @@ export async function handleOrderPaid(deps: HandlerDeps, { orderId }: OrderJobDa
 /** video.render: Kundenvideo erzeugen, prüfen, speichern → Bestellung „fertig“. */
 export async function handleVideoRender(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
   const key = `video.render:${orderId}:customer`;
-  const result = await runIdempotent(deps.db, key, () => renderCustomerVideo(deps, orderId), { attempt });
-  return failIfBusy(key, result);
+  const result = failIfBusy(
+    key,
+    await runIdempotent(deps.db, key, () => renderCustomerVideo(deps, orderId), { attempt }),
+  );
+  // Danach: E-Mail „Dein Song ist fertig“ (höchstens einmal) – nur wenn die Bestellung wirklich
+  // fertig ist; sonst würde der Schritt als „erledigt“ verbucht und die E-Mail käme nie
+  const order = await loadOrder(deps.db, orderId);
+  if (order.status === "completed") {
+    const mailKey = `email:song-ready:${orderId}`;
+    failIfBusy(
+      mailKey,
+      await runIdempotent(deps.db, mailKey, () => sendSongReady(deps.db, deps.baseUrl, orderId), { attempt }),
+    );
+  }
+  return result;
 }
 
 /** Aufräumen: Fragebogen-Entwürfe nach Ablauf (30 Tage) löschen. */

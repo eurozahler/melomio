@@ -1,8 +1,10 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { getEnv } from "@/config/env";
 import { getDb } from "@/db/client";
 import { CheckoutError, startCheckout, type CheckoutErrorCode } from "@/orders/checkout";
+import { disableSharePage, enableSharePage } from "@/orders/delivery";
 import { getAppPaymentProvider, getWebhookUrl, hashedClientIp } from "@/server/payments";
 import { getSessionUser } from "@/server/session";
 
@@ -32,4 +34,20 @@ export async function startCheckoutAction(ref: unknown, accepted: unknown): Prom
     console.error("[Checkout]", error);
     return { ok: false, error: "generic" };
   }
+}
+
+/** Song-Seite einschalten (nur eigene, bezahlte Bestellung). */
+export async function enableShareAction(ref: unknown): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.emailVerified || typeof ref !== "string") return;
+  await enableSharePage(getDb(), ref, user.id);
+  refresh();
+}
+
+/** Song-Seite abschalten – der Link funktioniert danach nicht mehr. */
+export async function disableShareAction(ref: unknown): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.emailVerified || typeof ref !== "string") return;
+  await disableSharePage(getDb(), ref, user.id);
+  refresh();
 }

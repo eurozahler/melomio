@@ -3,7 +3,7 @@ import type { Database } from "@/db/client";
 import { consents, orders, priceSnapshots, users } from "@/db/schema";
 import { CONSENT_TEXTS } from "@/domain/consents";
 import { sendEmail } from "@/server/email";
-import { orderConfirmationTemplate } from "@/server/email/templates";
+import { orderConfirmationTemplate, songReadyTemplate } from "@/server/email/templates";
 
 /**
  * Nach bestätigter Zahlung (M7): Bestellbestätigung per E-Mail mit Vertragsinhalt und den
@@ -62,4 +62,31 @@ export async function sendOrderConfirmation(db: Database, baseUrl: string, order
     db,
   );
   return "Bestellbestätigung verschickt";
+}
+
+/** E-Mail „Dein Song ist fertig“ – nach Abschluss des Videos (M9). */
+export async function sendSongReady(db: Database, baseUrl: string, orderId: string): Promise<string> {
+  const [row] = await db
+    .select({ order: orders, user: users })
+    .from(orders)
+    .innerJoin(users, eq(orders.userId, users.id))
+    .where(eq(orders.id, orderId));
+  if (!row) throw new Error(`Bestellung ${orderId} nicht gefunden`);
+  if (row.order.status !== "completed") return "übersprungen (noch nicht fertig)";
+  await sendEmail(
+    {
+      to: row.user.email,
+      userId: row.user.id,
+      orderId,
+      template: "song-ready",
+      ...songReadyTemplate({
+        name: row.user.name,
+        publicRef: row.order.publicRef,
+        orderUrl: `${baseUrl}/bestellung/${row.order.publicRef}`,
+        isTest: row.order.isTest,
+      }),
+    },
+    db,
+  );
+  return "E-Mail „Song fertig“ verschickt";
 }

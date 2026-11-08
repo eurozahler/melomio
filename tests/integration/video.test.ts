@@ -10,7 +10,15 @@ import { QUEUES } from "@/jobs/queues";
 import { probeVideo } from "@/media/video";
 import { processPaymentUpdate, startCheckout } from "@/orders/checkout";
 import { createMockPaymentProvider, setMockPaymentStatus } from "@/payments/mock";
-import { connectTestDb, orderWithRealPreview, TEST_STORAGE_DIR, testDeps, useShortSongs } from "./helpers";
+import { disableSharePage, enableSharePage, findActiveShare } from "@/orders/delivery";
+import {
+  connectTestDb,
+  createUserWithOrder,
+  orderWithRealPreview,
+  TEST_STORAGE_DIR,
+  testDeps,
+  useShortSongs,
+} from "./helpers";
 
 const { db, pool } = connectTestDb();
 let boss: PgBoss;
@@ -50,7 +58,7 @@ async function statusOf(orderId: string) {
   return o?.status;
 }
 
-describe("Standardvideo (Abnahme M8)", () => {
+describe("Standardvideo (Abnahme M8) und Auslieferung (M9)", () => {
   it("nach der Zahlung: Song festgelegt, Video 1080×1920 H.264/AAC in Songlänge, Bestellung fertig", async () => {
     const { order } = await paidOrder();
     const deps = testDeps(db, boss);
@@ -84,6 +92,33 @@ describe("Standardvideo (Abnahme M8)", () => {
     await handleOrderPaid(deps, { orderId: order.id });
     await handleVideoRender(deps, { orderId: order.id });
     expect(await db.select().from(videos).where(eq(videos.orderId, order.id))).toHaveLength(1);
+  }, 180_000);
+
+  it("nach Abschluss: E-Mail „Song fertig“ (einmal) und Song-Seite ein-/ausschaltbar", async () => {
+    const { userId, order } = await paidOrder();
+    const deps = testDeps(db, boss);
+    await handleOrderPaid(deps, { orderId: order.id });
+    await handleVideoRender(deps, { orderId: order.id });
+    await handleVideoRender(deps, { orderId: order.id });
+
+    const mails = await db.execute<{ n: number }>(
+      sql`select count(*)::int as n from dev_mailbox m join users u on u.email = m.recipient where u.id = ${userId} and m.template = 'song-ready'`,
+    );
+    expect(mails.rows[0]?.n).toBe(1);
+
+    const share = await enableSharePage(db, order.publicRef, userId);
+    expect(share?.token).toMatch(/^[A-Za-z0-9_-]{32}$/);
+    expect(await findActiveShare(db, share!.token)).not.toBeNull();
+    // fremdes Konto kann nicht einschalten
+    const { userId: stranger } = await createUserWithOrder(db);
+    expect(await enableSharePage(db, order.publicRef, stranger)).toBeNull();
+
+    await disableSharePage(db, order.publicRef, userId);
+    expect(await findActiveShare(db, share!.token)).toBeNull();
+    // erneut einschalten ergibt einen NEUEN Link
+    const again = await enableSharePage(db, order.publicRef, userId);
+    expect(again?.token).not.toBe(share!.token);
+    expect(await findActiveShare(db, share!.token)).toBeNull();
   }, 180_000);
 
   it("ohne Zahlung entsteht kein Video", async () => {

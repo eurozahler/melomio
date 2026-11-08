@@ -12,7 +12,13 @@ import { splitGross } from "@/payments/types";
 import { getSongPrice } from "@/server/catalog";
 import { getSenderBoss } from "@/server/jobs";
 import { getAppPaymentProvider } from "@/server/payments";
+import QRCode from "qrcode";
+import { getEnv } from "@/config/env";
+import { getSetting } from "@/db/settings-store";
+import { createSignedFilePath } from "@/delivery/signing";
+import { getDeliveryFiles, getSharePage } from "@/orders/delivery";
 import { CheckoutForm } from "./checkout-form";
+import { ShareControls } from "./share-controls";
 import { requireUser } from "@/server/session";
 
 const STEPS = ["lyrics", "music", "preview", "payment", "delivery"] as const;
@@ -87,6 +93,18 @@ async function OrderContent({
   const fmt = (cents: number) =>
     new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
   const openPayment = order.status === "awaiting_payment" ? await getOpenCheckoutUrl(db, order.id) : null;
+
+  // Auslieferung (M9): signierte, kurzlebige Links – nur nach bestätigter Zahlung
+  const files = order.paidAt ? await getDeliveryFiles(db, order.id) : { song: null, video: null };
+  const ttl = await getSetting(db, "download_link_ttl_min");
+  const secret = getEnv().BETTER_AUTH_SECRET;
+  const songPath = files.song ? createSignedFilePath(secret, "song", order.publicRef, ttl) : null;
+  const videoPath = files.video ? createSignedFilePath(secret, "video", order.publicRef, ttl) : null;
+  const share = order.paidAt ? await getSharePage(db, order.id) : null;
+  const shareUrl = share?.active ? `${getEnv().APP_BASE_URL}/s/${share.token}` : null;
+  const qrSvg = shareUrl
+    ? await QRCode.toString(shareUrl, { type: "svg", margin: 1, color: { dark: "#040a2e" } })
+    : null;
   const hasPreview = ["preview_ready", "awaiting_payment", "paid", "video_rendering", "completed"].includes(
     order.status,
   );
@@ -185,7 +203,63 @@ async function OrderContent({
           )}
         </Notice>
       )}
-      {order.paidAt && <Notice kind="success">{t("paid")}</Notice>}
+      {order.paidAt && order.status !== "completed" && <Notice kind="success">{t("paid")}</Notice>}
+
+      {order.status === "completed" && songPath && (
+        <section
+          className="flex flex-col gap-4 rounded-2xl border border-brand/40 p-5"
+          aria-labelledby="delivery"
+        >
+          <div>
+            <h2 id="delivery" className="text-2xl font-bold">
+              {t("deliveryTitle")}
+            </h2>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">{t("deliveryText")}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-sm font-semibold">{t("songLabel")}</p>
+            <audio controls preload="metadata" className="w-full" src={songPath} data-testid="song-audio" />
+          </div>
+          {videoPath && (
+            <div>
+              <p className="mb-1 text-sm font-semibold">{t("videoLabel")}</p>
+              <video
+                controls
+                preload="metadata"
+                playsInline
+                className="mx-auto max-h-[70vh] rounded-xl bg-black"
+                src={videoPath}
+                data-testid="song-video"
+              />
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <a
+              href={`${songPath}&download=1`}
+              className="rounded-full bg-brand-strong px-5 py-3 text-center font-semibold text-white"
+              data-testid="download-song"
+            >
+              {t("downloadSong")}
+            </a>
+            {videoPath && (
+              <a
+                href={`${videoPath}&download=1`}
+                className="rounded-full border border-neutral-300 px-5 py-3 text-center font-semibold dark:border-neutral-700"
+                data-testid="download-video"
+              >
+                {t("downloadVideo")}
+              </a>
+            )}
+            <p className="text-center text-xs text-neutral-500">{t("linkHint", { minutes: ttl })}</p>
+          </div>
+        </section>
+      )}
+
+      {order.status === "completed" && (
+        <section className="rounded-2xl border border-neutral-200 p-5 dark:border-neutral-800">
+          <ShareControls publicRef={order.publicRef} shareUrl={shareUrl} qrSvg={qrSvg} />
+        </section>
+      )}
 
       <div className="flex flex-col gap-2 text-sm font-semibold">
         <Link href={`/bestellung/${order.publicRef}/songtext`} className="text-brand">

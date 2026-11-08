@@ -57,7 +57,7 @@ test("Songtext prüfen, selbst bearbeiten, KI neu formulieren, freigeben", async
   expect(preview.headers()["content-type"]).toBe("audio/mpeg");
   expect(preview.headers()["cache-control"]).toContain("no-store");
   const size = (await preview.body()).length;
-  // 20 s MP3 mit 128 kbit/s ≈ 320 KB – der ganze Song (3 min) wäre über 4 MB
+  // 20 s MP3 mit 128 kbit/s ≈ 320 KB – der ganze Song wäre ein Vielfaches davon
   expect(size).toBeGreaterThan(200_000);
   expect(size).toBeLessThan(600_000);
 });

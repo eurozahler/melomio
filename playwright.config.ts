@@ -57,6 +57,7 @@ export default defineConfig({
         LYRICS_PROVIDER: "mock",
         MUSIC_PROVIDER: "mock",
         MOCK_MUSIC_DELAY_MS: "300",
+        MOCK_MUSIC_DURATION_S: "60",
         STORAGE_LOCAL_DIR: ".e2e-storage",
       },
     },

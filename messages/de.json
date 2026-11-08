@@ -285,12 +285,32 @@
       "no_price": "Der Preis konnte nicht ermittelt werden. Bitte versuche es später noch einmal.",
       "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
     },
-    "videoRendering": "Dein Video wird gerade erstellt … Das dauert etwa eine Minute. Die Seite aktualisiert sich von selbst."
+    "videoRendering": "Dein Video wird gerade erstellt … Das dauert etwa eine Minute. Die Seite aktualisiert sich von selbst.",
+    "deliveryTitle": "Dein Song ist fertig! 🎉",
+    "deliveryText": "Hör ihn dir an, lade ihn herunter oder teile ihn mit lieben Menschen.",
+    "songLabel": "Dein Song",
+    "videoLabel": "Dein Video",
+    "downloadSong": "Song herunterladen (MP3)",
+    "downloadVideo": "Video herunterladen (MP4)",
+    "linkHint": "Die Download-Links gelten {minutes} Minuten. Danach einfach die Seite neu laden.",
+    "shareTitle": "Song-Seite zum Teilen",
+    "shareText": "Eine eigene Seite mit Player und Songtext – zum Verschicken oder als QR-Code auf einer Karte. Du kannst sie jederzeit wieder abschalten.",
+    "shareEnable": "Song-Seite einschalten",
+    "shareDisable": "Song-Seite abschalten",
+    "shareActive": "Deine Song-Seite ist online:",
+    "shareCopy": "Link kopieren",
+    "shareCopied": "Kopiert!",
+    "qrAlt": "QR-Code zur Song-Seite"
   },
   "Legal": {
     "agbTitle": "Allgemeine Geschäftsbedingungen",
     "privacyTitle": "Datenschutzerklärung",
     "imprintTitle": "Impressum",
     "placeholder": "Platzhalter: Der rechtlich geprüfte Text folgt vor dem Livegang."
+  },
+  "Share": {
+    "madeWith": "Dieser Song wurde mit melomio erstellt – Songtext und Musik entstehen mit künstlicher Intelligenz.",
+    "cta": "Eigenen Song erstellen",
+    "lyrics": "Songtext"
   }
 }

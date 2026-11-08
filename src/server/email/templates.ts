@@ -124,3 +124,25 @@ export function orderConfirmationTemplate(p: OrderConfirmationData): Rendered {
     html: layout(subject, lines, { label: "Zu deiner Bestellung", url: p.orderUrl }, footer),
   };
 }
+
+/** „Dein Song ist fertig“ (M9): Link führt zur Bestellung – Anmeldung nötig, keine Datei direkt in der E-Mail. */
+export function songReadyTemplate(p: {
+  name?: string | null;
+  publicRef: string;
+  orderUrl: string;
+  isTest: boolean;
+}): Rendered {
+  const subject = `${p.isTest ? "[TEST] " : ""}Dein Song ist fertig! 🎉`;
+  const lines = [
+    greeting(p.name),
+    "dein persönlicher Song und dein Video sind fertig.",
+    "Über den Button kommst du zu deiner Bestellung. Dort kannst du alles anhören, herunterladen und eine Song-Seite zum Teilen einschalten.",
+    `Bestellnummer: ${p.publicRef}`,
+  ];
+  const footer = "Zum Anhören und Herunterladen meldest du dich mit deinem melomio-Konto an.";
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nZu deinem Song: ${p.orderUrl}\n\n${footer}`,
+    html: layout(subject, lines, { label: "Zu deinem Song", url: p.orderUrl }, footer),
+  };
+}
