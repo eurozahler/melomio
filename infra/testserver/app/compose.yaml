@@ -1,0 +1,53 @@
+# melomio auf dem Testserver (Testbetrieb, Passwortschutz). Liegt auf dem Server unter /opt/melomio/app/.
+# Alle Dienste nutzen das Host-Netz: PostgreSQL ist nur an 127.0.0.1 gebunden und bleibt so unerreichbar
+# von außen. Von außen erreichbar ist nur Caddy (Port 80/443) – und erst, wenn die Firewall dafür
+# geöffnet wird (siehe README, Schritt „Freischalten“).
+services:
+  migrate:
+    image: melomio-app:latest
+    network_mode: host
+    env_file: .env
+    # Migrationen, danach Beispieldaten (wiederholbar, überschreibt nichts)
+    command:
+      - sh
+      - -c
+      - node node_modules/tsx/dist/cli.mjs scripts/db/migrate.ts && node node_modules/tsx/dist/cli.mjs scripts/db/seed.ts
+    restart: "no"
+
+  web:
+    image: melomio-app:latest
+    network_mode: host
+    env_file: .env
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    image: melomio-app:latest
+    network_mode: host
+    env_file: .env
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "--conditions=react-server", "worker/index.ts"]
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    network_mode: host
+    env_file: caddy.env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  storage:
+  caddy_data:
+  caddy_config:

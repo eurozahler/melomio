@@ -1,0 +1,30 @@
+# Caddy holt das HTTPS-Zertifikat automatisch (Let's Encrypt), sobald die Subdomain auf den Server
+# zeigt und Port 80/443 offen sind. Werte kommen aus caddy.env (vom Vorbereitungsskript erzeugt).
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# Zahlungs-Webhook ohne Passwort (der Zahlungsanbieter kennt es nicht). Die App fragt den
+	# Zahlungsstatus ohnehin immer selbst beim Anbieter nach.
+	@webhook path /api/webhooks/zahlung
+	handle @webhook {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	handle {
+		basic_auth {
+			{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+		}
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

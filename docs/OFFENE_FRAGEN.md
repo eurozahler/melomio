@@ -112,3 +112,38 @@ Das Pflichtenheft wollte im Admin ein Formular für API-Schlüssel (z. B. den Mo
 - **F-14 Mindestalter, Speicherfristen, Rückerstattungsregeln:** Vorschläge kommen in Phase C.
 - **F-20 Rabatt für Veröffentlichung:** Später entscheiden. ⚠️ Die Einwilligung muss freiwillig bleiben, deshalb rechtlich prüfen.
 - **F-21 Rechtliche Prüfung Trauer:** Einwilligung der Angehörigen, Bilder Verstorbener (§ 22 KUG), Wortlaut der Beauftragung.
+
+## Teil D – Sammelliste nach M8–M11 (zum gemeinsamen Durchgehen)
+
+Stand: 08.11.2026, nach Abschluss der ersten Version (M0–M11). Sortiert nach Dringlichkeit.
+
+### Entscheidungen, die du treffen musst
+1. **Testserver freischalten?** Alles ist vorbereitet (`infra/testserver/README.md`, Abschnitt „App“). Es fehlt:
+   - deine Zusage zur Subdomain (Vorschlag `test.melomio.de`),
+   - der DNS-Eintrag bei Strato (Typ A, `test` → `2.31.55.169`),
+   - deine Freigabe, Port 80/443 zu öffnen.
+   
+   Die Seite ist dann nur mit Passwort erreichbar und wird nicht von Suchmaschinen erfasst.
+2. **F-13 E-Mail-Absender:** Welche Adresse bei Strato (z. B. `hallo@melomio.de`)? Ohne sie gehen keine echten E-Mails raus. Auf dem Testserver hilft bis dahin das Test-Postfach `/dev/mailbox`.
+3. **F-22 Claude für Songtexte:** Den Schlüssel hast du selbst eingetragen und testest. Offen sind:
+   - Bist du mit der Qualität zufrieden?
+   - Sollen echte Kosten pro Songtext gemessen werden (wenige Testaufrufe, kostenpflichtig)?
+   - Soll der Testserver ebenfalls Claude nutzen? Standard dort ist der Test-Baustein ohne Kosten.
+4. **F-2 Musikanbieter:** Das ist der größte offene Punkt. Ohne echten Anbieter ist die „Musik“ ein Testton. Vorschlag: Hörtest mit 3–5 deutschen Texten (kostenpflichtig, wenige Euro), danach Entscheidung und Adapter.
+5. **F-23 Mollie-Konto:** Ein kostenloser Testschlüssel genügt für den Test. Der Webhook funktioniert erst auf dem Testserver.
+6. **Zweiter Musik-Kandidat nach dem Kauf** (E4, Einstellung `music_extra_candidates_after_purchase`): ist noch ohne Wirkung. Gehört er zur ersten Version oder zu Phase C?
+
+### Sicherheit
+7. **DB-Passwort und Auth-Schlüssel erneuern?** Beide sind bisher nur auf deinem PC und dem Server gespeichert. Eine Erneuerung ist nicht zwingend, aber vor dem Livegang empfohlen. Bitte kurz bestätigen, dass nichts davon geteilt wurde.
+8. **`npm audit`:** 12 mittelschwere Meldungen, **alle in Entwicklungswerkzeugen** (drizzle-kit über ein altes esbuild, ESLint über minimatch), keine im Programm, das Kunden erreicht. Die automatische Reparatur würde auf ältere, inkompatible Versionen zurückgehen. Vorschlag: auf Updates der Werkzeuge warten und vor dem Livegang erneut prüfen.
+
+### Für den Livegang (Phase C, zur Kenntnis)
+9. **F-24 Rechtstexte:** AGB, Datenschutz, Impressum, Widerrufs-Haken und Bestellbestätigung sind Entwürfe bzw. Platzhalter. Sie müssen juristisch geprüft werden.
+10. **Logo als SVG:** Das gelieferte PNG funktioniert. Ein SVG wäre auf allen Bildschirmen scharf und kleiner.
+11. **F-15 Dropbox / EasyGMV:** erst für C7 nötig.
+
+### Bekannte kleine Lücken der ersten Version
+- **Admin:** Das Bestelldetail zeigt Songtext, Verlauf und die vollständigen Musik-Kandidaten, aber noch nicht die geschnittene Hörprobe und das Video. Kommt mit C6.
+- **Admin ist nur auf Deutsch.** Die Kundenseiten sind mehrsprachig vorbereitet.
+- **Admin für Nicht-Admins:** Statt eines „echten“ 404-Status liefert Next.js wegen des Streamings Status 200 mit der Seite „Seite nicht gefunden“. Admin-Inhalte werden dabei nicht ausgeliefert. Kein Sicherheitsproblem.
+- **Barrierefreiheit:** Die automatische Prüfung (axe, WCAG 2.1 AA) ist auf allen Kundenseiten ohne Befund. Eine Prüfung von Hand (Screenreader, Tastatur) steht noch aus.

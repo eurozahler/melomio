@@ -1,6 +1,6 @@
 # Entwicklungsplan
 
-Stand: 08.11.2026 (2. Fassung) · Status: **freigegeben am 08.11.2026**, Umsetzung läuft · M0 ✅ · M1 ✅ · M2 ✅ · M3 ✅ · M3b ✅ · M4 ✅ · M5 ✅ · M6 ✅ · M7 ✅ · M8 ✅ · M9 ✅ (08.11.2026), nächstes Modul: M10
+Stand: 08.11.2026 (2. Fassung) · Status: **freigegeben am 08.11.2026**, Umsetzung läuft · M0 ✅ · M1 ✅ · M2 ✅ · M3 ✅ · M3b ✅ · M4 ✅ · M5 ✅ · M6 ✅ · M7 ✅ · M8 ✅ · M9 ✅ · M10 ✅ · M11 ✅ (08.11.2026, Testserver vorbereitet, noch nicht freigeschaltet) – offene Punkte: `OFFENE_FRAGEN.md` Teil D
 
 Die Umsetzung ist in kleine **Module** aufgeteilt. Jedes Modul endet mit einem **überprüfbaren Ergebnis**: etwas, das du selbst im Browser ansehen kannst, und automatische Tests, die grün sein müssen. Erst wenn ein Modul abgenommen ist, beginnt das nächste.
 
