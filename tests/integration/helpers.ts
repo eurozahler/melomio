@@ -53,6 +53,7 @@ export function testDeps(db: Database, boss: import("pg-boss").PgBoss) {
     music: createMockMusicProvider(tools),
     storage: createLocalStorage(TEST_STORAGE_DIR),
     tools,
+    baseUrl: "http://localhost:3200",
   };
 }
 

@@ -78,3 +78,21 @@ export async function orderViaQuestionnaire(page: Page, email: string, password:
   await expect(page).toHaveURL(/\/konto\?bestellung=M-/);
   return new URL(page.url()).searchParams.get("bestellung")!;
 }
+
+/** Bestellung bis zur fertigen Hörprobe: Fragebogen, Konto, Songtext freigeben, Musik abwarten. */
+export async function orderWithPreview(page: Page, email: string, password: string): Promise<string> {
+  const ref = await orderViaQuestionnaire(page, email, password);
+  await expect(page.getByTestId("order-status").filter({ visible: true })).toHaveText(
+    "Songtext bereit zur Prüfung",
+    { timeout: 30_000 },
+  );
+  await page.goto(`/bestellung/${ref}/songtext`);
+  await page.getByRole("button", { name: "Songtext freigeben" }).click();
+  await page.getByRole("button", { name: "Ja, freigeben" }).click();
+  await expect(page.getByText(/Songtext freigegeben\./)).toBeVisible();
+  await page.goto(`/bestellung/${ref}`);
+  await expect(page.getByTestId("order-status").filter({ visible: true })).toHaveText("Hörprobe bereit", {
+    timeout: 90_000,
+  });
+  return ref;
+}

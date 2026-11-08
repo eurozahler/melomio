@@ -80,3 +80,47 @@ export function resetPasswordTemplate(p: { name?: string | null; url: string }):
     html: layout(subject, lines, { label: "Neues Passwort festlegen", url: p.url }, IGNORE),
   };
 }
+
+export type OrderConfirmationData = {
+  name?: string | null;
+  publicRef: string;
+  productName: string;
+  grossCents: number;
+  taxCents: number;
+  taxRateBp: number;
+  currency: string;
+  paidAt: Date;
+  orderUrl: string;
+  consents: Array<{ text: string; version: string; grantedAt: Date }>;
+  isTest: boolean;
+};
+
+const money = (cents: number, currency: string) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
+const dateTime = (d: Date) =>
+  d.toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "long", timeStyle: "short" });
+
+/**
+ * Bestellbestätigung (E16): Vertragsinhalt und bestätigte Einwilligungen – insbesondere der
+ * Verzicht auf das Widerrufsrecht – auf einem dauerhaften Datenträger. ⚠️ Wortlaut juristisch prüfen.
+ */
+export function orderConfirmationTemplate(p: OrderConfirmationData): Rendered {
+  const subject = `${p.isTest ? "[TEST] " : ""}Deine Bestellung ${p.publicRef} bei melomio`;
+  const lines = [
+    greeting(p.name),
+    "vielen Dank für deine Bestellung! Deine Zahlung ist eingegangen. Wir erstellen jetzt deinen Song mit Video.",
+    `Bestellnummer: ${p.publicRef}`,
+    `Produkt: ${p.productName}`,
+    `Preis: ${money(p.grossCents, p.currency)} (darin enthalten ${(p.taxRateBp / 100).toLocaleString("de-DE")} % MwSt.: ${money(p.taxCents, p.currency)})`,
+    `Bezahlt am: ${dateTime(p.paidAt)}`,
+    "Du hast beim Kauf Folgendes bestätigt:",
+    ...p.consents.map((c) => `„${c.text}“ (bestätigt am ${dateTime(c.grantedAt)}, Fassung ${c.version})`),
+    ...(p.isTest ? ["TESTBETRIEB: Es wurde kein echtes Geld bezahlt."] : []),
+  ];
+  const footer = "Diese E-Mail ist deine Bestellbestätigung. Bitte bewahre sie auf.";
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nZu deiner Bestellung: ${p.orderUrl}\n\n${footer}`,
+    html: layout(subject, lines, { label: "Zu deiner Bestellung", url: p.orderUrl }, footer),
+  };
+}

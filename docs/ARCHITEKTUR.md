@@ -228,6 +228,8 @@ Geprüft anhand der offiziellen Dokumentation (Details in `ANBIETERPRUEFUNG.md`)
 5. Jedes Webhook-Ereignis wird in `payment_events` gespeichert. Ist der Status bereits verarbeitet, passiert nichts weiter (Idempotenz).
 6. Erst bei `paid` wechselt die Bestellung auf `paid`. Dann werden die volle Audiodatei freigegeben und der Auftrag „Video erzeugen“ angelegt.
 
+**Umsetzung M7:** `src/orders/checkout.ts` – Preis-Snapshot beim ersten Checkout, beide Einwilligungen mit Textversion und gehashter IP, Zahlung mit `Idempotency-Key` (Bestellung + Versuch), Webhook `/api/webhooks/zahlung` antwortet immer 200 (500 nur bei eigenen Fehlern, damit Mollie wiederholt). Zusätzlich fragt die Bestellseite bei der Rückkehr offene Zahlungen selbst beim Anbieter ab (nötig auf localhost, Absicherung im Livebetrieb). Betrag, Währung und Bestellung müssen mit der Abfrage übereinstimmen. Nach „bezahlt“ verschickt der Worker die Bestellbestätigung (Auftrag `order.paid`, einmalig). Test-Bezahlanbieter mit Testseite `/dev/zahlung/[id]`.
+
 **Vor der Zahlung** (E16): zwei Pflicht-Haken, nicht vorangekreuzt: AGB/Datenschutz und „Ich verlange den sofortigen Beginn der Ausführung und weiß, dass ich dadurch mein Widerrufsrecht verliere.“ Beide werden mit Textversion in `consents` gespeichert. Nach der Zahlung geht eine Bestätigungs-E-Mail mit Vertragsinhalt und Hinweis auf den Verzicht raus (dauerhafter Datenträger). ⚠️ Wortlaut vom Anwalt prüfen lassen.
 
 ---

@@ -36,6 +36,20 @@
       "when": 1794163743867,
       "tag": "0004_job_attempt_token",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794169524826,
+      "tag": "0005_dev_mock_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794169593572,
+      "tag": "0006_payment_checkout_url",
+      "breakpoints": true
     }
   ]
 }

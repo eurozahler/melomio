@@ -262,11 +262,34 @@
     "manualReview": "Wir schauen uns deinen Song noch einmal genau an, bevor du ihn hörst. Du bekommst Bescheid, sobald die Hörprobe bereit ist.",
     "previewTitle": "Deine Hörprobe",
     "previewText": "Ein 20-Sekunden-Ausschnitt deines Songs. Der leise Signalton ist ein Schutz – im fertigen Song gibt es ihn nicht.",
-    "buy": "Ganzen Song mit Video kaufen",
-    "buyPending": "Der Kauf folgt in Modul M7.",
     "lyricsLink": "Songtext ansehen",
     "lyricsReviewLink": "Songtext prüfen und freigeben",
     "failed": "Bei deiner Bestellung ist ein Problem aufgetreten. Wir kümmern uns darum.",
-    "details": "Details ansehen"
+    "details": "Details ansehen",
+    "checkoutTitle": "Ganzen Song mit Video kaufen",
+    "includes": "Enthalten: der vollständige Song als MP3 und ein Musikvideo (MP4, Hochformat).",
+    "priceLabel": "Gesamtpreis",
+    "vatNote": "inkl. {rate} % MwSt. ({tax})",
+    "consentTerms": "Ich habe die <agb>AGB</agb> und die <privacy>Datenschutzerklärung</privacy> gelesen und akzeptiere sie.",
+    "consentWaiver": "Ich verlange ausdrücklich, dass melomio sofort mit der Ausführung beginnt, und weiß, dass ich dadurch mein Widerrufsrecht verliere.",
+    "submit": "Zahlungspflichtig bestellen",
+    "consentsMissing": "Bitte bestätige beide Punkte, um fortzufahren.",
+    "awaitingPayment": "Wir warten auf die Bestätigung deiner Zahlung … Die Seite aktualisiert sich von selbst.",
+    "backToPayment": "Zur Bezahlseite zurück",
+    "paymentFailed": "Die Zahlung hat nicht geklappt oder wurde abgebrochen. Du kannst es einfach noch einmal versuchen.",
+    "paid": "Vielen Dank! Deine Zahlung ist eingegangen. Die Bestellbestätigung ist per E-Mail unterwegs. Als Nächstes entsteht dein Video (folgt in Modul M8).",
+    "errors": {
+      "not_found": "Diese Bestellung gibt es nicht.",
+      "wrong_status": "Diese Bestellung kann gerade nicht gekauft werden. Bitte lade die Seite neu.",
+      "consents_required": "Bitte bestätige beide Punkte, um fortzufahren.",
+      "no_price": "Der Preis konnte nicht ermittelt werden. Bitte versuche es später noch einmal.",
+      "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+    }
+  },
+  "Legal": {
+    "agbTitle": "Allgemeine Geschäftsbedingungen",
+    "privacyTitle": "Datenschutzerklärung",
+    "imprintTitle": "Impressum",
+    "placeholder": "Platzhalter: Der rechtlich geprüfte Text folgt vor dem Livegang."
   }
 }

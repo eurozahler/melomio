@@ -91,3 +91,20 @@ export const jobExecutions = pgTable("job_executions", {
   finishedAt: timestamp({ withTimezone: true }),
   error: text(),
 });
+
+/**
+ * Test-Zahlungen des Mock-Zahlungsanbieters (nur Testbetrieb). Spielt die Rolle von Mollie:
+ * Der Server fragt den Status auch hier „beim Anbieter“ ab, nie aus der Rückleitung.
+ */
+export const devMockPayments = pgTable("dev_mock_payments", {
+  id: text().primaryKey(),
+  status: text().notNull().default("open"),
+  amountCents: integer().notNull(),
+  currency: text().notNull(),
+  description: text().notNull(),
+  redirectUrl: text().notNull(),
+  metadata: jsonb().$type<Record<string, string>>().notNull().default({}),
+  idempotencyKey: text().unique(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});

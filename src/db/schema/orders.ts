@@ -120,6 +120,8 @@ export const payments = pgTable(
     amountCents: integer().notNull(),
     currency: text().notNull(),
     mode: modeEnum().notNull(),
+    /** Bezahlseite des Anbieters – für „Zur Zahlung zurück“, ohne eine zweite Zahlung anzulegen. */
+    checkoutUrl: text(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

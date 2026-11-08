@@ -43,7 +43,7 @@ async function main() {
   const tools = mediaToolsFromEnv(env);
   const music = getMusicProvider(env, tools);
   const storage = getStorage(env);
-  const deps = { db, boss, lyrics, music, storage, tools };
+  const deps = { db, boss, lyrics, music, storage, tools, baseUrl: env.APP_BASE_URL };
 
   function logResult(job: OrderJob, result: unknown) {
     const value = (result as { status?: string; value?: unknown }) ?? {};
@@ -84,6 +84,13 @@ async function main() {
       logResult(job, result);
     },
   );
+
+  await boss.work(QUEUES.orderPaid, { includeMetadata: true, batchSize: 1 }, async ([job]: OrderJob[]) => {
+    if (!job) return;
+    // Kein „failed“ für die Bestellung: Die Zahlung ist erfolgt, nur die E-Mail wird wiederholt
+    const result = await handlers.handleOrderPaid(deps, job.data, `${job.id}:${job.retryCount}`);
+    logResult(job, result);
+  });
 
   await boss.work(QUEUES.cleanupDrafts, async () => {
     console.log(`[worker] Aufräumen: ${await handlers.handleCleanupDrafts(deps)}`);

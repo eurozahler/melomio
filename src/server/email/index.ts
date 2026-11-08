@@ -1,7 +1,7 @@
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
 import { getEnv } from "@/config/env";
-import { getDb } from "@/db/client";
+import { getDb, type Database } from "@/db/client";
 import { devMailbox, emailEvents } from "@/db/schema";
 
 /**
@@ -23,13 +23,13 @@ export type EmailMessage = {
 
 interface EmailProvider {
   readonly name: string;
-  send(message: EmailMessage): Promise<{ providerMessageId: string | null }>;
+  send(message: EmailMessage, db: Database): Promise<{ providerMessageId: string | null }>;
 }
 
 const consoleProvider: EmailProvider = {
   name: "console",
-  async send(message) {
-    const [row] = await getDb()
+  async send(message, db) {
+    const [row] = await db
       .insert(devMailbox)
       .values({
         recipient: message.to,
@@ -72,23 +72,21 @@ function getProvider(): EmailProvider {
 }
 
 /** Versendet eine E-Mail und protokolliert den Versand (Erfolg oder Fehler) in email_events. */
-export async function sendEmail(message: EmailMessage): Promise<void> {
+export async function sendEmail(message: EmailMessage, db: Database = getDb()): Promise<void> {
   const provider = getProvider();
   try {
-    const { providerMessageId } = await provider.send(message);
-    await getDb()
-      .insert(emailEvents)
-      .values({
-        userId: message.userId ?? null,
-        orderId: message.orderId ?? null,
-        template: message.template,
-        recipient: message.to,
-        provider: provider.name,
-        providerMessageId,
-        status: "sent",
-      });
+    const { providerMessageId } = await provider.send(message, db);
+    await db.insert(emailEvents).values({
+      userId: message.userId ?? null,
+      orderId: message.orderId ?? null,
+      template: message.template,
+      recipient: message.to,
+      provider: provider.name,
+      providerMessageId,
+      status: "sent",
+    });
   } catch (error) {
-    await getDb()
+    await db
       .insert(emailEvents)
       .values({
         userId: message.userId ?? null,

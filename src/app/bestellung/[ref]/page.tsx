@@ -7,6 +7,12 @@ import { Notice } from "@/components/auth-ui";
 import { getDb } from "@/db/client";
 import type { OrderStatus } from "@/domain/order-status";
 import { getOwnedOrder } from "@/orders/lyrics";
+import { getOpenCheckoutUrl, getPriceSnapshot, syncOrderPayments } from "@/orders/checkout";
+import { splitGross } from "@/payments/types";
+import { getSongPrice } from "@/server/catalog";
+import { getSenderBoss } from "@/server/jobs";
+import { getAppPaymentProvider } from "@/server/payments";
+import { CheckoutForm } from "./checkout-form";
 import { requireUser } from "@/server/session";
 
 const STEPS = ["lyrics", "music", "preview", "payment", "delivery"] as const;
@@ -31,28 +37,54 @@ function currentStep(status: OrderStatus): number {
   }
 }
 
-export default function OrderPage({ params }: PageProps<"/bestellung/[ref]">) {
+export default function OrderPage({ params, searchParams }: PageProps<"/bestellung/[ref]">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 py-8">
       <Suspense fallback={null}>
-        <OrderContent params={params} />
+        <OrderContent params={params} searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
 
-async function OrderContent({ params }: Pick<PageProps<"/bestellung/[ref]">, "params">) {
+async function OrderContent({
+  params,
+  searchParams,
+}: Pick<PageProps<"/bestellung/[ref]">, "params" | "searchParams">) {
   const { ref } = await params;
+  const query = await searchParams;
   const user = await requireUser(`/bestellung/${encodeURIComponent(ref)}`);
-  const order = await getOwnedOrder(getDb(), ref, user.id);
+  const db = getDb();
+  let order = await getOwnedOrder(db, ref, user.id);
   if (!order) notFound();
+
+  // Rückkehr von der Bezahlseite: Status selbst beim Anbieter nachfragen (nie der Rückleitung trauen)
+  if (order.status === "awaiting_payment") {
+    await syncOrderPayments(db, await getSenderBoss(), getAppPaymentProvider(), order.id);
+    order = (await getOwnedOrder(db, ref, user.id)) ?? order;
+  }
+  const returnedFromPayment = query.zahlung === "zurueck";
 
   const t = await getTranslations("Order");
   const tStatus = await getTranslations("OrderStatus");
   const step = currentStep(order.status);
-  const working = ["created", "lyrics_generating", "lyrics_approved", "music_generating"].includes(
-    order.status,
-  );
+  const working = [
+    "created",
+    "lyrics_generating",
+    "lyrics_approved",
+    "music_generating",
+    "awaiting_payment",
+  ].includes(order.status);
+
+  // Preis: eingefrorener Snapshot, sonst der aktuelle Preis
+  const snapshot = await getPriceSnapshot(db, order.id);
+  const current = snapshot ? null : await getSongPrice();
+  const gross = snapshot?.grossCents ?? current?.grossCents ?? 0;
+  const currency = snapshot?.currency ?? current?.currency ?? "EUR";
+  const rateBp = snapshot?.taxRateBp ?? current?.taxRateBp ?? 1900;
+  const fmt = (cents: number) =>
+    new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
+  const openPayment = order.status === "awaiting_payment" ? await getOpenCheckoutUrl(db, order.id) : null;
   const hasPreview = ["preview_ready", "awaiting_payment", "paid", "video_rendering", "completed"].includes(
     order.status,
   );
@@ -110,20 +142,39 @@ async function OrderContent({ params }: Pick<PageProps<"/bestellung/[ref]">, "pa
             src={`/api/hoerprobe/${order.publicRef}`}
             data-testid="preview-audio"
           />
-          {order.status === "preview_ready" && (
-            <>
-              <button
-                type="button"
-                disabled
-                className="mt-4 w-full rounded-full bg-brand-strong px-6 py-3 font-semibold text-white opacity-60"
-              >
-                {t("buy")}
-              </button>
-              <p className="mt-1 text-center text-xs text-neutral-500">{t("buyPending")}</p>
-            </>
-          )}
         </section>
       )}
+
+      {order.status === "preview_ready" && returnedFromPayment && (
+        <Notice kind="error">{t("paymentFailed")}</Notice>
+      )}
+      {order.status === "preview_ready" && (
+        <section className="rounded-2xl border border-brand/40 p-5" aria-label={t("checkoutTitle")}>
+          <CheckoutForm
+            publicRef={order.publicRef}
+            grossLabel={fmt(gross)}
+            vatLabel={t("vatNote", {
+              rate: (rateBp / 100).toLocaleString("de-DE"),
+              tax: fmt(splitGross(gross, rateBp).taxCents),
+            })}
+          />
+        </section>
+      )}
+      {order.status === "awaiting_payment" && (
+        <Notice kind="info">
+          <span
+            className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-brand-strong"
+            aria-hidden
+          />
+          {t("awaitingPayment")}
+          {openPayment && (
+            <a href={openPayment} className="mt-2 block font-semibold underline">
+              {t("backToPayment")} →
+            </a>
+          )}
+        </Notice>
+      )}
+      {order.paidAt && <Notice kind="success">{t("paid")}</Notice>}
 
       <div className="flex flex-col gap-2 text-sm font-semibold">
         <Link href={`/bestellung/${order.publicRef}/songtext`} className="text-brand">

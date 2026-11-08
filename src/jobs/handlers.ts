@@ -7,6 +7,7 @@ import type { MediaTools } from "@/media/ffmpeg";
 import type { MusicProvider } from "@/music/types";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
+import { sendOrderConfirmation } from "./order-paid";
 import { transitionOrder } from "@/orders/service";
 import { enqueue } from "./enqueue";
 import { runIdempotent, StepBusyError, type IdempotentResult } from "./idempotency";
@@ -26,6 +27,8 @@ export type HandlerDeps = {
   music: MusicProvider;
   storage: StorageProvider;
   tools: MediaTools;
+  /** Öffentliche Adresse der Seite – für Links in E-Mails. */
+  baseUrl: string;
 };
 
 /** „Läuft schon“ darf einen Auftrag nie still als erledigt markieren – sonst bliebe die Bestellung hängen. */
@@ -155,6 +158,20 @@ export async function handleLyricsGenerate(
 export async function handleMusicGenerate(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
   const key = `music.generate:${orderId}:preview`;
   const result = await runIdempotent(deps.db, key, () => runPreviewMusic(deps, orderId), { attempt });
+  return failIfBusy(key, result);
+}
+
+/** order.paid: Bestellbestätigung verschicken (höchstens einmal pro Bestellung). */
+export async function handleOrderPaid(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
+  const key = `email:order-confirmation:${orderId}`;
+  const result = await runIdempotent(
+    deps.db,
+    key,
+    () => sendOrderConfirmation(deps.db, deps.baseUrl, orderId),
+    {
+      attempt,
+    },
+  );
   return failIfBusy(key, result);
 }
 
