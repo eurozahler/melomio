@@ -32,7 +32,8 @@ export const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   lyrics_approved: ["music_generating", "failed"],
   // vor der Zahlung → Hörprobe; nach der Zahlung (Neuversuch) → direkt zum Video
   music_generating: ["preview_ready", "manual_review", "video_rendering", "failed"],
-  manual_review: ["preview_ready", "video_rendering", "failed", "canceled"],
+  // Admin gibt einen unsicheren Kandidaten frei → Hörprobe wird im Musik-Schritt erstellt
+  manual_review: ["music_generating", "preview_ready", "video_rendering", "failed", "canceled"],
   preview_ready: ["awaiting_payment", "preview_expired", "canceled"],
   preview_expired: [],
   // Zahlung fehlgeschlagen oder abgebrochen → zurück zur Hörprobe

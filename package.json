@@ -19,7 +19,8 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "db:overview": "tsx scripts/db/overview.ts",
     "test:e2e": "playwright test",
-    "worker": "tsx --conditions=react-server worker/index.ts"
+    "worker": "tsx --conditions=react-server worker/index.ts",
+    "admin:rolle": "tsx scripts/admin/grant-role.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
