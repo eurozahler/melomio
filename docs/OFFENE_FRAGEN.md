@@ -36,7 +36,7 @@ Teil A ist das **Entscheidungsprotokoll**. Teil B listet Widersprüche und Lück
 ### Dritte Runde
 | # | Entscheidung | Folge |
 |---|---|---|
-| E18 | **Markenname und Domain: melomio** (`melomio.de`). F-18 bestätigt, Entwicklungsplan freigegeben (F-4). | Git-Repository: `github.com/eurozahler/melomio` (privat). Hetzner-Projekt: `melomio.de`. Der E-Mail-Absender wird voraussichtlich eine Adresse `@melomio.de` (F-13). |
+| E18 | **Markenname und Domain: melomio** (`melomio.de`). F-18 bestätigt, Entwicklungsplan freigegeben (F-4). Logo geliefert (Herz mit Note, Verlauf Koralle #FD6F6D → Violett #7821CD, Schrift #040A2E), eingebaut am 08.11.2026. Domain ist registriert, wird aber erst beim Livegang (C10) auf Hetzner gelenkt; E-Mail-Passwörter trägt der Auftraggeber selbst in die Umgebungsvariablen ein (nie im Chat). | Git-Repository: `github.com/eurozahler/melomio` (privat). Hetzner-Projekt: `melomio.de`. Der E-Mail-Absender wird voraussichtlich eine Adresse `@melomio.de` (F-13). |
 
 ### Erklärung zu E8: Zugangsdaten im Admin oder in Umgebungsvariablen?
 Das Pflichtenheft wollte im Admin ein Formular für API-Schlüssel (z. B. den Mollie-Schlüssel). Die Schlüssel lägen dann verschlüsselt in der Datenbank. Deine Vorgabe war: Zugangsdaten nur in Umgebungsvariablen.

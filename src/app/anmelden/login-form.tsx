@@ -118,7 +118,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
             onChange={(e) => setPassword(e.target.value)}
           />
           <PrimaryButton disabled={busy}>{t("login.submit")}</PrimaryButton>
-          <Link href="/passwort-vergessen" className="text-sm font-semibold text-rose-600">
+          <Link href="/passwort-vergessen" className="text-sm font-semibold text-brand">
             {t("login.forgot")}
           </Link>
         </form>
@@ -126,7 +126,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
 
       <p className="text-sm text-neutral-600 dark:text-neutral-300">
         {t("login.noAccount")}{" "}
-        <Link href={`/registrieren?next=${encodeURIComponent(next)}`} className="font-semibold text-rose-600">
+        <Link href={`/registrieren?next=${encodeURIComponent(next)}`} className="font-semibold text-brand">
           {t("login.register")}
         </Link>
       </p>

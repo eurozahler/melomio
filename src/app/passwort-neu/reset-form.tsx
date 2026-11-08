@@ -32,7 +32,7 @@ export function ResetForm({ token }: { token: string | null }) {
         </Notice>
         <Link
           href={state === "done" ? "/anmelden" : "/passwort-vergessen"}
-          className="font-semibold text-rose-600"
+          className="font-semibold text-brand"
         >
           {state === "done" ? t("reset.toLogin") : t("forgot.title")}
         </Link>

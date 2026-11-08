@@ -228,7 +228,7 @@ export const SEED_VIDEO_TEMPLATE = {
   name: "Standard: Farbverlauf mit Titel",
   config: {
     background: "gradient",
-    colors: ["#e11d48", "#7c3aed"],
+    colors: ["#9b2fb4", "#7c3aed"],
     showTitle: true,
     width: 1080,
     height: 1920,

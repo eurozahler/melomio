@@ -77,7 +77,7 @@ export function RegisterForm({ next }: { next: string }) {
       <PrimaryButton disabled={busy}>{t("register.submit")}</PrimaryButton>
       <p className="text-sm text-neutral-600 dark:text-neutral-300">
         {t("register.haveAccount")}{" "}
-        <Link href={`/anmelden?next=${encodeURIComponent(next)}`} className="font-semibold text-rose-600">
+        <Link href={`/anmelden?next=${encodeURIComponent(next)}`} className="font-semibold text-brand">
           {t("login.title")}
         </Link>
       </p>

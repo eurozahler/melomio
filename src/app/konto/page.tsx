@@ -75,7 +75,7 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
                 <p className="mt-1 flex items-center gap-2 text-sm" data-testid="order-status">
                   {WORKING_STATUSES.includes(o.status) && (
                     <span
-                      className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-600"
+                      className="inline-block h-2 w-2 animate-pulse rounded-full bg-brand-strong"
                       aria-hidden
                     />
                   )}
@@ -109,7 +109,7 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
                     {t("updated", { date: formatDate(d.updatedAt) })}
                   </p>
                 </div>
-                <Link href={`/song/${d.occasionSlug}`} className="text-sm font-semibold text-rose-600">
+                <Link href={`/song/${d.occasionSlug}`} className="text-sm font-semibold text-brand">
                   {t("draftContinue")}
                 </Link>
               </li>
@@ -119,7 +119,7 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
       </section>
 
       <div className="flex flex-wrap gap-3">
-        <Link href="/#anlaesse" className="rounded-full bg-rose-600 px-6 py-3 font-semibold text-white">
+        <Link href="/#anlaesse" className="rounded-full bg-brand-strong px-6 py-3 font-semibold text-white">
           {t("newSong")}
         </Link>
         <form action={logoutAction}>

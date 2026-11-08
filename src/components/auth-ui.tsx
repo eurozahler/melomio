@@ -31,7 +31,7 @@ export function TextField({
       </label>
       <input
         id={id}
-        className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base shadow-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-200 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base shadow-sm focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
         name={name}
         aria-describedby={hint ? `${id}-hint` : undefined}
         {...input}
@@ -50,7 +50,7 @@ export function PrimaryButton({ children, disabled }: { children: ReactNode; dis
     <button
       type="submit"
       disabled={disabled}
-      className="w-full rounded-full bg-rose-600 px-6 py-3 font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+      className="w-full rounded-full bg-brand-strong px-6 py-3 font-semibold text-white hover:bg-brand-strong-hover disabled:opacity-60"
     >
       {children}
     </button>

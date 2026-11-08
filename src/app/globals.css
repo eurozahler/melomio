@@ -1,21 +1,39 @@
 @import "tailwindcss";
 
+/*
+ * Markenfarben aus dem Logo:
+ *   Koralle #FD6F6D → Violett #7821CD (Verlauf), Schrift #040A2E
+ * Für Schrift und Buttons wird ein kräftiges Magenta verwendet, damit der Kontrast
+ * zu Weiß ausreicht (Barrierefreiheit). Der Verlauf dient als Schmuckelement.
+ */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #040a2e;
+  --brand: #9b2fb4; /* Akzent-Schrift, im Dunkelmodus heller */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-strong: #9b2fb4; /* Buttons mit weißer Schrift (Kontrast > 5:1) */
+  --color-brand-strong-hover: #7f2296;
+  --color-brand-coral: #fd6f6d;
+  --color-brand-purple: #7821cd;
+  --color-ink: #040a2e;
   --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b0b14;
+    --foreground: #ededf5;
+    --brand: #d690ea;
   }
+}
+
+@utility bg-brand-gradient {
+  background-image: linear-gradient(90deg, var(--color-brand-coral), var(--color-brand-purple));
 }
 
 body {

@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
           <PrimaryButton disabled={busy}>{t("forgot.submit")}</PrimaryButton>
         </form>
       )}
-      <Link href="/anmelden" className="text-sm font-semibold text-rose-600">
+      <Link href="/anmelden" className="text-sm font-semibold text-brand">
         {t("forgot.back")}
       </Link>
     </AuthCard>

@@ -131,7 +131,7 @@ export function QuestionnaireWizard({
       {/* Kopf: Anlass, Fortschritt, Speicherstatus */}
       <div className="mb-6">
         <div className="flex items-center justify-between text-sm text-neutral-500">
-          <span className="font-semibold text-rose-600">{occasionName}</span>
+          <span className="font-semibold text-brand">{occasionName}</span>
           <span aria-live="polite" data-testid="save-state">
             {saveState === "saving" && t("saving")}
             {saveState === "saved" && `✓ ${t("saved")}`}
@@ -147,7 +147,7 @@ export function QuestionnaireWizard({
           aria-label={t("stepOf", { current: currentIndex + 1, total: steps.length })}
         >
           <div
-            className="h-full rounded-full bg-rose-600 transition-all"
+            className="bg-brand-gradient h-full rounded-full transition-all"
             style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
           />
         </div>
@@ -207,7 +207,7 @@ export function QuestionnaireWizard({
             {currentKey !== SUMMARY_STEP ? (
               <button
                 type="submit"
-                className="flex-1 rounded-full bg-rose-600 px-5 py-3 font-semibold text-white hover:bg-rose-700"
+                className="flex-1 rounded-full bg-brand-strong px-5 py-3 font-semibold text-white hover:bg-brand-strong-hover"
               >
                 {tc("next")}
               </button>
@@ -216,7 +216,7 @@ export function QuestionnaireWizard({
                 type="button"
                 onClick={continueToAccount}
                 disabled={continuing}
-                className="flex-1 rounded-full bg-rose-600 px-5 py-3 font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+                className="flex-1 rounded-full bg-brand-strong px-5 py-3 font-semibold text-white hover:bg-brand-strong-hover disabled:opacity-60"
               >
                 {t("summary.continue")}
               </button>
@@ -257,7 +257,7 @@ function ErrorText({ id, children }: { id: string; children: React.ReactNode }) 
 }
 
 const inputClass =
-  "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base shadow-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-200 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900";
+  "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base shadow-sm focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900";
 
 function QuestionStep({
   question,
@@ -363,8 +363,8 @@ function QuestionStep({
                 key={option.value}
                 className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-4 text-base transition ${
                   selected
-                    ? "border-rose-500 bg-rose-50 font-semibold dark:bg-rose-950/40"
-                    : "border-neutral-300 hover:border-rose-300 dark:border-neutral-700"
+                    ? "border-brand bg-brand/10 font-semibold dark:bg-brand/15"
+                    : "border-neutral-300 hover:border-brand/50 dark:border-neutral-700"
                 }`}
               >
                 <input
@@ -372,7 +372,7 @@ function QuestionStep({
                   name={fieldId}
                   value={option.value}
                   checked={selected}
-                  className="h-5 w-5 accent-rose-600"
+                  className="h-5 w-5 accent-brand-strong"
                   onChange={(e) => {
                     if (question.type === "single_choice") return onChange(option.value);
                     const current = Array.isArray(value) ? value : [];
@@ -425,8 +425,8 @@ function ChoiceGroup({
               key={item.slug}
               className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm transition ${
                 selected
-                  ? "border-rose-500 bg-rose-50 font-semibold dark:bg-rose-950/40"
-                  : "border-neutral-300 hover:border-rose-300 dark:border-neutral-700"
+                  ? "border-brand bg-brand/10 font-semibold dark:bg-brand/15"
+                  : "border-neutral-300 hover:border-brand/50 dark:border-neutral-700"
               }`}
             >
               <input
@@ -434,7 +434,7 @@ function ChoiceGroup({
                 name={name}
                 value={item.slug}
                 checked={selected}
-                className="h-4 w-4 accent-rose-600"
+                className="h-4 w-4 accent-brand-strong"
                 onChange={() => onChange(item.slug)}
               />
               {item.name}
@@ -502,7 +502,7 @@ function StyleStep({
           <input
             type="checkbox"
             checked={choices.customLyrics}
-            className="h-5 w-5 accent-rose-600"
+            className="h-5 w-5 accent-brand-strong"
             onChange={(e) => onChange({ customLyrics: e.target.checked })}
           />
           <span className="font-medium">{t("style.customLyrics")}</span>
@@ -575,7 +575,7 @@ function SummaryStep({
             <button
               type="button"
               onClick={() => onEdit(q.key)}
-              className="shrink-0 text-sm font-semibold text-rose-600"
+              className="shrink-0 text-sm font-semibold text-brand"
             >
               {t("summary.edit")}
             </button>
@@ -595,7 +595,7 @@ function SummaryStep({
           <button
             type="button"
             onClick={() => onEdit(STYLE_STEP)}
-            className="shrink-0 text-sm font-semibold text-rose-600"
+            className="shrink-0 text-sm font-semibold text-brand"
           >
             {t("summary.edit")}
           </button>

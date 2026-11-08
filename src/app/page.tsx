@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import icon from "./icon.png";
 import { connection } from "next/server";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
@@ -15,12 +17,12 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Einstieg */}
         <section className="mx-auto flex max-w-xl flex-col items-center gap-6 px-4 pt-16 pb-12 text-center">
-          <p className="text-sm font-semibold tracking-[0.3em] text-rose-600 uppercase">melomio</p>
+          <Image src={icon} alt="" priority className="h-20 w-20" sizes="80px" />
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t("headline")}</h1>
           <p className="text-lg text-neutral-600 dark:text-neutral-300">{t("subline")}</p>
           <a
             href="#anlaesse"
-            className="rounded-full bg-rose-600 px-8 py-3 text-base font-semibold text-white hover:bg-rose-700"
+            className="rounded-full bg-brand-strong px-8 py-3 text-base font-semibold text-white hover:bg-brand-strong-hover"
           >
             {t("cta")}
           </a>
@@ -34,7 +36,7 @@ export default function HomePage() {
           <ol className="grid gap-4 sm:grid-cols-4">
             {stepKeys.map((key, i) => (
               <li key={key} className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-sm font-bold text-white">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-strong text-sm font-bold text-white">
                   {i + 1}
                 </span>
                 <p className="mt-3 font-semibold">{t(`steps.${key}.title`)}</p>
@@ -102,13 +104,13 @@ async function OccasionsAndPrice() {
           <li key={o.slug}>
             <Link
               href={`/song/${o.slug}`}
-              className="flex h-full flex-col rounded-2xl border border-neutral-200 p-5 transition hover:border-rose-400 hover:shadow-md dark:border-neutral-800"
+              className="flex h-full flex-col rounded-2xl border border-neutral-200 p-5 transition hover:border-brand/50 hover:shadow-md dark:border-neutral-800"
             >
               <span className="text-lg font-bold">{o.name}</span>
               {o.description && (
                 <span className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">{o.description}</span>
               )}
-              <span className="mt-4 text-sm font-semibold text-rose-600">{t("cta")} →</span>
+              <span className="mt-4 text-sm font-semibold text-brand">{t("cta")} →</span>
             </Link>
           </li>
         ))}

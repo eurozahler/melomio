@@ -23,10 +23,10 @@ function layout(
   const p = paragraphs.map((t) => `<p style="margin:0 0 16px">${escapeHtml(t)}</p>`).join("");
   return `<!doctype html><html lang="de"><body style="margin:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#171717">
 <div style="max-width:520px;margin:0 auto;padding:24px">
-<p style="color:#e11d48;font-weight:bold;letter-spacing:4px;text-transform:uppercase;font-size:12px">melomio</p>
+<p style="color:#9b2fb4;font-weight:bold;letter-spacing:4px;text-transform:uppercase;font-size:12px">melomio</p>
 <div style="background:#fff;border-radius:16px;padding:24px">
 <h1 style="font-size:22px;margin:0 0 16px">${escapeHtml(title)}</h1>${p}
-<p style="margin:24px 0"><a href="${escapeHtml(button.url)}" style="background:#e11d48;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;display:inline-block">${escapeHtml(button.label)}</a></p>
+<p style="margin:24px 0"><a href="${escapeHtml(button.url)}" style="background:#9b2fb4;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;display:inline-block">${escapeHtml(button.label)}</a></p>
 <p style="font-size:12px;color:#737373;word-break:break-all">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br>${escapeHtml(button.url)}</p>
 </div>
 <p style="font-size:12px;color:#737373;margin-top:16px">${escapeHtml(footer)}</p>

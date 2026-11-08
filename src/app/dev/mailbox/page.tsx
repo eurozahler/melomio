@@ -61,7 +61,7 @@ async function Mailbox() {
                     <li key={href}>
                       <a
                         href={href}
-                        className="text-sm break-all text-rose-600 underline"
+                        className="text-sm break-all text-brand underline"
                         data-testid="mail-link"
                       >
                         {href}
