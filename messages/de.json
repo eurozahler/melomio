@@ -176,7 +176,8 @@
     "orderCreated": "Deine Bestellung {ref} ist angelegt. Den Fortschritt siehst du hier – die Seite aktualisiert sich von selbst.",
     "tooManyOpen": "Du hast bereits mehrere offene Bestellungen. Bitte schließe zuerst eine davon ab.",
     "orderNumber": "Bestellnummer {ref}",
-    "lyricsPending": "Die Prüfseite für den Songtext folgt in Modul M5."
+    "openLyrics": "Songtext ansehen und prüfen",
+    "viewLyrics": "Songtext ansehen"
   },
   "Mailbox": {
     "title": "Test-Postfach",
@@ -201,5 +202,45 @@
     "refunded": "Erstattet",
     "failed": "Problem aufgetreten – wir kümmern uns darum",
     "canceled": "Abgebrochen"
+  },
+  "Lyrics": {
+    "title": "Dein Songtext",
+    "orderRef": "Bestellung {ref}",
+    "generating": "Dein Songtext wird gerade geschrieben … Das dauert meist weniger als eine Minute. Die Seite aktualisiert sich von selbst.",
+    "intro": "Lies dir den Text in Ruhe durch. Du kannst ihn selbst anpassen, einmal von der KI neu formulieren lassen oder direkt freigeben.",
+    "sections": {
+      "intro": "Intro",
+      "verse": "Strophe {n}",
+      "chorus": "Refrain",
+      "bridge": "Bridge",
+      "outro": "Outro"
+    },
+    "edit": "Selbst bearbeiten",
+    "editHint": "Ändere einzelne Wörter oder Zeilen. Jede Zeile ist eine Liedzeile.",
+    "titleLabel": "Titel",
+    "save": "Änderungen speichern",
+    "cancel": "Abbrechen",
+    "revise": "KI neu formulieren lassen",
+    "revisionsLeft": "{count, plural, =0 {Keine KI-Neuformulierung mehr übrig} one {Noch # KI-Neuformulierung kostenlos} other {Noch # KI-Neuformulierungen kostenlos}}",
+    "reviseFeedbackLabel": "Was soll anders werden? (freiwillig)",
+    "reviseFeedbackPlaceholder": "z. B. „Bitte mehr über unseren Urlaub in Italien“",
+    "reviseSubmit": "Neu formulieren",
+    "reviseNote": "Tipp: Kleine Änderungen machst du am besten selbst – das geht unbegrenzt und der Text bleibt, wie er ist.",
+    "approve": "Songtext freigeben",
+    "approveConfirmTitle": "Songtext endgültig freigeben?",
+    "approveConfirmText": "Aus diesem Text entsteht dein Song. Nach der Freigabe kann der Text nicht mehr geändert werden.",
+    "approveConfirm": "Ja, freigeben",
+    "approved": "Songtext freigegeben. Als Nächstes entsteht deine Musik (folgt in Modul M6).",
+    "saved": "Gespeichert.",
+    "failed": "Bei deinem Songtext ist ein Problem aufgetreten. Wir kümmern uns darum.",
+    "notReady": "Der Songtext ist noch nicht verfügbar.",
+    "back": "Zurück zu Mein Konto",
+    "errors": {
+      "not_found": "Diese Bestellung gibt es nicht.",
+      "wrong_status": "Der Songtext kann gerade nicht geändert werden. Bitte lade die Seite neu.",
+      "limit_reached": "Die kostenlose KI-Neuformulierung ist aufgebraucht. Du kannst den Text aber weiterhin selbst bearbeiten.",
+      "invalid": "Bitte prüfe den Text: Jede Zeile höchstens 120 Zeichen, kein Abschnitt leer.",
+      "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+    }
   }
 }

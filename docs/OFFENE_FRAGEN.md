@@ -92,6 +92,9 @@ Das Pflichtenheft wollte im Admin ein Formular für API-Schlüssel (z. B. den Mo
   - Später lässt sich mit kleinen Umfragen oder A/B-Tests herausfinden, was am besten ankommt (Phase D).
 - ~~F-17 Grafikkarte~~ → ✅ geprüft: Quadro M1000M mit 2 GB. Das ist zu wenig und zu alt für ACE-Step. Ein Test bräuchte einen gemieteten GPU-Rechner.
 
+### Vor dem echten Songtext mit Claude
+- **F-22 Freigabe für echte Songtexte mit Claude:** Der Claude-Baustein ist fertig und getestet, aber **ohne einen einzigen echten Aufruf** (Tests laufen gegen eine Attrappe). Für den ersten echten Aufruf braucht es: einen API-Schlüssel von Anthropic (trägt der Auftraggeber selbst in `.env.local` ein, Variable `ANTHROPIC_API_KEY`), `LYRICS_PROVIDER=anthropic` und die ausdrückliche Freigabe. Modell: Claude Opus 5.5 (`claude-opus-5-5`, ca. 4 $ / 20 $ je 1 Mio. Ein-/Ausgabe-Tokens ⚠️ Stand der Referenz vom 06.10.2026), mittlere Denktiefe, mit automatischem Rückfall auf ein anderes Modell, falls Claude eine Anfrage aus Sicherheitsgründen ablehnt. Grobe Schätzung pro Songtext: wenige Cent (⚠️ vor dem Livegang mit echten Aufrufen messen). Das Modell lässt sich pro Prompt-Version ändern (Tabelle `prompt_versions`).
+
 ### Vor dem echten Musikanbieter
 - **F-2 Musikanbieter:** Hörtest ElevenLabs gegen ACE-Step mit 3–5 deutschen Beispieltexten, danach Entscheidung. ACE-Step nur auf einem gemieteten GPU-Rechner (Hetzner Cloud bietet nach meinem Stand keine GPUs pro Stunde an, ⚠️ nicht geprüft). Zu ElevenLabs: Die kleinen Tarife sind laut AGB „For Individual Use Only“. Ob ein interner Test damit erlaubt ist, ist ungeklärt.
 - ~~F-12 Strato-Paket~~ → ✅ erledigt durch E10.

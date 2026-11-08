@@ -44,13 +44,13 @@ export default defineConfig({
       },
     },
     {
-      // Hintergrund-Worker gegen die Testdatenbank (Songtext-Platzhalter verkürzt)
+      // Hintergrund-Worker gegen die Testdatenbank (Songtext mit dem Test-Baustein, keine Kosten)
       command: "node node_modules/tsx/dist/cli.mjs --conditions=react-server worker/index.ts",
       stdout: "pipe",
       wait: { stdout: /\[worker\] bereit/ },
       timeout: 300_000,
       reuseExistingServer: false,
-      env: { DATABASE_URL: testDb, APP_MODE: "test", LYRICS_STUB_DELAY_MS: "1500" },
+      env: { DATABASE_URL: testDb, APP_MODE: "test", LYRICS_PROVIDER: "mock" },
     },
   ],
 });

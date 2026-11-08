@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { fromDrizzle, type PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
-import type { OrderJobData, QueueName } from "./queues";
+import type { LyricsJobData, QueueName } from "./queues";
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
@@ -13,7 +13,7 @@ type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 export async function enqueue(
   boss: PgBoss,
   name: QueueName,
-  data: OrderJobData,
+  data: LyricsJobData,
   options: { tx?: Tx; singletonKey?: string; startAfterSeconds?: number } = {},
 ): Promise<string | null> {
   return boss.send(name, data, {

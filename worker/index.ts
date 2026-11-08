@@ -12,12 +12,13 @@ import { EnvError, getEnv } from "../src/config/env";
 import { createDb } from "../src/db/client";
 import { createBoss } from "../src/jobs/boss";
 import * as handlers from "../src/jobs/handlers";
-import { ensureQueues, QUEUES, type OrderJobData } from "../src/jobs/queues";
+import { ensureQueues, QUEUES, type LyricsJobData } from "../src/jobs/queues";
+import { getLyricsProvider } from "../src/lyrics";
 
 // Die Konfiguration wird erst beim ersten getEnv() gelesen – daher reicht es, sie hier zu laden
 loadEnvConfig(process.cwd());
 
-type OrderJob = JobWithMetadata<OrderJobData>;
+type OrderJob = JobWithMetadata<LyricsJobData>;
 
 async function main() {
   let env;
@@ -35,7 +36,8 @@ async function main() {
   const boss = createBoss(env.DATABASE_URL, "worker");
   await boss.start();
   await ensureQueues(boss);
-  const deps = { db, boss };
+  const lyrics = getLyricsProvider(env);
+  const deps = { db, boss, lyrics };
 
   function logResult(job: OrderJob, result: unknown) {
     const value = (result as { status?: string; value?: unknown }) ?? {};
@@ -72,7 +74,7 @@ async function main() {
   await boss.schedule(QUEUES.cleanupDrafts, "30 3 * * *", null, { tz: "Europe/Berlin" });
 
   console.log(
-    `[worker] bereit – ${env.isTestOperation ? "TESTBETRIEB" : "LIVEBETRIEB"} – Warteschlangen: ${Object.values(QUEUES).join(", ")}`,
+    `[worker] bereit – ${env.isTestOperation ? "TESTBETRIEB" : "LIVEBETRIEB"} – Songtext: ${lyrics.name} – Warteschlangen: ${Object.values(QUEUES).join(", ")}`,
   );
 
   let stopping = false;

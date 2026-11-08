@@ -7,6 +7,7 @@ import {
   occasions,
   prices,
   products,
+  promptVersions,
   questionOptions,
   questionnaireVersions,
   questions,
@@ -25,6 +26,7 @@ import {
   SEED_VOICES,
 } from "./seed-data";
 import { SETTINGS, SETTING_KEYS } from "./settings";
+import { LYRICS_DEFAULT_MODEL, LYRICS_SYSTEM_PROMPT_KEY, LYRICS_SYSTEM_PROMPT_V1 } from "../lyrics/prompts";
 
 /**
  * Spielt die Beispieldaten ein. Kann beliebig oft laufen:
@@ -119,6 +121,22 @@ export async function seed(db: Database) {
       .insert(videoTemplates)
       .values(SEED_VIDEO_TEMPLATE)
       .onConflictDoNothing({ target: videoTemplates.slug });
+
+    // System-Prompt für Songtexte, Version 1 (nur, wenn es noch keine Fassung gibt)
+    const prompts = await tx
+      .select({ id: promptVersions.id })
+      .from(promptVersions)
+      .where(eq(promptVersions.key, LYRICS_SYSTEM_PROMPT_KEY));
+    if (prompts.length === 0) {
+      await tx.insert(promptVersions).values({
+        key: LYRICS_SYSTEM_PROMPT_KEY,
+        version: 1,
+        template: LYRICS_SYSTEM_PROMPT_V1,
+        model: LYRICS_DEFAULT_MODEL,
+        active: true,
+        createdBy: "seed",
+      });
+    }
 
     // Einstellungen mit Standardwerten
     await tx

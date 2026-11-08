@@ -8,7 +8,7 @@ import { listOrdersForUser } from "@/server/orders";
 import { requireUser } from "@/server/session";
 import { WORKING_STATUSES } from "@/domain/order-status";
 import { logoutAction } from "./actions";
-import { AutoRefresh } from "./auto-refresh";
+import { AutoRefresh } from "@/components/auto-refresh";
 
 export default function AccountPage({ searchParams }: PageProps<"/konto">) {
   return (
@@ -81,8 +81,13 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
                   )}
                   {tStatus(o.status)}
                 </p>
-                {o.status === "lyrics_review" && (
-                  <p className="mt-1 text-xs text-neutral-500">{t("lyricsPending")}</p>
+                {(o.status === "lyrics_review" || o.status === "lyrics_approved") && (
+                  <Link
+                    href={`/bestellung/${o.publicRef}/songtext`}
+                    className="mt-2 inline-block text-sm font-semibold text-brand"
+                  >
+                    {o.status === "lyrics_review" ? t("openLyrics") : t("viewLyrics")} →
+                  </Link>
                 )}
               </li>
             ))}

@@ -92,7 +92,7 @@ Jeder externe Dienst wird hinter einer **Schnittstelle** (Interface) versteckt. 
 | Schnittstelle | Methoden (vereinfacht) | Test-Adapter | Echte Adapter (Kandidaten) |
 |---|---|---|---|
 | `PaymentProvider` | `createPayment`, `getPayment`, `createRefund` | `mock` (Zahlung per Klick bestätigen) | Mollie (zuerst im Testmodus) |
-| `LyricsProvider` (LLM) | `generateLyrics`, `reviseLyrics` | `mock` (Vorlagentext aus den Antworten) | Anthropic Claude |
+| `LyricsProvider` (LLM) | `generate`, `revise` | `mock` (Vorlagentext aus den Antworten) | Anthropic Claude: Claude Opus 5.5, strukturierte Ausgabe (Titel + Abschnitte), Rückfall-Option bei Ablehnung, gleichbleibender System-Prompt aus `prompt_versions`, Kundenangaben als gekennzeichnete Daten (Schutz vor Prompt-Injection), Künstlernamen werden vorher herausgefiltert |
 | `MusicProvider` | `generate`, `getStatus`, `getAssets`, `estimateCost`, `cancel?` | `mock` (erzeugt eine Test-Tonfolge, simuliert Wartezeit und Fehler) | ElevenLabs Music, Google Lyria, Mureka, **eigene KI: ACE-Step auf einem GPU-Server** – **noch nicht freigegeben** (siehe `ANBIETERPRUEFUNG.md`) |
 | `VideoRenderer` | `render(template, audio, photos?)` | – (FFmpeg läuft lokal, kostet nichts) | FFmpeg |
 | `EmailProvider` | `send` | `console` (E-Mails landen im Log und in einem Test-Postfach unter `/dev/mailbox`) | später: transaktionaler Dienst (offen, F-13) |

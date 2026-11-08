@@ -1,11 +1,12 @@
-import { eq, lt } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import type { JobWithMetadata, PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
-import { orders, questionnaireDrafts } from "@/db/schema";
+import { lyricsVersions, orders, questionnaireDrafts } from "@/db/schema";
+import { buildLyricsInput, getActiveSystemPrompt, lyricsSchema, type LyricsProvider } from "@/lyrics";
+import { transitionOrder } from "@/orders/service";
 import { enqueue } from "./enqueue";
 import { runIdempotent, StepBusyError, type IdempotentResult } from "./idempotency";
-import { QUEUES, type OrderJobData } from "./queues";
-import { transitionOrder } from "@/orders/service";
+import { QUEUES, type LyricsJobData, type OrderJobData } from "./queues";
 
 /**
  * Arbeitsschritte des Workers. Jeder Schritt
@@ -14,18 +15,12 @@ import { transitionOrder } from "@/orders/service";
  * - setzt die Bestellung nach dem letzten fehlgeschlagenen Versuch auf „failed“.
  */
 
-export type HandlerDeps = { db: Database; boss: PgBoss };
+export type HandlerDeps = { db: Database; boss: PgBoss; lyrics: LyricsProvider };
 
 /** „Läuft schon“ darf einen Auftrag nie still als erledigt markieren – sonst bliebe die Bestellung hängen. */
 function failIfBusy<T>(key: string, result: IdempotentResult<T>): IdempotentResult<T> {
   if (result.status === "busy") throw new StepBusyError(key);
   return result;
-}
-
-/** Platzhalter-Dauer des Songtext-Schritts bis Modul M5 (für Tests verkürzbar). */
-function stubDelayMs(): number {
-  const value = Number(process.env.LYRICS_STUB_DELAY_MS ?? 3000);
-  return Number.isFinite(value) && value >= 0 ? value : 3000;
 }
 
 async function loadOrder(db: Database, orderId: string) {
@@ -53,7 +48,12 @@ export async function handleOrderStart(
       }
       await db.transaction(async (tx) => {
         await transitionOrder(tx, orderId, "lyrics_generating", { actor: "worker" });
-        await enqueue(boss, QUEUES.lyricsGenerate, { orderId }, { tx, singletonKey: orderId });
+        await enqueue(
+          boss,
+          QUEUES.lyricsGenerate,
+          { orderId, targetVersion: 1 },
+          { tx, singletonKey: `${orderId}:1` },
+        );
       });
       return "Songtext angestoßen";
     },
@@ -63,23 +63,77 @@ export async function handleOrderStart(
 }
 
 /**
- * lyrics.generate: Platzhalter bis Modul M5. Wartet kurz und setzt die Bestellung auf „Songtext
- * bereit zur Prüfung“. In M5 entsteht hier der echte Songtext (Mock bzw. Claude).
+ * lyrics.generate: Songtext erzeugen (Fassung 1) oder neu formulieren (weitere Fassungen).
+ * Der Aufruf beim Anbieter passiert außerhalb der Datenbank-Transaktion; gespeichert wird die
+ * neue Fassung zusammen mit dem Statuswechsel – nie das eine ohne das andere.
  */
-export async function handleLyricsGenerate({ db }: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
-  const key = `lyrics.generate:${orderId}:1`;
+export async function handleLyricsGenerate(
+  { db, lyrics }: HandlerDeps,
+  { orderId, targetVersion = 1, feedback = null }: LyricsJobData,
+  attempt?: string,
+) {
+  const key = `lyrics.generate:${orderId}:${targetVersion}`;
   const result = await runIdempotent(
     db,
     key,
     async () => {
       const order = await loadOrder(db, orderId);
       if (order.status !== "lyrics_generating") return "übersprungen (Status passt nicht)";
-      await new Promise((resolve) => setTimeout(resolve, stubDelayMs()));
+
+      const [existing] = await db
+        .select({ id: lyricsVersions.id })
+        .from(lyricsVersions)
+        .where(and(eq(lyricsVersions.orderId, orderId), eq(lyricsVersions.version, targetVersion)));
+
+      if (!existing) {
+        const { input, flagged } = await buildLyricsInput(db, orderId);
+        const prompt = await getActiveSystemPrompt(db);
+        const [previous] = await db
+          .select()
+          .from(lyricsVersions)
+          .where(eq(lyricsVersions.orderId, orderId))
+          .orderBy(desc(lyricsVersions.version))
+          .limit(1);
+
+        const generated =
+          targetVersion > 1 && previous
+            ? await lyrics.revise(
+                input,
+                {
+                  previous: lyricsSchema.parse({
+                    title: previous.title,
+                    sections: previous.content.sections,
+                  }),
+                  feedback,
+                },
+                prompt.template,
+                prompt.model,
+              )
+            : await lyrics.generate(input, prompt.template, prompt.model);
+
+        await db.transaction(async (tx) => {
+          await tx.insert(lyricsVersions).values({
+            orderId,
+            version: targetVersion,
+            title: generated.title,
+            content: { sections: generated.sections },
+            source: targetVersion > 1 ? "ai_revision" : "ai",
+            promptVersionId: prompt.id,
+          });
+          await transitionOrder(tx, orderId, "lyrics_review", {
+            actor: "worker",
+            reason: `Fassung ${targetVersion} von ${lyrics.name}/${generated.model}${flagged ? " (Eingaben gefiltert)" : ""}`,
+          });
+        });
+        return `Songtext-Fassung ${targetVersion} fertig (${lyrics.name})`;
+      }
+
+      // Fassung existiert schon (z. B. Absturz nach dem Speichern): nur noch den Status nachziehen
       await transitionOrder(db, orderId, "lyrics_review", {
         actor: "worker",
-        reason: "Platzhalter – echter Songtext folgt in Modul M5",
+        reason: "Fassung bereits vorhanden",
       });
-      return "Songtext-Platzhalter fertig";
+      return `Songtext-Fassung ${targetVersion} war schon gespeichert`;
     },
     { attempt },
   );

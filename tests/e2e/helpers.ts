@@ -59,3 +59,22 @@ export async function logout(page: Page) {
   await page.getByRole("button", { name: "Abmelden" }).click();
   await expect(page.getByTestId("header-account")).toHaveText("Anmelden");
 }
+
+/**
+ * Kompletter Weg bis zur Bestellung: Fragebogen ausfüllen, registrieren, E-Mail bestätigen.
+ * Endet in „Mein Konto“ mit einer neuen Bestellung; gibt die Bestellnummer zurück.
+ */
+export async function orderViaQuestionnaire(page: Page, email: string, password: string): Promise<string> {
+  await fillBirthdayQuestionnaire(page);
+  await page.getByRole("button", { name: "Weiter zur Anmeldung" }).click();
+  await expect(page).toHaveURL(/\/anmelden/, { timeout: 15_000 });
+  await page.getByRole("link", { name: "Mit Passwort registrieren" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Konto erstellen");
+  await page.getByLabel("E-Mail-Adresse").filter({ visible: true }).fill(email);
+  await page.getByLabel("Passwort").filter({ visible: true }).fill(password);
+  await page.getByRole("button", { name: "Registrieren" }).click();
+  await expect(page.getByText("Fast geschafft!")).toBeVisible();
+  await page.goto(await linkFromMailbox(page, email, /bestätige deine E-Mail/));
+  await expect(page).toHaveURL(/\/konto\?bestellung=M-/);
+  return new URL(page.url()).searchParams.get("bestellung")!;
+}

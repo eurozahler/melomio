@@ -7,7 +7,7 @@ import type { PgBoss, QueueOptions } from "pg-boss";
 export const QUEUES = {
   /** Startet die Verarbeitung einer neuen Bestellung. */
   orderStart: "order.start",
-  /** Songtext erzeugen (Modul M5: echter Text; bis dahin Platzhalter-Schritt). */
+  /** Songtext erzeugen oder neu formulieren (Modul M5). */
   lyricsGenerate: "lyrics.generate",
   /** Aufräumen: abgelaufene Fragebogen-Entwürfe löschen. */
   cleanupDrafts: "maintenance.cleanup-drafts",
@@ -16,6 +16,9 @@ export const QUEUES = {
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
 
 export type OrderJobData = { orderId: string };
+
+/** Songtext-Auftrag: welche Fassung entstehen soll, ggf. mit Änderungswunsch („KI neu formulieren“). */
+export type LyricsJobData = OrderJobData & { targetVersion?: number; feedback?: string | null };
 
 export const QUEUE_OPTIONS: Record<QueueName, QueueOptions> = {
   // heartbeatSeconds: Der Worker meldet sich regelmäßig. Bleibt das aus (Absturz), wird der Auftrag
