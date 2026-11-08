@@ -20,6 +20,11 @@ coverage/
 playwright-report/
 test-results/
 
+# TypeScript / Next.js
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
 # System und Editor
 .DS_Store
 Thumbs.db

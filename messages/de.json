@@ -1,0 +1,17 @@
+{
+  "Meta": {
+    "title": "melomio – dein persönlicher Song",
+    "description": "Personalisierte Songs für besondere Anlässe: Liebe, Hochzeit, Geburtstag und mehr."
+  },
+  "TestBanner": {
+    "title": "TESTBETRIEB",
+    "text": "keine echte Zahlung, kein echter Song",
+    "mocks": "Aktive Test-Adapter: {list}"
+  },
+  "Home": {
+    "headline": "Dein persönlicher Song",
+    "subline": "Erzähl uns von deinem Anlass – wir machen daraus einen Song mit Video. Vor dem Kauf hörst du kostenlos rein.",
+    "cta": "Jetzt Song erstellen",
+    "comingSoon": "Der Fragebogen folgt in Modul M3."
+  }
+}

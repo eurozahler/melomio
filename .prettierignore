@@ -1,0 +1,8 @@
+node_modules
+.next
+coverage
+package-lock.json
+next-env.d.ts
+docs
+Pflichtenheft_KI_Song_Plattform_Claude_Code.md
+AGENTS.md
