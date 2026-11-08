@@ -166,15 +166,17 @@
     "title": "Mein Konto",
     "signedInAs": "Angemeldet als {email}",
     "logout": "Abmelden",
-    "draftSaved": "Deine Angaben für „{occasion}“ sind in deinem Konto gespeichert.",
-    "draftNext": "Im nächsten Ausbauschritt entsteht hier automatisch dein Songtext (Modul M5).",
     "draftsTitle": "Angefangene Songs",
     "draftContinue": "Weiterbearbeiten",
     "draftsEmpty": "Keine angefangenen Songs.",
     "ordersTitle": "Meine Songs",
     "ordersEmpty": "Du hast noch keine Songs bestellt.",
     "newSong": "Neuen Song erstellen",
-    "updated": "zuletzt bearbeitet am {date}"
+    "updated": "zuletzt bearbeitet am {date}",
+    "orderCreated": "Deine Bestellung {ref} ist angelegt. Den Fortschritt siehst du hier – die Seite aktualisiert sich von selbst.",
+    "tooManyOpen": "Du hast bereits mehrere offene Bestellungen. Bitte schließe zuerst eine davon ab.",
+    "orderNumber": "Bestellnummer {ref}",
+    "lyricsPending": "Die Prüfseite für den Songtext folgt in Modul M5."
   },
   "Mailbox": {
     "title": "Test-Postfach",
@@ -182,5 +184,22 @@
     "empty": "Noch keine E-Mails.",
     "to": "An",
     "links": "Links in dieser E-Mail"
+  },
+  "OrderStatus": {
+    "created": "Bestellung angelegt",
+    "lyrics_generating": "Songtext wird geschrieben …",
+    "lyrics_review": "Songtext bereit zur Prüfung",
+    "lyrics_approved": "Songtext freigegeben",
+    "music_generating": "Musik wird komponiert …",
+    "manual_review": "Wird von uns geprüft",
+    "preview_ready": "Hörprobe bereit",
+    "preview_expired": "Hörprobe abgelaufen",
+    "awaiting_payment": "Wartet auf Zahlung",
+    "paid": "Bezahlt",
+    "video_rendering": "Video wird erstellt …",
+    "completed": "Fertig",
+    "refunded": "Erstattet",
+    "failed": "Problem aufgetreten – wir kümmern uns darum",
+    "canceled": "Abgebrochen"
   }
 }

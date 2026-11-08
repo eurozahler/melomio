@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // Server-Bibliotheken mit eigenen Datenbankverbindungen nicht bündeln
+  serverExternalPackages: ["pg-boss", "pg"],
   turbopack: {
     rules: {
       "*.css": {

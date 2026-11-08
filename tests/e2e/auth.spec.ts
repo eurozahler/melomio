@@ -11,12 +11,13 @@ import {
 
 const PASSWORD = "Sommer-Lied-2026";
 
-test("Fragebogen → registrieren → E-Mail bestätigen → Antworten sind im Konto", async ({ page }) => {
+test("Fragebogen → registrieren → E-Mail bestätigen → Bestellung läuft automatisch los", async ({ page }) => {
   const email = uniqueEmail("reg");
   await fillBirthdayQuestionnaire(page);
 
   await page.getByRole("button", { name: "Weiter zur Anmeldung" }).click();
-  await expect(page).toHaveURL(/\/anmelden\?next=%2Fsong%2Fgeburtstag%2Fweiter/);
+  // Erster Aufruf nach dem Serverstart kann etwas dauern (Verbindungen werden aufgebaut)
+  await expect(page).toHaveURL(/\/anmelden\?next=%2Fsong%2Fgeburtstag%2Fweiter/, { timeout: 15_000 });
 
   await page.getByRole("link", { name: "Mit Passwort registrieren" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Konto erstellen");
@@ -40,16 +41,19 @@ test("Fragebogen → registrieren → E-Mail bestätigen → Antworten sind im K
   const link = await linkFromMailbox(page, email, /bestätige deine E-Mail/);
   expect(link).toContain("callbackURL=%2Fsong%2Fgeburtstag%2Fweiter");
   await page.goto(link);
-  await expect(page).toHaveURL(/\/konto\?entwurf=geburtstag/);
+  await expect(page).toHaveURL(/\/konto\?bestellung=M-/);
   await expect(page.getByTestId("signed-in-as")).toContainText(email);
-  await expect(
-    page.getByText("Deine Angaben für „Geburtstag“ sind in deinem Konto gespeichert."),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Weiterbearbeiten" })).toBeVisible();
+  await expect(page.getByText(/Deine Bestellung M-[A-Z0-9]{6} ist angelegt/)).toBeVisible();
 
-  // Die Antworten sind über das Konto abrufbar
-  await page.getByRole("link", { name: "Weiterbearbeiten" }).click();
-  await expect(page.getByText("Anna", { exact: true })).toBeVisible();
+  // Abnahme M4: Der Status wechselt sichtbar automatisch weiter (Worker im Hintergrund)
+  await expect(page.getByTestId("order-status")).toHaveText("Songtext bereit zur Prüfung", {
+    timeout: 30_000,
+  });
+
+  // Der Entwurf ist verbraucht – ein erneuter Aufruf legt keine zweite Bestellung an
+  await page.goto("/song/geburtstag/weiter");
+  await expect(page).toHaveURL(/\/konto$/);
+  await expect(page.getByTestId("order")).toHaveCount(1);
 });
 
 test("Anmelden mit E-Mail-Link ohne Passwort (legt das Konto an)", async ({ page }) => {

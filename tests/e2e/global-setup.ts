@@ -15,6 +15,10 @@ export default async function globalSetup() {
   await client.query(
     "DROP SCHEMA IF EXISTS public CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE; CREATE SCHEMA public;",
   );
+  // Der Test-Worker läuft evtl. schon: Warteschlangen-Bereich behalten, nur alte Aufträge entfernen
+  await client.query(
+    "DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'pgboss' AND table_name = 'job') THEN DELETE FROM pgboss.job; END IF; END $$;",
+  );
   await client.end();
 
   await runMigrations(url);

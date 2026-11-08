@@ -6,6 +6,8 @@
 import { loadEnvConfig } from "@next/env";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { createDb } from "../../src/db/client";
+import { createBoss } from "../../src/jobs/boss";
+import { ensureQueues } from "../../src/jobs/queues";
 
 loadEnvConfig(process.cwd());
 
@@ -15,6 +17,14 @@ export async function runMigrations(url: string) {
     await migrate(db, { migrationsFolder: "./src/db/migrations" });
   } finally {
     await pool.end();
+  }
+  // Warteschlange (pg-boss): Schema installieren/aktualisieren und Warteschlangen anlegen
+  const boss = createBoss(url, "migrate");
+  await boss.start();
+  try {
+    await ensureQueues(boss);
+  } finally {
+    await boss.stop({ graceful: false });
   }
 }
 

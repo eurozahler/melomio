@@ -32,3 +32,6 @@ Thumbs.db
 
 # End-to-End-Tests
 .next-e2e/
+
+# Temporäre Hilfsskripte
+.tmp/

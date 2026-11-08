@@ -26,20 +26,31 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [{ name: "handy", use: { ...devices["Pixel 7"] } }],
-  webServer: {
-    command: `npx next build && npx next start -p ${PORT}`,
-    // Bereitschaftsprüfung ohne Datenbankzugriff (die Testdatenbank wird parallel neu aufgebaut)
-    url: `http://localhost:${PORT}/api/auth/ok`,
-    timeout: 300_000,
-    reuseExistingServer: false,
-    env: {
-      NEXT_DIST_DIR: ".next-e2e",
-      DATABASE_URL: testDb,
-      APP_MODE: "test",
-      EMAIL_PROVIDER: "console",
-      APP_BASE_URL: `http://localhost:${PORT}`,
-      // Die Tests melden sich schneller an, als ein Mensch es je täte
-      AUTH_RATE_LIMIT: "off",
+  webServer: [
+    {
+      command: `npx next build && npx next start -p ${PORT}`,
+      // Bereitschaftsprüfung ohne Datenbankzugriff (die Testdatenbank wird parallel neu aufgebaut)
+      url: `http://localhost:${PORT}/api/auth/ok`,
+      timeout: 300_000,
+      reuseExistingServer: false,
+      env: {
+        NEXT_DIST_DIR: ".next-e2e",
+        DATABASE_URL: testDb,
+        APP_MODE: "test",
+        EMAIL_PROVIDER: "console",
+        APP_BASE_URL: `http://localhost:${PORT}`,
+        // Die Tests melden sich schneller an, als ein Mensch es je täte
+        AUTH_RATE_LIMIT: "off",
+      },
     },
-  },
+    {
+      // Hintergrund-Worker gegen die Testdatenbank (Songtext-Platzhalter verkürzt)
+      command: "node node_modules/tsx/dist/cli.mjs --conditions=react-server worker/index.ts",
+      stdout: "pipe",
+      wait: { stdout: /\[worker\] bereit/ },
+      timeout: 300_000,
+      reuseExistingServer: false,
+      env: { DATABASE_URL: testDb, APP_MODE: "test", LYRICS_STUB_DELAY_MS: "1500" },
+    },
+  ],
 });

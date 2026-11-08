@@ -1,4 +1,4 @@
-import { boolean, index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { emailStatusEnum } from "./enums";
 import { orders } from "./orders";
 import { users } from "./users";
@@ -75,3 +75,19 @@ export const devMailbox = pgTable(
   },
   (t) => [index().on(t.recipient, t.createdAt)],
 );
+
+/**
+ * Ausführungsprotokoll für Arbeitsschritte mit Idempotenzschlüssel: Ein Schritt mit demselben
+ * Schlüssel (z. B. "order.start:<id>") wird nur einmal erfolgreich ausgeführt – auch wenn der
+ * Auftrag doppelt ankommt oder der Worker abstürzt und neu startet.
+ */
+export const jobExecutions = pgTable("job_executions", {
+  idempotencyKey: text().primaryKey(),
+  status: text().$type<"running" | "succeeded" | "failed">().notNull(),
+  attempts: integer().notNull().default(0),
+  /** Kennung des laufenden Versuchs (pg-boss: Auftrags-ID + Wiederholungszähler). */
+  attemptToken: text(),
+  startedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp({ withTimezone: true }),
+  error: text(),
+});

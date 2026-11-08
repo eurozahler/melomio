@@ -1,0 +1,1 @@
+ALTER TABLE "job_executions" ADD COLUMN "attempt_token" text;

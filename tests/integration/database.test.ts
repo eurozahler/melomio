@@ -37,7 +37,7 @@ describe("Migrationen und Beispieldaten (M2)", () => {
     const r = await db.execute<{ n: number }>(
       sql`select count(*)::int as n from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE'`,
     );
-    expect(r.rows[0]?.n).toBe(41); // 37 aus M2 + sessions, accounts, verifications, dev_mailbox (M3b)
+    expect(r.rows[0]?.n).toBe(42); // 37 aus M2 + sessions, accounts, verifications, dev_mailbox (M3b) + job_executions (M4)
   });
 
   it("spielt die Beispieldaten vollständig ein", async () => {

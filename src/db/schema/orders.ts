@@ -27,6 +27,8 @@ export const orders = pgTable(
     /** Kunde schreibt den Songtext selbst (E17). */
     customLyrics: boolean().notNull().default(false),
     isTest: boolean().notNull(),
+    /** Zeitpunkt der serverseitig bestätigten Zahlung. Voraussetzung für Video und volle Datei (E12). */
+    paidAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

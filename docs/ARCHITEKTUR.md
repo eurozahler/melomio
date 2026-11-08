@@ -202,6 +202,17 @@ lyrics_generating ──▶ lyrics_review ◀──┐ selbst bearbeiten (unbegr
 
 Jeder Auftrag hat einen **Idempotenzschlüssel**. Das ist ein eindeutiger Name pro Bestellung und Schritt, der verhindert, dass derselbe Schritt doppelt ausgeführt (und doppelt bezahlt) wird, etwa wenn ein Webhook zweimal ankommt oder der Worker abstürzt.
 
+**Umsetzung (M4):**
+- Bestellung und Startauftrag entstehen in **einer** Datenbank-Transaktion (pg-boss `send` mit `fromDrizzle(tx)`): nie das eine ohne das andere.
+- Tabelle `job_executions`: Schlüssel → Status (läuft / erfolgreich / fehlgeschlagen), Versuchskennung. Ein erfolgreicher Schritt wird nie wiederholt.
+- **Absturz des Workers:** Der Worker sendet regelmäßige Lebenszeichen (`heartbeatSeconds: 30`). Bleiben sie aus, gibt pg-boss den Auftrag als neuen Versuch aus; dieser darf den „hängenden“ Schritt übernehmen. Getestet: Absturz mitten im Schritt → nach Neustart in ca. 2–3 Minuten erledigt, nichts doppelt.
+- „Läuft schon“ wird nie still als erledigt gewertet, sondern führt zu einem späteren Wiederholungsversuch.
+- Nach dem letzten erlaubten Versuch wechselt die Bestellung auf `failed` (mit Grund) und kann im Admin wiederholt werden (M10).
+- Zusätzlich prüft jeder Schritt zuerst den Bestellstatus: Passt er nicht, ist der Schritt schon erledigt und tut nichts.
+- Statuswechsel nur über `transitionOrder` (Zeile gesperrt mit FOR UPDATE, Eintrag in `order_status_history`). „bezahlt“, Video und „fertig“ setzen eine bestätigte Zahlung (`paid_at`) voraus.
+- Höchstens 3 offene, unbezahlte Bestellungen pro Konto (Missbrauchsschutz).
+- Täglicher Aufräum-Auftrag (3:30 Uhr): abgelaufene Fragebogen-Entwürfe löschen.
+
 ---
 
 ## 8. Ablauf der Zahlung (Mollie)

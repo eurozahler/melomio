@@ -6,7 +6,9 @@ import { cookies } from "next/headers";
 import { attachDraftToUser, DRAFT_COOKIE, isValidDraftCookieId, listUserDrafts } from "@/server/drafts";
 import { listOrdersForUser } from "@/server/orders";
 import { requireUser } from "@/server/session";
+import { WORKING_STATUSES } from "@/domain/order-status";
 import { logoutAction } from "./actions";
+import { AutoRefresh } from "./auto-refresh";
 
 export default function AccountPage({ searchParams }: PageProps<"/konto">) {
   return (
@@ -29,8 +31,9 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
   if (isValidDraftCookieId(cookieId)) await attachDraftToUser(cookieId, user.id);
 
   const [drafts, orders] = await Promise.all([listUserDrafts(user.id), listOrdersForUser(user.id)]);
-  const justSaved =
-    typeof params.entwurf === "string" ? drafts.find((d) => d.occasionSlug === params.entwurf) : undefined;
+  const tStatus = await getTranslations("OrderStatus");
+  const newRef = typeof params.bestellung === "string" ? params.bestellung : null;
+  const anyWorking = orders.some((o) => WORKING_STATUSES.includes(o.status));
   const formatDate = (d: Date) =>
     d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 
@@ -43,12 +46,13 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
         </p>
       </div>
 
-      {justSaved && (
-        <Notice kind="success">
-          <p className="font-semibold">{t("draftSaved", { occasion: justSaved.occasionName })}</p>
-          <p className="text-sm">{t("draftNext")}</p>
-        </Notice>
+      {/* Solange im Hintergrund gearbeitet wird, aktualisiert sich die Seite von selbst */}
+      <AutoRefresh active={anyWorking} />
+
+      {newRef && orders.some((o) => o.publicRef === newRef) && (
+        <Notice kind="success">{t("orderCreated", { ref: newRef })}</Notice>
       )}
+      {params.hinweis === "zu-viele-offen" && <Notice kind="error">{t("tooManyOpen")}</Notice>}
 
       <section aria-labelledby="orders">
         <h2 id="orders" className="mb-3 text-xl font-bold">
@@ -61,9 +65,25 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
             {orders.map((o) => (
               <li
                 key={o.id}
+                data-testid="order"
                 className="rounded-xl border border-neutral-200 px-4 py-3 dark:border-neutral-800"
               >
-                <span className="font-semibold">{o.occasionName}</span> · {o.publicRef} · {o.status}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold">{o.occasionName}</span>
+                  <span className="text-xs text-neutral-500">{t("orderNumber", { ref: o.publicRef })}</span>
+                </div>
+                <p className="mt-1 flex items-center gap-2 text-sm" data-testid="order-status">
+                  {WORKING_STATUSES.includes(o.status) && (
+                    <span
+                      className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-600"
+                      aria-hidden
+                    />
+                  )}
+                  {tStatus(o.status)}
+                </p>
+                {o.status === "lyrics_review" && (
+                  <p className="mt-1 text-xs text-neutral-500">{t("lyricsPending")}</p>
+                )}
               </li>
             ))}
           </ul>

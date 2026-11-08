@@ -12,7 +12,10 @@ Personalisierte KI-Songs mit Musikvideo für besondere Anlässe.
 
 1. Einmalig: `npm install` und `.env.example` nach `.env.local` kopieren und ausfüllen.
 2. In einem eigenen Terminal den Datenbank-Tunnel öffnen: `.\scripts\db-tunnel.ps1` (ab Modul M2 nötig).
-3. `npm run dev` und im Browser http://localhost:3000 öffnen.
+3. In einem weiteren Terminal den Hintergrund-Worker starten: `npm run worker` (ab Modul M4 nötig, damit Bestellungen weiterlaufen).
+4. `npm run dev` und im Browser http://localhost:3000 öffnen.
+
+Den Worker beendest du mit **Strg+C** in seinem Terminal – dann bringt er laufende Aufträge noch zu Ende. Wird er hart beendet (Absturz), werden abgebrochene Aufträge nach dem Neustart automatisch wiederholt (nach etwa 1–3 Minuten).
 
 ## Befehle
 
