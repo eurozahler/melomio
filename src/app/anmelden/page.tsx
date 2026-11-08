@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AuthCard } from "@/components/auth-ui";
+import { hasTestMailbox } from "@/server/email/test-mailbox";
 import { getSessionUser, safeNextPath } from "@/server/session";
 import { LoginForm } from "./login-form";
 
@@ -22,5 +23,5 @@ async function LoginContent({ searchParams }: Pick<PageProps<"/anmelden">, "sear
   const user = await getSessionUser();
   if (user?.emailVerified) redirect(next);
   const linkError = params.fehler === "link" || typeof params.error === "string";
-  return <LoginForm next={next} linkError={linkError} />;
+  return <LoginForm next={next} linkError={linkError} testMailbox={hasTestMailbox()} />;
 }

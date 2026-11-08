@@ -55,5 +55,5 @@ export async function requestRevisionAction(ref: unknown, feedback: unknown) {
 }
 
 export async function approveLyricsAction(ref: unknown) {
-  return run((userId) => approveLyrics(getDb(), checkRef(ref), userId));
+  return run(async (userId) => approveLyrics(getDb(), await getSenderBoss(), checkRef(ref), userId));
 }

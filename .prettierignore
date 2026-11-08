@@ -10,3 +10,7 @@ src/db/migrations
 .next-e2e
 playwright-report
 test-results
+.test-storage
+storage
+.tmp
+.e2e-storage

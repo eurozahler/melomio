@@ -41,6 +41,7 @@ export default defineConfig({
         APP_BASE_URL: `http://localhost:${PORT}`,
         // Die Tests melden sich schneller an, als ein Mensch es je täte
         AUTH_RATE_LIMIT: "off",
+        STORAGE_LOCAL_DIR: ".e2e-storage",
       },
     },
     {
@@ -50,7 +51,14 @@ export default defineConfig({
       wait: { stdout: /\[worker\] bereit/ },
       timeout: 300_000,
       reuseExistingServer: false,
-      env: { DATABASE_URL: testDb, APP_MODE: "test", LYRICS_PROVIDER: "mock" },
+      env: {
+        DATABASE_URL: testDb,
+        APP_MODE: "test",
+        LYRICS_PROVIDER: "mock",
+        MUSIC_PROVIDER: "mock",
+        MOCK_MUSIC_DELAY_MS: "300",
+        STORAGE_LOCAL_DIR: ".e2e-storage",
+      },
     },
   ],
 });

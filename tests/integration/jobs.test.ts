@@ -8,7 +8,6 @@ import { IllegalTransitionError } from "@/domain/order-status";
 import { createBoss } from "@/jobs/boss";
 import { handleLyricsGenerate, handleOrderStart } from "@/jobs/handlers";
 import { runIdempotent } from "@/jobs/idempotency";
-import { mockLyricsProvider } from "@/lyrics/mock";
 import { QUEUES } from "@/jobs/queues";
 import {
   createOrderFromDraft,
@@ -18,7 +17,7 @@ import {
   transitionOrder,
 } from "@/orders/service";
 import { getQuestionnaireForTest } from "./catalog-helper";
-import { connectTestDb, createUserWithOrder } from "./helpers";
+import { connectTestDb, createUserWithOrder, testDeps } from "./helpers";
 
 const { db, pool } = connectTestDb();
 let boss: PgBoss;
@@ -121,9 +120,9 @@ describe("Wiederaufnahme nach einem Absturz des Workers", () => {
       attemptToken: "job-9:0",
       startedAt: new Date(),
     });
-    await expect(
-      handleOrderStart({ db, boss, lyrics: mockLyricsProvider }, { orderId: order.id }, "job-9:0"),
-    ).rejects.toThrow(/läuft bereits/);
+    await expect(handleOrderStart(testDeps(db, boss), { orderId: order.id }, "job-9:0")).rejects.toThrow(
+      /läuft bereits/,
+    );
     expect(await statusOf(order.id)).toBe("created");
   });
 });
@@ -232,8 +231,8 @@ describe("Bestellung aus Entwurf anlegen", () => {
 describe("Arbeitsschritte des Workers", () => {
   it("order.start → Songtext wird angestoßen; ein doppelter Auftrag bewirkt nichts", async () => {
     const { order } = await createUserWithOrder(db);
-    const first = await handleOrderStart({ db, boss, lyrics: mockLyricsProvider }, { orderId: order.id });
-    const second = await handleOrderStart({ db, boss, lyrics: mockLyricsProvider }, { orderId: order.id });
+    const first = await handleOrderStart(testDeps(db, boss), { orderId: order.id });
+    const second = await handleOrderStart(testDeps(db, boss), { orderId: order.id });
     expect(first.status).toBe("executed");
     expect(second.status).toBe("skipped");
     expect(await statusOf(order.id)).toBe("lyrics_generating");
@@ -242,8 +241,8 @@ describe("Arbeitsschritte des Workers", () => {
 
   it("lyrics.generate → Songtext bereit zur Prüfung", async () => {
     const { order } = await createUserWithOrder(db);
-    await handleOrderStart({ db, boss, lyrics: mockLyricsProvider }, { orderId: order.id });
-    await handleLyricsGenerate({ db, boss, lyrics: mockLyricsProvider }, { orderId: order.id });
+    await handleOrderStart(testDeps(db, boss), { orderId: order.id });
+    await handleLyricsGenerate(testDeps(db, boss), { orderId: order.id });
     expect(await statusOf(order.id)).toBe("lyrics_review");
   });
 
@@ -251,10 +250,7 @@ describe("Arbeitsschritte des Workers", () => {
     const { order } = await createUserWithOrder(db);
     await transitionOrder(db, order.id, "lyrics_generating", { actor: "test" });
     await transitionOrder(db, order.id, "lyrics_review", { actor: "test" });
-    const result = await handleLyricsGenerate(
-      { db, boss, lyrics: mockLyricsProvider },
-      { orderId: order.id },
-    );
+    const result = await handleLyricsGenerate(testDeps(db, boss), { orderId: order.id });
     expect(result).toMatchObject({ status: "executed", value: expect.stringMatching(/übersprungen/) });
     expect(await statusOf(order.id)).toBe("lyrics_review");
   });

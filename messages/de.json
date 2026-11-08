@@ -160,7 +160,8 @@
       "done": "Dein Passwort wurde geändert. Du kannst dich jetzt anmelden.",
       "invalid": "Der Link ist abgelaufen oder ungültig. Bitte fordere einen neuen an.",
       "toLogin": "Zur Anmeldung"
-    }
+    },
+    "toMailbox": "Testbetrieb: E-Mail im Test-Postfach öffnen"
   },
   "Account": {
     "title": "Mein Konto",
@@ -177,7 +178,7 @@
     "tooManyOpen": "Du hast bereits mehrere offene Bestellungen. Bitte schließe zuerst eine davon ab.",
     "orderNumber": "Bestellnummer {ref}",
     "openLyrics": "Songtext ansehen und prüfen",
-    "viewLyrics": "Songtext ansehen"
+    "orderDetails": "Bestellung ansehen"
   },
   "Mailbox": {
     "title": "Test-Postfach",
@@ -230,7 +231,7 @@
     "approveConfirmTitle": "Songtext endgültig freigeben?",
     "approveConfirmText": "Aus diesem Text entsteht dein Song. Nach der Freigabe kann der Text nicht mehr geändert werden.",
     "approveConfirm": "Ja, freigeben",
-    "approved": "Songtext freigegeben. Als Nächstes entsteht deine Musik (folgt in Modul M6).",
+    "approved": "Songtext freigegeben. Jetzt entsteht deine Musik – die Hörprobe findest du gleich in deiner Bestellung.",
     "saved": "Gespeichert.",
     "failed": "Bei deinem Songtext ist ein Problem aufgetreten. Wir kümmern uns darum.",
     "notReady": "Der Songtext ist noch nicht verfügbar.",
@@ -240,7 +241,32 @@
       "wrong_status": "Der Songtext kann gerade nicht geändert werden. Bitte lade die Seite neu.",
       "limit_reached": "Die kostenlose KI-Neuformulierung ist aufgebraucht. Du kannst den Text aber weiterhin selbst bearbeiten.",
       "invalid": "Bitte prüfe den Text: Jede Zeile höchstens 120 Zeichen, kein Abschnitt leer.",
-      "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
-    }
+      "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+      "preview_limit": "Du hast deine kostenlose Hörprobe bereits genutzt. Dein Songtext bleibt gespeichert.",
+      "preview_budget": "Heute sind alle kostenlosen Hörproben vergeben. Bitte versuche es morgen noch einmal – dein Songtext bleibt gespeichert."
+    },
+    "toOrder": "Zur Bestellung",
+    "missing": "Der Songtext fehlt, obwohl er fertig sein sollte. Wir haben das Problem notiert und kümmern uns darum."
+  },
+  "Order": {
+    "title": "Deine Bestellung",
+    "orderRef": "Bestellung {ref}",
+    "steps": {
+      "lyrics": "Songtext",
+      "music": "Musik",
+      "preview": "Hörprobe",
+      "payment": "Bezahlen",
+      "delivery": "Song & Video"
+    },
+    "musicGenerating": "Deine Musik wird gerade komponiert … Das dauert ein paar Minuten. Die Seite aktualisiert sich von selbst.",
+    "manualReview": "Wir schauen uns deinen Song noch einmal genau an, bevor du ihn hörst. Du bekommst Bescheid, sobald die Hörprobe bereit ist.",
+    "previewTitle": "Deine Hörprobe",
+    "previewText": "Ein 20-Sekunden-Ausschnitt deines Songs. Der leise Signalton ist ein Schutz – im fertigen Song gibt es ihn nicht.",
+    "buy": "Ganzen Song mit Video kaufen",
+    "buyPending": "Der Kauf folgt in Modul M7.",
+    "lyricsLink": "Songtext ansehen",
+    "lyricsReviewLink": "Songtext prüfen und freigeben",
+    "failed": "Bei deiner Bestellung ist ein Problem aufgetreten. Wir kümmern uns darum.",
+    "details": "Details ansehen"
   }
 }

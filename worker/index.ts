@@ -14,6 +14,9 @@ import { createBoss } from "../src/jobs/boss";
 import * as handlers from "../src/jobs/handlers";
 import { ensureQueues, QUEUES, type LyricsJobData } from "../src/jobs/queues";
 import { getLyricsProvider } from "../src/lyrics";
+import { getMusicProvider, mediaToolsFromEnv } from "../src/music";
+import { getStorage } from "../src/storage";
+import { workerVersion } from "./version";
 
 // Die Konfiguration wird erst beim ersten getEnv() gelesen – daher reicht es, sie hier zu laden
 loadEnvConfig(process.cwd());
@@ -37,7 +40,10 @@ async function main() {
   await boss.start();
   await ensureQueues(boss);
   const lyrics = getLyricsProvider(env);
-  const deps = { db, boss, lyrics };
+  const tools = mediaToolsFromEnv(env);
+  const music = getMusicProvider(env, tools);
+  const storage = getStorage(env);
+  const deps = { db, boss, lyrics, music, storage, tools };
 
   function logResult(job: OrderJob, result: unknown) {
     const value = (result as { status?: string; value?: unknown }) ?? {};
@@ -67,6 +73,18 @@ async function main() {
     },
   );
 
+  await boss.work(
+    QUEUES.musicGenerate,
+    { includeMetadata: true, batchSize: 1 },
+    async ([job]: OrderJob[]) => {
+      if (!job) return;
+      const result = await handlers.withFinalFailure(db, job, () =>
+        handlers.handleMusicGenerate(deps, job.data, `${job.id}:${job.retryCount}`),
+      );
+      logResult(job, result);
+    },
+  );
+
   await boss.work(QUEUES.cleanupDrafts, async () => {
     console.log(`[worker] Aufräumen: ${await handlers.handleCleanupDrafts(deps)}`);
   });
@@ -74,7 +92,7 @@ async function main() {
   await boss.schedule(QUEUES.cleanupDrafts, "30 3 * * *", null, { tz: "Europe/Berlin" });
 
   console.log(
-    `[worker] bereit – ${env.isTestOperation ? "TESTBETRIEB" : "LIVEBETRIEB"} – Songtext: ${lyrics.name} – Warteschlangen: ${Object.values(QUEUES).join(", ")}`,
+    `[worker] bereit – ${env.isTestOperation ? "TESTBETRIEB" : "LIVEBETRIEB"} – Stand ${workerVersion()} – Songtext: ${lyrics.name} – Musik: ${music.name} – Warteschlangen: ${Object.values(QUEUES).join(", ")}`,
   );
 
   let stopping = false;

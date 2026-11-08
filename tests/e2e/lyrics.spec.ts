@@ -44,8 +44,57 @@ test("Songtext prüfen, selbst bearbeiten, KI neu formulieren, freigeben", async
   await expect(page.getByText(/Songtext freigegeben\./)).toBeVisible();
   await expect(page.getByRole("button", { name: "Selbst bearbeiten" })).toHaveCount(0);
 
-  await page.goto("/konto");
-  await expect(page.getByTestId("order-status")).toHaveText("Songtext freigegeben");
+  // Abnahme M6: Musik entsteht im Hintergrund, danach ist die 20-Sekunden-Hörprobe hörbar
+  await page.getByRole("link", { name: "Zur Bestellung" }).click();
+  await expect(page).toHaveURL(new RegExp(`/bestellung/${ref}$`));
+  await expect(page.getByTestId("order-status").filter({ visible: true })).toHaveText("Hörprobe bereit", {
+    timeout: 90_000,
+  });
+  await expect(page.getByTestId("preview-audio")).toBeVisible();
+
+  const preview = await page.request.get(`/api/hoerprobe/${ref}`);
+  expect(preview.status()).toBe(200);
+  expect(preview.headers()["content-type"]).toBe("audio/mpeg");
+  expect(preview.headers()["cache-control"]).toContain("no-store");
+  const size = (await preview.body()).length;
+  // 20 s MP3 mit 128 kbit/s ≈ 320 KB – der ganze Song (3 min) wäre über 4 MB
+  expect(size).toBeGreaterThan(200_000);
+  expect(size).toBeLessThan(600_000);
+});
+
+test("Die Hörprobe gibt es nur für das eigene Konto, die volle Datei vor der Zahlung gar nicht", async ({
+  page,
+  browser,
+  playwright,
+}) => {
+  const ref = await orderViaQuestionnaire(page, uniqueEmail("preview"), PASSWORD);
+  await expect(page.getByTestId("order-status")).toHaveText("Songtext bereit zur Prüfung", {
+    timeout: 30_000,
+  });
+  await page.goto(`/bestellung/${ref}/songtext`);
+  await page.getByRole("button", { name: "Songtext freigeben" }).click();
+  await page.getByRole("button", { name: "Ja, freigeben" }).click();
+  await expect(page.getByText(/Songtext freigegeben\./)).toBeVisible();
+  await page.goto(`/bestellung/${ref}`);
+  await expect(page.getByTestId("order-status").filter({ visible: true })).toHaveText("Hörprobe bereit", {
+    timeout: 90_000,
+  });
+
+  // ohne Anmeldung
+  const anonymous = await playwright.request.newContext({ baseURL: new URL(page.url()).origin });
+  expect((await anonymous.get(`/api/hoerprobe/${ref}`)).status()).toBe(401);
+  await anonymous.dispose();
+
+  // fremdes Konto
+  const other = await browser.newContext();
+  const strangerPage = await other.newPage();
+  await registerAndVerify(strangerPage, uniqueEmail("stranger2"), PASSWORD);
+  expect((await strangerPage.request.get(`/api/hoerprobe/${ref}`)).status()).toBe(404);
+  await other.close();
+
+  // Der Speicherordner ist nicht über das Web erreichbar
+  expect((await page.request.get("/storage/")).status()).toBe(404);
+  expect((await page.request.get("/.e2e-storage/")).status()).toBe(404);
 });
 
 test("Ein fremdes Konto sieht den Songtext nicht", async ({ page, browser }) => {

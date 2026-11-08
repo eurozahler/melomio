@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { desc } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
-import { getEnv } from "@/config/env";
+import { hasTestMailbox } from "@/server/email/test-mailbox";
 import { getDb } from "@/db/client";
 import { devMailbox } from "@/db/schema";
 
@@ -24,8 +24,7 @@ const URL_PATTERN = /https?:\/\/[^\s<>"]+/g;
 
 async function Mailbox() {
   await connection();
-  const env = getEnv();
-  if (!env.isTestOperation || env.EMAIL_PROVIDER !== "console") notFound();
+  if (!hasTestMailbox()) notFound();
 
   const t = await getTranslations("Mailbox");
   const mails = await getDb().select().from(devMailbox).orderBy(desc(devMailbox.createdAt)).limit(50);

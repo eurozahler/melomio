@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Notice, PrimaryButton, TextField } from "@/components/auth-ui";
 import { authClient } from "@/lib/auth-client";
 
-export function RegisterForm({ next }: { next: string }) {
+export function RegisterForm({ next, testMailbox = false }: { next: string; testMailbox?: boolean }) {
   const t = useTranslations("Auth");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,6 +36,15 @@ export function RegisterForm({ next }: { next: string }) {
       <Notice kind="success">
         <p className="font-semibold">{t("register.sentTitle")}</p>
         <p>{t("register.sent", { email: sentTo })}</p>
+        {testMailbox && (
+          <a
+            href="/dev/mailbox"
+            className="mt-2 inline-block font-semibold underline"
+            data-testid="to-mailbox"
+          >
+            {t("toMailbox")} →
+          </a>
+        )}
       </Notice>
     );
   }

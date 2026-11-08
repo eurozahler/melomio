@@ -8,7 +8,15 @@ import { authClient } from "@/lib/auth-client";
 
 type Mode = "link" | "password";
 
-export function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
+export function LoginForm({
+  next,
+  linkError,
+  testMailbox = false,
+}: {
+  next: string;
+  linkError: boolean;
+  testMailbox?: boolean;
+}) {
   const t = useTranslations("Auth");
   const [mode, setMode] = useState<Mode>("link");
   const [email, setEmail] = useState("");
@@ -53,6 +61,15 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
       <Notice kind="success">
         <p className="font-semibold">{t("login.linkSentTitle")}</p>
         <p>{t("login.linkSent", { email: linkSentTo })}</p>
+        {testMailbox && (
+          <a
+            href="/dev/mailbox"
+            className="mt-2 inline-block font-semibold underline"
+            data-testid="to-mailbox"
+          >
+            {t("toMailbox")} →
+          </a>
+        )}
       </Notice>
     );
   }

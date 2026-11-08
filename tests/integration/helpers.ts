@@ -2,6 +2,9 @@ import { loadLocalEnv } from "./load-env";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
+import { mockLyricsProvider } from "@/lyrics/mock";
+import { createMockMusicProvider } from "@/music/mock";
+import { createLocalStorage } from "@/storage";
 import { occasions, orders, questionnaireVersions, users } from "@/db/schema";
 
 loadLocalEnv();
@@ -36,3 +39,21 @@ export async function createUserWithOrder(db: Database) {
   if (!order) throw new Error("Bestellung konnte nicht angelegt werden");
   return { userId, order };
 }
+
+/** Alles, was die Worker-Schritte brauchen – mit Test-Bausteinen und einem eigenen Test-Speicherordner. */
+export function testDeps(db: Database, boss: import("pg-boss").PgBoss) {
+  const tools = {
+    ffmpeg: process.env.FFMPEG_PATH || "ffmpeg",
+    ffprobe: process.env.FFPROBE_PATH || "ffprobe",
+  };
+  return {
+    db,
+    boss,
+    lyrics: mockLyricsProvider,
+    music: createMockMusicProvider(tools),
+    storage: createLocalStorage(TEST_STORAGE_DIR),
+    tools,
+  };
+}
+
+export const TEST_STORAGE_DIR = ".test-storage";

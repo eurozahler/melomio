@@ -1,7 +1,7 @@
-import { and, count, desc, eq, max } from "drizzle-orm";
+import { and, count, desc, eq, gte, max, sql } from "drizzle-orm";
 import type { PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
-import { lyricsVersions, orders } from "@/db/schema";
+import { lyricsVersions, orders, previewUsage } from "@/db/schema";
 import { getSetting } from "@/db/settings-store";
 import { enqueue } from "@/jobs/enqueue";
 import { QUEUES } from "@/jobs/queues";
@@ -13,7 +13,8 @@ import { transitionOrder } from "./service";
  * Jede Aktion prüft: Gehört die Bestellung diesem Konto? Steht sie auf „Songtext bereit zur Prüfung“?
  */
 
-export type LyricsActionErrorCode = "not_found" | "wrong_status" | "limit_reached" | "invalid";
+export type LyricsActionErrorCode =
+  "not_found" | "wrong_status" | "limit_reached" | "invalid" | "preview_limit" | "preview_budget";
 
 export class LyricsActionError extends Error {
   constructor(public readonly code: LyricsActionErrorCode) {
@@ -136,10 +137,36 @@ export async function requestAiRevision(
   });
 }
 
-/** Freigeben: Die aktuelle Fassung wird endgültig; danach sind keine Änderungen mehr möglich. */
-export async function approveLyrics(db: Database, publicRef: string, userId: string) {
+/**
+ * Freigeben: Die aktuelle Fassung wird endgültig; danach sind keine Änderungen mehr möglich.
+ * Gleichzeitig wird die Hörprobe vorgemerkt und die Musik in Auftrag gegeben (E12) – vorher
+ * werden das Limit pro Konto und das Tagesbudget geprüft (Kostenbremse, L16). Ist ein Limit
+ * erreicht, bleibt der Songtext unverändert bearbeitbar.
+ */
+export async function approveLyrics(db: Database, boss: PgBoss, publicRef: string, userId: string) {
   const order = await requireReviewable(db, publicRef, userId);
+  const [perAccount, dailyBudget] = await Promise.all([
+    getSetting(db, "previews_per_account"),
+    getSetting(db, "previews_daily_budget"),
+  ]);
+
   await db.transaction(async (tx) => {
+    // Gleichzeitige Freigaben nacheinander abarbeiten, damit das Tagesbudget nicht überschritten wird
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('melomio:preview-budget'))`);
+
+    const [mine] = await tx.select({ n: count() }).from(previewUsage).where(eq(previewUsage.userId, userId));
+    if ((mine?.n ?? 0) >= perAccount) throw new LyricsActionError("preview_limit");
+    const [today] = await tx
+      .select({ n: count() })
+      .from(previewUsage)
+      .where(
+        gte(
+          previewUsage.createdAt,
+          sql`(date_trunc('day', now() at time zone 'Europe/Berlin') at time zone 'Europe/Berlin')`,
+        ),
+      );
+    if ((today?.n ?? 0) >= dailyBudget) throw new LyricsActionError("preview_budget");
+
     const [latest] = await tx
       .select()
       .from(lyricsVersions)
@@ -152,6 +179,13 @@ export async function approveLyrics(db: Database, publicRef: string, userId: str
       actor: userId,
       reason: `Fassung ${latest.version} freigegeben`,
     });
+    await tx.insert(previewUsage).values({ userId, orderId: order.id });
+    await enqueue(
+      boss,
+      QUEUES.musicGenerate,
+      { orderId: order.id },
+      { tx, singletonKey: `${order.id}:preview` },
+    );
   });
 }
 

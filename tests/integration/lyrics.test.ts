@@ -6,7 +6,6 @@ import { lyricsVersions, orders } from "@/db/schema";
 import { createBoss } from "@/jobs/boss";
 import { handleLyricsGenerate } from "@/jobs/handlers";
 import { QUEUES } from "@/jobs/queues";
-import { mockLyricsProvider } from "@/lyrics/mock";
 import {
   approveLyrics,
   getLyricsReview,
@@ -15,11 +14,11 @@ import {
   saveCustomerEdit,
 } from "@/orders/lyrics";
 import { transitionOrder } from "@/orders/service";
-import { connectTestDb, createUserWithOrder } from "./helpers";
+import { connectTestDb, createUserWithOrder, testDeps } from "./helpers";
 
 const { db, pool } = connectTestDb();
 let boss: PgBoss;
-const deps = () => ({ db, boss, lyrics: mockLyricsProvider });
+const deps = () => testDeps(db, boss);
 
 beforeAll(async () => {
   await seed(db);
@@ -104,7 +103,7 @@ describe("Selbst bearbeiten", () => {
     const { userId: stranger } = await createUserWithOrder(db);
     expect(await getLyricsReview(db, order.publicRef, stranger)).toBeNull();
     expect(await codeOf(saveCustomerEdit(db, order.publicRef, stranger, EDITED))).toBe("not_found");
-    expect(await codeOf(approveLyrics(db, order.publicRef, stranger))).toBe("not_found");
+    expect(await codeOf(approveLyrics(db, boss, order.publicRef, stranger))).toBe("not_found");
   });
 });
 
@@ -138,7 +137,7 @@ describe("KI neu formulieren lassen (Limit aus den Einstellungen, F-18)", () => 
     const { userId, order } = await orderInReview();
     await requestAiRevision(db, boss, order.publicRef, userId, null);
     expect(await codeOf(saveCustomerEdit(db, order.publicRef, userId, EDITED))).toBe("wrong_status");
-    expect(await codeOf(approveLyrics(db, order.publicRef, userId))).toBe("wrong_status");
+    expect(await codeOf(approveLyrics(db, boss, order.publicRef, userId))).toBe("wrong_status");
   });
 });
 
@@ -146,7 +145,7 @@ describe("Freigeben", () => {
   it("nach der Freigabe ist der Text nicht mehr änderbar (Abnahme M5)", async () => {
     const { userId, order } = await orderInReview();
     await saveCustomerEdit(db, order.publicRef, userId, EDITED);
-    await approveLyrics(db, order.publicRef, userId);
+    await approveLyrics(db, boss, order.publicRef, userId);
 
     expect(await statusOf(order.id)).toBe("lyrics_approved");
     const [latest] = await db
@@ -160,6 +159,6 @@ describe("Freigeben", () => {
 
     expect(await codeOf(saveCustomerEdit(db, order.publicRef, userId, EDITED))).toBe("wrong_status");
     expect(await codeOf(requestAiRevision(db, boss, order.publicRef, userId, null))).toBe("wrong_status");
-    expect(await codeOf(approveLyrics(db, order.publicRef, userId))).toBe("wrong_status");
+    expect(await codeOf(approveLyrics(db, boss, order.publicRef, userId))).toBe("wrong_status");
   });
 });

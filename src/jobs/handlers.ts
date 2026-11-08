@@ -3,6 +3,10 @@ import type { JobWithMetadata, PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
 import { lyricsVersions, orders, questionnaireDrafts } from "@/db/schema";
 import { buildLyricsInput, getActiveSystemPrompt, lyricsSchema, type LyricsProvider } from "@/lyrics";
+import type { MediaTools } from "@/media/ffmpeg";
+import type { MusicProvider } from "@/music/types";
+import type { StorageProvider } from "@/storage";
+import { runPreviewMusic } from "./music";
 import { transitionOrder } from "@/orders/service";
 import { enqueue } from "./enqueue";
 import { runIdempotent, StepBusyError, type IdempotentResult } from "./idempotency";
@@ -15,7 +19,14 @@ import { QUEUES, type LyricsJobData, type OrderJobData } from "./queues";
  * - setzt die Bestellung nach dem letzten fehlgeschlagenen Versuch auf „failed“.
  */
 
-export type HandlerDeps = { db: Database; boss: PgBoss; lyrics: LyricsProvider };
+export type HandlerDeps = {
+  db: Database;
+  boss: PgBoss;
+  lyrics: LyricsProvider;
+  music: MusicProvider;
+  storage: StorageProvider;
+  tools: MediaTools;
+};
 
 /** „Läuft schon“ darf einen Auftrag nie still als erledigt markieren – sonst bliebe die Bestellung hängen. */
 function failIfBusy<T>(key: string, result: IdempotentResult<T>): IdempotentResult<T> {
@@ -137,6 +148,13 @@ export async function handleLyricsGenerate(
     },
     { attempt },
   );
+  return failIfBusy(key, result);
+}
+
+/** music.generate: Musik erzeugen, prüfen, Hörprobe schneiden (M6). */
+export async function handleMusicGenerate(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
+  const key = `music.generate:${orderId}:preview`;
+  const result = await runIdempotent(deps.db, key, () => runPreviewMusic(deps, orderId), { attempt });
   return failIfBusy(key, result);
 }
 

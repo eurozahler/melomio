@@ -81,14 +81,16 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
                   )}
                   {tStatus(o.status)}
                 </p>
-                {(o.status === "lyrics_review" || o.status === "lyrics_approved") && (
-                  <Link
-                    href={`/bestellung/${o.publicRef}/songtext`}
-                    className="mt-2 inline-block text-sm font-semibold text-brand"
-                  >
-                    {o.status === "lyrics_review" ? t("openLyrics") : t("viewLyrics")} →
-                  </Link>
-                )}
+                <Link
+                  href={
+                    o.status === "lyrics_review"
+                      ? `/bestellung/${o.publicRef}/songtext`
+                      : `/bestellung/${o.publicRef}`
+                  }
+                  className="mt-2 inline-block text-sm font-semibold text-brand"
+                >
+                  {o.status === "lyrics_review" ? t("openLyrics") : t("orderDetails")} →
+                </Link>
               </li>
             ))}
           </ul>

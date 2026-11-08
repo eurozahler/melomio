@@ -58,12 +58,21 @@ async function LyricsContent({ params }: Pick<PageProps<"/bestellung/[ref]/songt
 
       {approved && lyrics && (
         <>
-          <Notice kind="success">{t("approved")}</Notice>
+          <Notice kind="success">
+            {t("approved")}{" "}
+            <Link href={`/bestellung/${order.publicRef}`} className="font-semibold underline">
+              {t("toOrder")}
+            </Link>
+          </Notice>
           <LyricsView lyrics={lyrics} />
         </>
       )}
 
-      {!lyrics && !generating && order.status !== "failed" && <p>{t("notReady")}</p>}
+      {/* Schutz: „bereit zur Prüfung“ ohne Text darf nie stumm bleiben (Vorfall mit veraltetem Worker) */}
+      {!lyrics && order.status === "lyrics_review" && <Notice kind="error">{t("missing")}</Notice>}
+      {!lyrics && !generating && order.status !== "failed" && order.status !== "lyrics_review" && (
+        <p>{t("notReady")}</p>
+      )}
 
       <Link href="/konto" className="text-sm font-semibold text-brand">
         ← {t("back")}

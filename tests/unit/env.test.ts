@@ -148,3 +148,12 @@ describe("Startsperre für den Livemodus (Abnahmekriterium M1)", () => {
     expect(env.isTestOperation).toBe(true);
   });
 });
+
+describe("Werkzeuge und Speicher", () => {
+  it("leere Angaben aus der Vorlage führen zu den Standardwerten", () => {
+    const env = parseEnv({ ...BASE, FFMPEG_PATH: "", FFPROBE_PATH: "", STORAGE_LOCAL_DIR: "" });
+    expect(env.FFMPEG_PATH).toBe("ffmpeg");
+    expect(env.FFPROBE_PATH).toBe("ffprobe");
+    expect(env.STORAGE_LOCAL_DIR).toBe("storage");
+  });
+});

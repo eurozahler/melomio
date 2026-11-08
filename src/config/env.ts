@@ -68,6 +68,12 @@ const baseSchema = z.object({
   SMTP_PASSWORD: optionalString,
   SMTP_FROM: optionalString,
 
+  /** Audio/Video-Werkzeug. Ohne Angabe wird "ffmpeg"/"ffprobe" im Systempfad gesucht. */
+  FFMPEG_PATH: optionalString.transform((v) => v ?? "ffmpeg"),
+  FFPROBE_PATH: optionalString.transform((v) => v ?? "ffprobe"),
+  /** Ordner für den lokalen Dateispeicher im Testbetrieb (STORAGE_PROVIDER=local). */
+  STORAGE_LOCAL_DIR: optionalString.transform((v) => v ?? "storage"),
+
   S3_ENDPOINT: optionalString,
   S3_REGION: optionalString,
   S3_BUCKET: optionalString,
