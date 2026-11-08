@@ -282,7 +282,7 @@ Die Tabellen sind nach Bereichen gruppiert. **Fett** markierte Tabellen werden s
 | **music_jobs** | order_id, provider, provider_job_id, idempotency_key, status, attempt, cost_estimate, error | Musikaufträge |
 | **music_candidates** | job_id, storage_key, duration_s, format, qc_result (JSON), qc_status, sections (JSON, falls vom Anbieter geliefert) | Erzeugte Kandidaten mit Ergebnis der Qualitätsprüfung |
 | *preview_clips* | candidate_id, storage_key, start_s, duration_s, start_method (anbieter/songtext/analyse/ersatzwert) | Die 20-Sekunden-Hörprobe mit Wasserzeichen (E12) |
-| *preview_quota* | user_id, used, period · global: Tagesbudget in `app_settings` | Limit pro Konto und Kostenbremse |
+| *preview_usage* | user_id, order_id, cost_estimate_cents, created_at | Protokoll jeder erzeugten Hörprobe: Grundlage für das Limit pro Konto und das Tagesbudget (Werte in `app_settings`). Bleibt erhalten, auch wenn abgelaufene Hörproben gelöscht werden. |
 | *share_pages* | order_id, token, active, created_at, disabled_at | Teilbare Song-Seite mit QR-Code (E17) |
 | **selected_tracks** | order_id, candidate_id, selected_by (auto/admin/kunde) | Der ausgelieferte Song |
 | **video_jobs** | order_id, template_id, format, status, attempt, error | Videoaufträge |

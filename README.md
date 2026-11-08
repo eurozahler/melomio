@@ -24,6 +24,16 @@ Personalisierte KI-Songs mit Musikvideo für besondere Anlässe.
 | `npm test`       | Unit-Tests                                     |
 | `npm run format` | Code automatisch formatieren                   |
 
+### Datenbank (Tunnel muss offen sein)
+
+| Befehl                     | Zweck                                                             |
+| -------------------------- | ----------------------------------------------------------------- |
+| `npm run db:overview`      | Übersicht: Tabellen, Anlässe mit Fragen, Katalog, Einstellungen   |
+| `npm run db:migrate`       | Fehlende Migrationen einspielen                                   |
+| `npm run db:seed`          | Beispieldaten einspielen (wiederholbar, überschreibt nichts)      |
+| `npm run db:generate`      | Nach Schemaänderung eine neue Migration erzeugen                  |
+| `npm run test:integration` | Tests gegen die Testdatenbank (wird dabei komplett neu aufgebaut) |
+
 ## Testbetrieb
 
 Solange `APP_MODE=test` gilt oder ein Test-Adapter (Mock) aktiv ist, zeigt jede Seite das Banner **TESTBETRIEB**.
