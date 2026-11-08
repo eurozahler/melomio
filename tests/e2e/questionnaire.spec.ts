@@ -24,7 +24,7 @@ test("Fragebogen ausfüllen und nach dem Neuladen weitermachen", async ({ page }
   await next(page).click();
   await expect(page.getByRole("alert").filter({ hasText: "Bitte beantworte diese Frage." })).toBeVisible();
 
-  await page.getByLabel("Für wen ist der Song?").fill("Anna");
+  await page.getByLabel("Für wen ist der Song?").filter({ visible: true }).fill("Anna");
   await next(page).click();
 
   await expect(heading(page)).toHaveText("Wer ist diese Person für dich?");
@@ -36,12 +36,13 @@ test("Fragebogen ausfüllen und nach dem Neuladen weitermachen", async ({ page }
   await page.getByRole("radio", { name: "Ja" }).check();
   await next(page).click();
   await expect(heading(page)).toHaveText("Welcher Geburtstag wird gefeiert?");
-  await page.getByLabel("Welcher Geburtstag wird gefeiert?").fill("50");
+  await page.getByLabel("Welcher Geburtstag wird gefeiert?").filter({ visible: true }).fill("50");
   await next(page).click();
 
   await expect(heading(page)).toHaveText("Was macht diese Person besonders?");
   await page
     .getByLabel("Was macht diese Person besonders?")
+    .filter({ visible: true })
     .fill("Sie lacht laut, liebt Kaffee und Wandern.");
   await next(page).click();
 
@@ -75,12 +76,12 @@ test("Fragebogen ausfüllen und nach dem Neuladen weitermachen", async ({ page }
 
   // Ändern springt zur Frage zurück, die Antwort ist vorausgefüllt
   await page.getByRole("button", { name: "Ändern" }).first().click();
-  await expect(page.getByLabel("Für wen ist der Song?")).toHaveValue("Anna");
+  await expect(page.getByLabel("Für wen ist der Song?").filter({ visible: true })).toHaveValue("Anna");
 });
 
 test("Folgefrage bleibt bei „Nein“ ausgeblendet", async ({ page }) => {
   await page.goto("/song/geburtstag");
-  await page.getByLabel("Für wen ist der Song?").fill("Ben");
+  await page.getByLabel("Für wen ist der Song?").filter({ visible: true }).fill("Ben");
   await next(page).click();
   await page.getByRole("radio", { name: "Familie" }).check();
   await next(page).click();
@@ -93,7 +94,7 @@ test("Ein neuer Besucher sieht keinen fremden Entwurf", async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto("/song/geburtstag");
-  await expect(page.getByLabel("Für wen ist der Song?")).toHaveValue("");
+  await expect(page.getByLabel("Für wen ist der Song?").filter({ visible: true })).toHaveValue("");
   await context.close();
 });
 

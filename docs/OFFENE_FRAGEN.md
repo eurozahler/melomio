@@ -99,7 +99,7 @@ Das Pflichtenheft wollte im Admin ein Formular für API-Schlüssel (z. B. den Mo
 
 ### Später (Phase C)
 - **F-15 Dropbox-Zugriffsart:** Kann EasyGMV Ordner wie `/Apps/SongPlattform/Trauer` und `/Apps/SongPlattform/Liebe` überwachen? Dann genügt die sichere Variante „App-Ordner“. Wenn es bereits vorhandene Ordner außerhalb davon sein müssen, braucht die App Zugriff auf die ganze Dropbox.
-- **F-16 Login-Methode:** E-Mail und Passwort, **E-Mail-Link ohne Passwort** oder beides? Vorschlag: beides.
+- ~~F-16 Login-Methode~~ → ✅ **beides** (E-Mail + Passwort und E-Mail-Link ohne Passwort), bestätigt am 08.11.2026.
 - **F-11 Steuern:** Kleinunternehmerregelung oder reguläre MwSt.? Gibt es ein Rechnungsprogramm?
 - **F-13 E-Mail-Absender:** Welche Adresse bei Strato (z. B. `songs@deinedomain.de`)? Sie wird auch für Anmelde-E-Mails gebraucht.
 - **F-14 Mindestalter, Speicherfristen, Rückerstattungsregeln:** Vorschläge kommen in Phase C.

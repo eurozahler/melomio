@@ -148,6 +148,7 @@ STORAGE_PROVIDER=local   # local | s3 (Hetzner Object Storage)
 | Browser ↔ Server | Der Browser greift **nie direkt** auf die Datenbank zu. Alle Zugriffe laufen über Server-Code, der Rechte prüft. Jede Datenbankabfrage für Kundendaten filtert zwingend nach dem angemeldeten Konto (zentral in einer Hilfsfunktion, per Test abgesichert). |
 | Zahlung | Eine Bestellung gilt **nur** als bezahlt, wenn der Server den Status selbst bei Mollie abgefragt hat. Der Webhook liefert nur die Zahlungs-ID, siehe Abschnitt 8. |
 | **Volle Datei vor Zahlung** (E12) | Vor der Zahlung wird nur die **20-Sekunden-Hörprobe** ausgeliefert. Sie wird auf dem Server als eigene Datei geschnitten und mit Wasserzeichen versehen. Die vollständige Audiodatei liegt in einem Bereich des Speichers, für den es erst nach dem Status `paid` signierte Links gibt. Ein Video entsteht erst nach der Zahlung. Prüfung in der Statusmaschine und per Test. |
+| Anmeldung | Better Auth: E-Mail + Passwort (E-Mail muss bestätigt sein) und E-Mail-Link (F-16). Höchstens 3 Anmelde-/Registrierungsversuche pro 10 Sekunden und Gerät; im Livebetrieb nicht abschaltbar (Startsperre). Antworten verraten nicht, ob ein Konto existiert. Beim Abmelden wird das Entwurfs-Cookie gelöscht, und ein Entwurf, der einem anderen Konto gehört, wird nie angezeigt (gemeinsam genutzte Geräte). |
 | Kosten der Hörproben | Hörproben nur mit bestätigter E-Mail, begrenzte Zahl pro Konto, Tagesbudget für alle Hörproben (Kostenbremse), Rate Limits. Alle Werte im Admin einstellbar. |
 | Kundenzugriff | Bestellungen, Songtexte und Downloads sind nur nach Anmeldung sichtbar, und nur für die eigene Bestellung. Links in E-Mails führen zur Anmeldung, nicht direkt zur Datei. Ausnahme: die **teilbare Song-Seite** (E17), die der Kunde selbst einschaltet. Ihr Link enthält eine lange Zufallskennung und lässt sich jederzeit abschalten. |
 | Dateien | Private Buckets, signierte Links mit kurzer Laufzeit. Fotos werden nur in den Auftrag der jeweiligen Bestellung übernommen. |
@@ -244,7 +245,9 @@ Die Tabellen sind nach Bereichen gruppiert. **Fett** markierte Tabellen werden s
 ### 10.1 Benutzer und Zugriff
 | Tabelle | Wichtige Spalten | Zweck |
 |---|---|---|
-| **users** (+ Tabellen der Login-Bibliothek: sessions, accounts, verifications) | id, email, email_verified, locale, created_at | Admins und Kunden (Login über Better Auth) |
+| **users** | id, email, email_verified, name, locale, created_at | Admins und Kunden (Login über Better Auth) |
+| **sessions**, **accounts**, **verifications** | (Spalten wie von Better Auth vorgegeben) | Anmeldesitzungen, Passwort-Hash (scrypt), Einmal-Tokens für E-Mail-Bestätigung, E-Mail-Link und Passwort-Zurücksetzen |
+| *dev_mailbox* | recipient, subject, text, html | Test-Postfach: nur im Testbetrieb (EMAIL_PROVIDER=console), sichtbar unter /dev/mailbox |
 | **roles** / *user_roles* | role (owner, admin, support, content_reviewer, customer) | Rollen, die einem Benutzer zugeordnet sind |
 | ~~guest_access_tokens~~ | – | **entfällt**, da keine Gastbestellung |
 | *questionnaire_drafts* | id, cookie_id, user_id?, answers (JSON), expires_at | Entwurf vor der Anmeldung. Wird beim Login dem Konto zugeordnet und nach Ablauf gelöscht. |

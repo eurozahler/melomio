@@ -57,3 +57,21 @@ export const auditLogs = pgTable(
   },
   (t) => [index().on(t.entity, t.entityId), index().on(t.createdAt)],
 );
+
+/**
+ * Test-Postfach: Nur im Testbetrieb (EMAIL_PROVIDER=console) landen E-Mails hier statt beim Empfänger.
+ * Sichtbar unter /dev/mailbox. Im Livebetrieb wird diese Tabelle nicht beschrieben.
+ */
+export const devMailbox = pgTable(
+  "dev_mailbox",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    recipient: text().notNull(),
+    subject: text().notNull(),
+    template: text().notNull(),
+    text: text().notNull(),
+    html: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.recipient, t.createdAt)],
+);

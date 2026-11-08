@@ -105,6 +105,22 @@ export function QuestionnaireWizard({
     const nextKey = steps[currentIndex + 1];
     if (nextKey) goTo(nextKey);
   };
+  // Vor dem Wechsel zur Anmeldung sicher speichern, dann weiter (Anmeldung, Zuordnung zum Konto)
+  const [continuing, setContinuing] = useState(false);
+  const continueToAccount = async () => {
+    setContinuing(true);
+    try {
+      const result = await saveDraftAction(occasionSlug, draft);
+      if (!result.ok) throw new Error(result.error);
+      // Volle Seitennavigation nötig: /weiter ist ein Route Handler mit Weiterleitungen, keine Seite
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign(`/song/${occasionSlug}/weiter`);
+    } catch {
+      setSaveState("failed");
+      setContinuing(false);
+    }
+  };
+
   const back = () => {
     const prevKey = steps[currentIndex - 1];
     if (prevKey) goTo(prevKey);
@@ -198,9 +214,9 @@ export function QuestionnaireWizard({
             ) : (
               <button
                 type="button"
-                disabled
-                title={t("summary.continuePending")}
-                className="flex-1 rounded-full bg-rose-600 px-5 py-3 font-semibold text-white opacity-60"
+                onClick={continueToAccount}
+                disabled={continuing}
+                className="flex-1 rounded-full bg-rose-600 px-5 py-3 font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
               >
                 {t("summary.continue")}
               </button>
@@ -585,7 +601,6 @@ function SummaryStep({
           </button>
         </div>
       </dl>
-      <p className="text-sm text-neutral-500">{t("summary.continuePending")}</p>
     </div>
   );
 }

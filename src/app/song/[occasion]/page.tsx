@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getChoiceLists, getQuestionnaire } from "@/server/catalog";
 import { DRAFT_COOKIE, loadDraft } from "@/server/drafts";
+import { getSessionUser } from "@/server/session";
 import { QuestionnaireWizard } from "./questionnaire-wizard";
 
 export default function QuestionnairePage({ params }: PageProps<"/song/[occasion]">) {
@@ -20,9 +21,10 @@ async function QuestionnaireLoader({ params }: Pick<PageProps<"/song/[occasion]"
   if (!questionnaire) notFound();
 
   const cookieId = (await cookies()).get(DRAFT_COOKIE)?.value;
+  const user = await getSessionUser();
   const [choiceLists, draft] = await Promise.all([
     getChoiceLists(),
-    loadDraft(cookieId, questionnaire.occasion.id),
+    loadDraft(cookieId, questionnaire.occasion.id, user?.id ?? null),
   ]);
 
   return (

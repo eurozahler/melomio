@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { EnvError, parseEnv } from "@/config/env";
 
 const DB = "postgres://user:pw@localhost:5433/melomio_dev";
+/** Pflichtangaben, die in jeder Konfiguration vorhanden sein müssen. */
+const BASE = { DATABASE_URL: DB, APP_BASE_URL: "http://localhost:3000", BETTER_AUTH_SECRET: "s".repeat(32) };
 
 /** Hilfsfunktion: erwartet einen Konfigurationsfehler und liefert dessen Problemliste. */
 function problemsOf(raw: Record<string, string | undefined>): string[] {
@@ -16,7 +18,7 @@ function problemsOf(raw: Record<string, string | undefined>): string[] {
 
 describe("Umgebungsvariablen – Grundfälle", () => {
   it("startet mit minimaler Konfiguration im Testbetrieb (alles Mocks)", () => {
-    const env = parseEnv({ DATABASE_URL: DB });
+    const env = parseEnv({ ...BASE });
     expect(env.APP_MODE).toBe("test");
     expect(env.PAYMENT_PROVIDER).toBe("mock");
     expect(env.isTestOperation).toBe(true);
@@ -33,29 +35,58 @@ describe("Umgebungsvariablen – Grundfälle", () => {
   });
 
   it("meldet ungültige Werte mit den erlaubten Alternativen", () => {
-    const problems = problemsOf({ DATABASE_URL: DB, PAYMENT_PROVIDER: "paypal" });
+    const problems = problemsOf({ ...BASE, PAYMENT_PROVIDER: "paypal" });
     expect(problems.join("\n")).toMatch(/PAYMENT_PROVIDER: ungültiger Wert "paypal"\. Erlaubt: mock, mollie/);
   });
 
   it("lehnt eine DATABASE_URL ohne postgres:// ab", () => {
-    const problems = problemsOf({ DATABASE_URL: "mysql://x" });
+    const problems = problemsOf({ ...BASE, DATABASE_URL: "mysql://x" });
     expect(problems.join("\n")).toMatch(/DATABASE_URL: muss mit postgres:\/\//);
   });
 
   it("verlangt den Mollie-Schlüssel, wenn Mollie gewählt ist", () => {
-    const problems = problemsOf({ DATABASE_URL: DB, PAYMENT_PROVIDER: "mollie" });
+    const problems = problemsOf({ ...BASE, PAYMENT_PROVIDER: "mollie" });
     expect(problems).toContain("MOLLIE_API_KEY: fehlt (nötig wegen PAYMENT_PROVIDER=mollie)");
   });
 
   it("lehnt noch nicht gebaute Musik-Adapter ab", () => {
-    const problems = problemsOf({ DATABASE_URL: DB, MUSIC_PROVIDER: "acestep" });
+    const problems = problemsOf({ ...BASE, MUSIC_PROVIDER: "acestep" });
     expect(problems.join("\n")).toMatch(/noch nicht umgesetzt/);
+  });
+});
+
+describe("Anmeldung: Adresse und geheimer Schlüssel", () => {
+  it("verlangt APP_BASE_URL und BETTER_AUTH_SECRET", () => {
+    const problems = problemsOf({ DATABASE_URL: DB });
+    expect(problems).toContain("APP_BASE_URL: fehlt");
+    expect(problems).toContain("BETTER_AUTH_SECRET: fehlt");
+  });
+
+  it("lehnt einen zu kurzen geheimen Schlüssel ab", () => {
+    const problems = problemsOf({ ...BASE, BETTER_AUTH_SECRET: "kurz" });
+    expect(problems.join("\n")).toMatch(/BETTER_AUTH_SECRET: muss mindestens 32 Zeichen/);
+  });
+
+  it("lehnt eine Adresse mit Pfad ab", () => {
+    const problems = problemsOf({ ...BASE, APP_BASE_URL: "http://localhost:3000/shop" });
+    expect(problems.join("\n")).toMatch(/APP_BASE_URL: muss eine Adresse ohne Pfad sein/);
+  });
+
+  it("Schutz gegen zu viele Anmeldeversuche ist im Livebetrieb Pflicht", () => {
+    const problems = problemsOf({ ...BASE, APP_MODE: "live", AUTH_RATE_LIMIT: "off" });
+    expect(problems.join("\n")).toMatch(/AUTH_RATE_LIMIT=off ist im Livebetrieb nicht erlaubt/);
+    expect(parseEnv({ ...BASE }).AUTH_RATE_LIMIT).toBe("on");
+  });
+
+  it("Livebetrieb verlangt https", () => {
+    const problems = problemsOf({ ...BASE, APP_MODE: "live" });
+    expect(problems.join("\n")).toMatch(/verlangt eine APP_BASE_URL mit https/);
   });
 });
 
 describe("Startsperre für den Livemodus (Abnahmekriterium M1)", () => {
   it("APP_MODE=live mit einem Mock-Provider startet NICHT", () => {
-    const problems = problemsOf({ DATABASE_URL: DB, APP_MODE: "live" });
+    const problems = problemsOf({ ...BASE, APP_MODE: "live" });
     expect(problems.some((p) => p.startsWith("Startsperre") && p.includes("PAYMENT_PROVIDER=mock"))).toBe(
       true,
     );
@@ -63,7 +94,7 @@ describe("Startsperre für den Livemodus (Abnahmekriterium M1)", () => {
 
   it("APP_MODE=live mit Mollie-Testschlüssel startet NICHT", () => {
     const problems = problemsOf({
-      DATABASE_URL: DB,
+      ...BASE,
       APP_MODE: "live",
       PAYMENT_PROVIDER: "mollie",
       MOLLIE_API_KEY: "test_abc",
@@ -73,7 +104,7 @@ describe("Startsperre für den Livemodus (Abnahmekriterium M1)", () => {
 
   it("APP_MODE=test mit Mollie-Liveschlüssel startet NICHT (kein echtes Geld im Testbetrieb)", () => {
     const problems = problemsOf({
-      DATABASE_URL: DB,
+      ...BASE,
       PAYMENT_PROVIDER: "mollie",
       MOLLIE_API_KEY: "live_abc",
     });
@@ -82,7 +113,8 @@ describe("Startsperre für den Livemodus (Abnahmekriterium M1)", () => {
 
   it("vollständige Livekonfiguration ohne Mocks startet und zeigt kein Banner", () => {
     const env = parseEnv({
-      DATABASE_URL: DB,
+      ...BASE,
+      APP_BASE_URL: "https://melomio.de",
       APP_MODE: "live",
       PAYMENT_PROVIDER: "mollie",
       MOLLIE_API_KEY: "live_abc",
@@ -109,7 +141,7 @@ describe("Startsperre für den Livemodus (Abnahmekriterium M1)", () => {
 
   it("Testbetrieb mit echten Adaptern zeigt trotzdem das Banner", () => {
     const env = parseEnv({
-      DATABASE_URL: DB,
+      ...BASE,
       PAYMENT_PROVIDER: "mollie",
       MOLLIE_API_KEY: "test_abc",
     });

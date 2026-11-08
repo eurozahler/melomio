@@ -21,9 +21,18 @@
     "cta": "Jetzt Song erstellen",
     "howTitle": "So funktioniert’s",
     "steps": {
-      "tell": { "title": "Erzählen", "text": "Beantworte ein paar Fragen – tippen oder diktieren." },
-      "lyrics": { "title": "Songtext prüfen", "text": "Du liest den Songtext und kannst ihn anpassen." },
-      "preview": { "title": "Reinhören", "text": "Hör dir kostenlos eine Hörprobe an, bevor du kaufst." },
+      "tell": {
+        "title": "Erzählen",
+        "text": "Beantworte ein paar Fragen – tippen oder diktieren."
+      },
+      "lyrics": {
+        "title": "Songtext prüfen",
+        "text": "Du liest den Songtext und kannst ihn anpassen."
+      },
+      "preview": {
+        "title": "Reinhören",
+        "text": "Hör dir kostenlos eine Hörprobe an, bevor du kaufst."
+      },
       "receive": {
         "title": "Song & Video",
         "text": "Nach dem Kauf bekommst du den ganzen Song und ein Video."
@@ -90,12 +99,88 @@
       "edit": "Ändern",
       "noAnswer": "–",
       "ownLyricsYes": "Eigener Songtext",
-      "continue": "Weiter zur Anmeldung",
-      "continuePending": "Die Anmeldung folgt in Modul M3b."
+      "continue": "Weiter zur Anmeldung"
     }
   },
   "NotFound": {
     "title": "Seite nicht gefunden",
     "text": "Diese Seite gibt es nicht (mehr)."
+  },
+  "Header": {
+    "login": "Anmelden",
+    "account": "Mein Konto"
+  },
+  "Auth": {
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "passwordHint": "Mindestens 8 Zeichen",
+    "name": "Vorname",
+    "nameOptional": "(freiwillig, für die Anrede in E-Mails)",
+    "showPassword": "Passwort anzeigen",
+    "or": "oder",
+    "login": {
+      "title": "Anmelden",
+      "intro": "Melde dich an, damit wir deinen Songtext erstellen können.",
+      "tabLink": "Mit E-Mail-Link",
+      "tabPassword": "Mit Passwort",
+      "linkHelp": "Wir schicken dir einen Link – ein Klick, und du bist angemeldet. Hast du noch kein Konto, wird es dabei angelegt.",
+      "sendLink": "Link senden",
+      "submit": "Anmelden",
+      "forgot": "Passwort vergessen?",
+      "noAccount": "Noch kein Konto?",
+      "register": "Mit Passwort registrieren",
+      "linkSentTitle": "Schau in dein Postfach",
+      "linkSent": "Wir haben dir einen Anmeldelink an {email} geschickt. Er ist 15 Minuten gültig.",
+      "errorInvalid": "E-Mail-Adresse oder Passwort stimmt nicht.",
+      "errorUnverified": "Bitte bestätige zuerst deine E-Mail-Adresse. Wir haben dir den Link noch einmal geschickt.",
+      "errorLink": "Der Anmeldelink ist abgelaufen oder wurde schon benutzt. Bitte fordere einen neuen an.",
+      "errorGeneric": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "intro": "Mit Konto findest du deinen Song später jederzeit wieder.",
+      "submit": "Registrieren",
+      "haveAccount": "Schon ein Konto?",
+      "privacyNote": "Mit der Registrierung legst du ein Kundenkonto an. Hinweise zum Datenschutz folgen vor dem Livegang.",
+      "sentTitle": "Fast geschafft!",
+      "sent": "Wir haben dir eine E-Mail an {email} geschickt. Bitte klicke auf den Link darin, um deine Adresse zu bestätigen.",
+      "errorPassword": "Das Passwort muss zwischen 8 und 128 Zeichen lang sein.",
+      "errorGeneric": "Das hat nicht geklappt. Bitte prüfe deine Angaben."
+    },
+    "forgot": {
+      "title": "Passwort vergessen",
+      "intro": "Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link, mit dem du ein neues Passwort festlegst.",
+      "submit": "Link anfordern",
+      "sent": "Falls ein Konto mit dieser Adresse existiert, haben wir dir eine E-Mail geschickt.",
+      "back": "Zurück zur Anmeldung"
+    },
+    "reset": {
+      "title": "Neues Passwort festlegen",
+      "submit": "Passwort speichern",
+      "done": "Dein Passwort wurde geändert. Du kannst dich jetzt anmelden.",
+      "invalid": "Der Link ist abgelaufen oder ungültig. Bitte fordere einen neuen an.",
+      "toLogin": "Zur Anmeldung"
+    }
+  },
+  "Account": {
+    "title": "Mein Konto",
+    "signedInAs": "Angemeldet als {email}",
+    "logout": "Abmelden",
+    "draftSaved": "Deine Angaben für „{occasion}“ sind in deinem Konto gespeichert.",
+    "draftNext": "Im nächsten Ausbauschritt entsteht hier automatisch dein Songtext (Modul M5).",
+    "draftsTitle": "Angefangene Songs",
+    "draftContinue": "Weiterbearbeiten",
+    "draftsEmpty": "Keine angefangenen Songs.",
+    "ordersTitle": "Meine Songs",
+    "ordersEmpty": "Du hast noch keine Songs bestellt.",
+    "newSong": "Neuen Song erstellen",
+    "updated": "zuletzt bearbeitet am {date}"
+  },
+  "Mailbox": {
+    "title": "Test-Postfach",
+    "intro": "Nur im Testbetrieb: Hier landen alle E-Mails, die die App verschickt, statt beim Empfänger.",
+    "empty": "Noch keine E-Mails.",
+    "to": "An",
+    "links": "Links in dieser E-Mail"
   }
 }

@@ -42,6 +42,22 @@ const baseSchema = z.object({
     }),
   DATABASE_URL_TEST: optionalString,
 
+  /** Öffentliche Adresse der Webseite, z. B. https://melomio.de – wird in E-Mail-Links verwendet. */
+  APP_BASE_URL: z
+    .string({ error: "fehlt" })
+    .trim()
+    .min(1, { error: "fehlt" })
+    .refine((v) => /^https?:\/\/[^/]+$/.test(v), {
+      error: "muss eine Adresse ohne Pfad sein, z. B. http://localhost:3000 oder https://melomio.de",
+    }),
+  /** Geheimer Schlüssel zum Signieren der Anmelde-Cookies (mind. 32 Zeichen, zufällig). */
+  BETTER_AUTH_SECRET: z
+    .string({ error: "fehlt" })
+    .min(32, { error: "muss mindestens 32 Zeichen lang sein (zufällig erzeugt)" }),
+
+  /** Schutz gegen zu viele Anmeldeversuche. Nur für automatische Tests abschaltbar, nie im Livebetrieb. */
+  AUTH_RATE_LIMIT: z.enum(["on", "off"]).default("on"),
+
   MOLLIE_API_KEY: optionalString,
   ANTHROPIC_API_KEY: optionalString,
   ELEVENLABS_API_KEY: optionalString,
@@ -176,6 +192,16 @@ export function parseEnv(raw: Record<string, string | undefined>): AppEnv {
     if (env.MOLLIE_API_KEY?.startsWith("test_")) {
       problems.push("Startsperre: APP_MODE=live ist mit einem Mollie-Testschlüssel (test_…) nicht erlaubt");
     }
+  }
+
+  // 3a. Schutz gegen zu viele Anmeldeversuche ist im Livebetrieb Pflicht
+  if (env.APP_MODE === "live" && env.AUTH_RATE_LIMIT === "off") {
+    problems.push("Startsperre: AUTH_RATE_LIMIT=off ist im Livebetrieb nicht erlaubt");
+  }
+
+  // 3b. Im Livebetrieb nur verschlüsselte Verbindungen
+  if (env.APP_MODE === "live" && !env.APP_BASE_URL.startsWith("https://")) {
+    problems.push("Startsperre: APP_MODE=live verlangt eine APP_BASE_URL mit https://");
   }
 
   // 4. Schutz vor echten Zahlungen im Testbetrieb

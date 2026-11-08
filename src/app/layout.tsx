@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Geist } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { SiteHeader } from "@/components/site-header";
 import { TestModeBanner } from "@/components/test-mode-banner";
 import { DEFAULT_LOCALE } from "@/i18n/request";
 import "./globals.css";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={null}>
             <TestModeBanner />
           </Suspense>
+          <SiteHeader />
           {children}
         </NextIntlClientProvider>
       </body>

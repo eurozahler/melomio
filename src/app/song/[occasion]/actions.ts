@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { getEnv } from "@/config/env";
 import { draftDataSchema, type DraftData } from "@/domain/draft";
 import { validateAnswer } from "@/domain/questionnaire";
 import { getChoiceLists, getQuestionnaire } from "@/server/catalog";
@@ -11,6 +12,7 @@ import {
   newDraftCookieId,
   storeDraft,
 } from "@/server/drafts";
+import { getSessionUser } from "@/server/session";
 
 export type SaveDraftResult = { ok: true } | { ok: false; error: "unknown_occasion" | "invalid" };
 
@@ -48,19 +50,27 @@ export async function saveDraftAction(occasionSlug: unknown, input: unknown): Pr
     return { ok: false, error: "invalid" };
   }
 
+  const user = await getSessionUser();
   const cookieStore = await cookies();
-  let cookieId = cookieStore.get(DRAFT_COOKIE)?.value;
-  if (!isValidDraftCookieId(cookieId)) {
-    cookieId = newDraftCookieId();
-    cookieStore.set(DRAFT_COOKIE, cookieId, {
+  const issueCookie = () => {
+    const id = newDraftCookieId();
+    cookieStore.set(DRAFT_COOKIE, id, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: getEnv().APP_BASE_URL.startsWith("https://"),
       path: "/",
       maxAge: DRAFT_TTL_DAYS * 24 * 60 * 60,
     });
-  }
+    return id;
+  };
 
-  await storeDraft(cookieId, questionnaire.occasion.id, data);
+  let cookieId = cookieStore.get(DRAFT_COOKIE)?.value;
+  if (!isValidDraftCookieId(cookieId)) cookieId = issueCookie();
+
+  const stored = await storeDraft(cookieId, questionnaire.occasion.id, data, user?.id ?? null);
+  if (!stored) {
+    // Der Entwurf zu diesem Cookie gehört einem anderen Konto (gemeinsam genutztes Gerät): neu beginnen
+    await storeDraft(issueCookie(), questionnaire.occasion.id, data, user?.id ?? null);
+  }
   return { ok: true };
 }

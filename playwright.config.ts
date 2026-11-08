@@ -28,9 +28,18 @@ export default defineConfig({
   projects: [{ name: "handy", use: { ...devices["Pixel 7"] } }],
   webServer: {
     command: `npx next build && npx next start -p ${PORT}`,
-    url: `http://localhost:${PORT}`,
+    // Bereitschaftsprüfung ohne Datenbankzugriff (die Testdatenbank wird parallel neu aufgebaut)
+    url: `http://localhost:${PORT}/api/auth/ok`,
     timeout: 300_000,
     reuseExistingServer: false,
-    env: { NEXT_DIST_DIR: ".next-e2e", DATABASE_URL: testDb, APP_MODE: "test" },
+    env: {
+      NEXT_DIST_DIR: ".next-e2e",
+      DATABASE_URL: testDb,
+      APP_MODE: "test",
+      EMAIL_PROVIDER: "console",
+      APP_BASE_URL: `http://localhost:${PORT}`,
+      // Die Tests melden sich schneller an, als ein Mensch es je täte
+      AUTH_RATE_LIMIT: "off",
+    },
   },
 });
