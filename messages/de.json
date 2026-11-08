@@ -8,10 +8,94 @@
     "text": "keine echte Zahlung, kein echter Song",
     "mocks": "Aktive Test-Adapter: {list}"
   },
+  "Common": {
+    "brand": "melomio",
+    "back": "Zurück",
+    "next": "Weiter",
+    "loading": "Wird geladen …",
+    "home": "Zur Startseite"
+  },
   "Home": {
     "headline": "Dein persönlicher Song",
     "subline": "Erzähl uns von deinem Anlass – wir machen daraus einen Song mit Video. Vor dem Kauf hörst du kostenlos rein.",
     "cta": "Jetzt Song erstellen",
-    "comingSoon": "Der Fragebogen folgt in Modul M3."
+    "howTitle": "So funktioniert’s",
+    "steps": {
+      "tell": { "title": "Erzählen", "text": "Beantworte ein paar Fragen – tippen oder diktieren." },
+      "lyrics": { "title": "Songtext prüfen", "text": "Du liest den Songtext und kannst ihn anpassen." },
+      "preview": { "title": "Reinhören", "text": "Hör dir kostenlos eine Hörprobe an, bevor du kaufst." },
+      "receive": {
+        "title": "Song & Video",
+        "text": "Nach dem Kauf bekommst du den ganzen Song und ein Video."
+      }
+    },
+    "occasionsTitle": "Wähle deinen Anlass",
+    "priceLabel": "Song mit Video",
+    "priceNote": "inkl. MwSt. · Hörprobe vorab kostenlos",
+    "faqTitle": "Häufige Fragen",
+    "faq": {
+      "ai": {
+        "q": "Wie entsteht mein Song?",
+        "a": "Songtext und Musik werden mit künstlicher Intelligenz erstellt – auf Grundlage deiner Antworten. Den Songtext kannst du vor der Vertonung lesen und anpassen."
+      },
+      "preview": {
+        "q": "Kann ich vor dem Kauf reinhören?",
+        "a": "Ja. Nach der Anmeldung hörst du einen kurzen Ausschnitt deines Songs. Erst wenn er dir gefällt, bezahlst du."
+      },
+      "data": {
+        "q": "Was passiert mit meinen Angaben?",
+        "a": "Deine Antworten nutzen wir nur, um deinen Song zu erstellen. Ohne deine ausdrückliche Zustimmung wird nichts veröffentlicht."
+      }
+    },
+    "footerImprint": "Impressum",
+    "footerPrivacy": "Datenschutz",
+    "footerLegalPending": "Rechtstexte folgen vor dem Livegang."
+  },
+  "Wizard": {
+    "stepOf": "Schritt {current} von {total}",
+    "saving": "Wird gespeichert …",
+    "saved": "Gespeichert",
+    "saveFailed": "Speichern fehlgeschlagen – wir versuchen es erneut.",
+    "optional": "freiwillig",
+    "dictationHint": "Tipp: Tippe auf das Mikrofon deiner Handy-Tastatur, um zu diktieren.",
+    "charCount": "{count} / {max} Zeichen",
+    "errors": {
+      "required": "Bitte beantworte diese Frage.",
+      "too_long": "Dieser Text ist zu lang.",
+      "invalid_option": "Bitte wähle eine der Möglichkeiten.",
+      "invalid_date": "Bitte gib ein gültiges Datum ein.",
+      "invalid_type": "Diese Antwort ist ungültig.",
+      "genre_required": "Bitte wähle ein Genre.",
+      "mood_required": "Bitte wähle eine Stimmung.",
+      "voice_required": "Bitte wähle eine Stimme.",
+      "own_lyrics_required": "Bitte gib deinen Songtext ein.",
+      "own_lyrics_too_long": "Dein Songtext ist zu lang."
+    },
+    "style": {
+      "title": "Wie soll dein Song klingen?",
+      "genre": "Genre",
+      "mood": "Stimmung",
+      "voice": "Stimme",
+      "voiceNote": "Die Stimme ist eine Beschreibung für die KI – das Ergebnis kann davon abweichen.",
+      "language": "Sprache des Songs",
+      "languageDe": "Deutsch",
+      "languageNote": "Weitere Sprachen folgen später.",
+      "customLyrics": "Ich schreibe den Songtext selbst",
+      "ownLyricsLabel": "Dein Songtext",
+      "ownLyricsHelp": "Schreib Strophen und Refrain untereinander. Leerzeilen trennen die Abschnitte."
+    },
+    "summary": {
+      "title": "Alles beisammen?",
+      "intro": "Prüfe deine Angaben. Im nächsten Schritt meldest du dich an – dann entsteht dein Songtext.",
+      "edit": "Ändern",
+      "noAnswer": "–",
+      "ownLyricsYes": "Eigener Songtext",
+      "continue": "Weiter zur Anmeldung",
+      "continuePending": "Die Anmeldung folgt in Modul M3b."
+    }
+  },
+  "NotFound": {
+    "title": "Seite nicht gefunden",
+    "text": "Diese Seite gibt es nicht (mehr)."
   }
 }

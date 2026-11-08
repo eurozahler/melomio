@@ -29,3 +29,6 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 *.log
+
+# End-to-End-Tests
+.next-e2e/

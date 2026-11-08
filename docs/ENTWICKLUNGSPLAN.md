@@ -1,6 +1,6 @@
 # Entwicklungsplan
 
-Stand: 08.11.2026 (2. Fassung) · Status: **freigegeben am 08.11.2026**, Umsetzung läuft · M0 ✅ · M1 ✅ · M2 ✅ (08.11.2026), nächstes Modul: M3
+Stand: 08.11.2026 (2. Fassung) · Status: **freigegeben am 08.11.2026**, Umsetzung läuft · M0 ✅ · M1 ✅ · M2 ✅ · M3 ✅ (08.11.2026), nächstes Modul: M3b
 
 Die Umsetzung ist in kleine **Module** aufgeteilt. Jedes Modul endet mit einem **überprüfbaren Ergebnis**: etwas, das du selbst im Browser ansehen kannst, und automatische Tests, die grün sein müssen. Erst wenn ein Modul abgenommen ist, beginnt das nächste.
 
@@ -59,6 +59,7 @@ Ohne echte Zugänge läuft alles im **gekennzeichneten Testbetrieb** (siehe `ARC
 
 ### M4 – Hintergrundaufträge und Statusmaschine
 - pg-boss, eigener Worker-Prozess (`npm run worker`), Statusmaschine der Bestellung mit Historie (neuer Ablauf, siehe `ARCHITEKTUR.md` Abschnitt 7), Wiederholungsregeln.
+- Regelmäßiger Aufräum-Auftrag: abgelaufene Fragebogen-Entwürfe (nach 30 Tagen) löschen.
 - **Ergebnis:** Nach dem Absenden des Fragebogens wechselt der Status sichtbar automatisch weiter. Den Worker stoppen und neu starten: Er macht dort weiter, wo er aufgehört hat.
 - **Tests:** Unerlaubte Statussprünge werden abgelehnt (z. B. `preview_ready → video_rendering` ohne Zahlung). Ein wiederholter Auftrag mit gleichem Idempotenzschlüssel läuft nicht doppelt.
 

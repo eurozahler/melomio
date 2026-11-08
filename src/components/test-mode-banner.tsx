@@ -23,7 +23,7 @@ export async function TestModeBanner() {
     >
       <span className="tracking-wider">{t("title")}</span> – {t("text")}
       {env.activeMocks.length > 0 && (
-        <span className="block text-xs font-normal opacity-80">
+        <span className="hidden text-xs font-normal opacity-80 sm:block">
           {t("mocks", { list: env.activeMocks.join(", ") })}
         </span>
       )}

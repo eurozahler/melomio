@@ -16,13 +16,14 @@ Personalisierte KI-Songs mit Musikvideo für besondere Anlässe.
 
 ## Befehle
 
-| Befehl           | Zweck                                          |
-| ---------------- | ---------------------------------------------- |
-| `npm run dev`    | Entwicklungsserver                             |
-| `npm run build`  | Produktions-Build                              |
-| `npm run check`  | Alles prüfen: Typen, Lint, Formatierung, Tests |
-| `npm test`       | Unit-Tests                                     |
-| `npm run format` | Code automatisch formatieren                   |
+| Befehl             | Zweck                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| `npm run dev`      | Entwicklungsserver                                                  |
+| `npm run build`    | Produktions-Build                                                   |
+| `npm run check`    | Alles prüfen: Typen, Lint, Formatierung, Tests                      |
+| `npm test`         | Unit-Tests                                                          |
+| `npm run test:e2e` | Browser-Tests in Handy-Größe gegen die Testdatenbank (Tunnel nötig) |
+| `npm run format`   | Code automatisch formatieren                                        |
 
 ### Datenbank (Tunnel muss offen sein)
 
