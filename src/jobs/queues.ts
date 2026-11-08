@@ -13,6 +13,8 @@ export const QUEUES = {
   musicGenerate: "music.generate",
   /** Nach bestätigter Zahlung: Bestellbestätigung per E-Mail (M7), später Video (M8). */
   orderPaid: "order.paid",
+  /** Kundenvideo erzeugen, prüfen, speichern (M8). */
+  videoRender: "video.render",
   /** Aufräumen: abgelaufene Fragebogen-Entwürfe löschen. */
   cleanupDrafts: "maintenance.cleanup-drafts",
 } as const;
@@ -53,6 +55,13 @@ export const QUEUE_OPTIONS: Record<QueueName, QueueOptions> = {
     retryDelay: 60,
     retryBackoff: true,
     expireInSeconds: 300,
+    heartbeatSeconds: 30,
+  },
+  [QUEUES.videoRender]: {
+    retryLimit: 2,
+    retryDelay: 60,
+    retryBackoff: true,
+    expireInSeconds: 1800,
     heartbeatSeconds: 30,
   },
   [QUEUES.cleanupDrafts]: { retryLimit: 2, retryDelay: 300, expireInSeconds: 600 },

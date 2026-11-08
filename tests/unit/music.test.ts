@@ -76,3 +76,20 @@ describe("Startpunkt der Hörprobe (F-19)", () => {
     ).toBe(0);
   });
 });
+
+describe("Titel im Video", () => {
+  it("bricht lange Titel um und kürzt notfalls", async () => {
+    const { wrapTitle } = await import("@/media/video");
+    expect(wrapTitle("Für Anna")).toEqual(["Für Anna"]);
+    expect(wrapTitle("Das schönste Lied der ganzen Welt")).toEqual([
+      "Das schönste",
+      "Lied der ganzen",
+      "Welt",
+    ]);
+    const long = wrapTitle(
+      "eins zwei drei vier fünf sechs sieben acht neun zehn elf zwölf dreizehn vierzehn",
+    );
+    expect(long).toHaveLength(4);
+    expect(long[3]).toMatch(/…$/);
+  });
+});

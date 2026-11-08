@@ -74,6 +74,8 @@ async function OrderContent({
     "lyrics_approved",
     "music_generating",
     "awaiting_payment",
+    "paid",
+    "video_rendering",
   ].includes(order.status);
 
   // Preis: eingefrorener Snapshot, sonst der aktuelle Preis
@@ -123,6 +125,15 @@ async function OrderContent({
         </Notice>
       )}
       {order.status === "manual_review" && <Notice kind="info">{t("manualReview")}</Notice>}
+      {(order.status === "paid" || order.status === "video_rendering") && (
+        <Notice kind="info">
+          <span
+            className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-brand-strong"
+            aria-hidden
+          />
+          {t("videoRendering")}
+        </Notice>
+      )}
       {order.status === "failed" && <Notice kind="error">{t("failed")}</Notice>}
 
       {hasPreview && (

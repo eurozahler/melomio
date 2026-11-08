@@ -5,7 +5,11 @@ import { createDb, type Database } from "@/db/client";
 import { mockLyricsProvider } from "@/lyrics/mock";
 import { createMockMusicProvider } from "@/music/mock";
 import { createLocalStorage } from "@/storage";
-import { occasions, orders, questionnaireVersions, users } from "@/db/schema";
+import { appSettings, occasions, orders, questionnaireVersions, users } from "@/db/schema";
+import { handleLyricsGenerate } from "@/jobs/handlers";
+import { runPreviewMusic } from "@/jobs/music";
+import { approveLyrics } from "@/orders/lyrics";
+import { transitionOrder } from "@/orders/service";
 
 loadLocalEnv();
 
@@ -58,3 +62,25 @@ export function testDeps(db: Database, boss: import("pg-boss").PgBoss) {
 }
 
 export const TEST_STORAGE_DIR = ".test-storage";
+
+/** Kurze Test-Songs (60 s) und keine Wartezeit – für schnelle Musik- und Videotests. */
+export async function useShortSongs(db: Database) {
+  process.env.MOCK_MUSIC_DELAY_MS = "0";
+  process.env.MOCK_MUSIC_DURATION_S = "60";
+  delete process.env.MOCK_MUSIC_MODE;
+  await db
+    .insert(appSettings)
+    .values({ key: "song_target_duration_s", value: 60 })
+    .onConflictDoUpdate({ target: appSettings.key, set: { value: 60 } });
+}
+
+/** Bestellung mit echter Hörprobe: Songtext (Test-Baustein) freigegeben, Musik erzeugt. */
+export async function orderWithRealPreview(db: Database, boss: import("pg-boss").PgBoss) {
+  const { userId, order } = await createUserWithOrder(db);
+  const deps = testDeps(db, boss);
+  await transitionOrder(db, order.id, "lyrics_generating", { actor: "test" });
+  await handleLyricsGenerate(deps, { orderId: order.id, targetVersion: 1 });
+  await approveLyrics(db, boss, order.publicRef, userId);
+  await runPreviewMusic(deps, order.id);
+  return { userId, order };
+}

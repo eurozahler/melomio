@@ -8,6 +8,7 @@ import type { MusicProvider } from "@/music/types";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
 import { sendOrderConfirmation } from "./order-paid";
+import { renderCustomerVideo, startVideo } from "./video";
 import { transitionOrder } from "@/orders/service";
 import { enqueue } from "./enqueue";
 import { runIdempotent, StepBusyError, type IdempotentResult } from "./idempotency";
@@ -29,6 +30,8 @@ export type HandlerDeps = {
   tools: MediaTools;
   /** Öffentliche Adresse der Seite – für Links in E-Mails. */
   baseUrl: string;
+  /** Schriftdatei für Videos (optional, sonst Systemschrift). */
+  fontFile?: string | null;
 };
 
 /** „Läuft schon“ darf einen Auftrag nie still als erledigt markieren – sonst bliebe die Bestellung hängen. */
@@ -161,17 +164,30 @@ export async function handleMusicGenerate(deps: HandlerDeps, { orderId }: OrderJ
   return failIfBusy(key, result);
 }
 
-/** order.paid: Bestellbestätigung verschicken (höchstens einmal pro Bestellung). */
+/**
+ * order.paid: (1) Bestellbestätigung verschicken (rechtlich wichtig, E16), (2) Video starten –
+ * beide Schritte jeweils höchstens einmal. Schlägt ein Schritt fehl, wird der Auftrag wiederholt;
+ * der bereits erledigte Schritt wird dabei übersprungen.
+ */
 export async function handleOrderPaid(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
-  const key = `email:order-confirmation:${orderId}`;
-  const result = await runIdempotent(
-    deps.db,
-    key,
-    () => sendOrderConfirmation(deps.db, deps.baseUrl, orderId),
-    {
+  const mailKey = `email:order-confirmation:${orderId}`;
+  failIfBusy(
+    mailKey,
+    await runIdempotent(deps.db, mailKey, () => sendOrderConfirmation(deps.db, deps.baseUrl, orderId), {
       attempt,
-    },
+    }),
   );
+  const videoKey = `video.start:${orderId}`;
+  return failIfBusy(
+    videoKey,
+    await runIdempotent(deps.db, videoKey, () => startVideo(deps.db, deps.boss, orderId), { attempt }),
+  );
+}
+
+/** video.render: Kundenvideo erzeugen, prüfen, speichern → Bestellung „fertig“. */
+export async function handleVideoRender(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
+  const key = `video.render:${orderId}:customer`;
+  const result = await runIdempotent(deps.db, key, () => renderCustomerVideo(deps, orderId), { attempt });
   return failIfBusy(key, result);
 }
 

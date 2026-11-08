@@ -71,6 +71,8 @@ const baseSchema = z.object({
   /** Audio/Video-Werkzeug. Ohne Angabe wird "ffmpeg"/"ffprobe" im Systempfad gesucht. */
   FFMPEG_PATH: optionalString.transform((v) => v ?? "ffmpeg"),
   FFPROBE_PATH: optionalString.transform((v) => v ?? "ffprobe"),
+  /** Schriftdatei für Videos (.ttf). Ohne Angabe: gängige Systemschrift (Arial fett / DejaVu Sans fett). */
+  VIDEO_FONT_FILE: optionalString,
   /** Ordner für den lokalen Dateispeicher im Testbetrieb (STORAGE_PROVIDER=local). */
   STORAGE_LOCAL_DIR: optionalString.transform((v) => v ?? "storage"),
 

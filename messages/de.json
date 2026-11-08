@@ -277,14 +277,15 @@
     "awaitingPayment": "Wir warten auf die Bestätigung deiner Zahlung … Die Seite aktualisiert sich von selbst.",
     "backToPayment": "Zur Bezahlseite zurück",
     "paymentFailed": "Die Zahlung hat nicht geklappt oder wurde abgebrochen. Du kannst es einfach noch einmal versuchen.",
-    "paid": "Vielen Dank! Deine Zahlung ist eingegangen. Die Bestellbestätigung ist per E-Mail unterwegs. Als Nächstes entsteht dein Video (folgt in Modul M8).",
+    "paid": "Vielen Dank! Deine Zahlung ist eingegangen. Die Bestellbestätigung ist per E-Mail unterwegs.",
     "errors": {
       "not_found": "Diese Bestellung gibt es nicht.",
       "wrong_status": "Diese Bestellung kann gerade nicht gekauft werden. Bitte lade die Seite neu.",
       "consents_required": "Bitte bestätige beide Punkte, um fortzufahren.",
       "no_price": "Der Preis konnte nicht ermittelt werden. Bitte versuche es später noch einmal.",
       "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
-    }
+    },
+    "videoRendering": "Dein Video wird gerade erstellt … Das dauert etwa eine Minute. Die Seite aktualisiert sich von selbst."
   },
   "Legal": {
     "agbTitle": "Allgemeine Geschäftsbedingungen",

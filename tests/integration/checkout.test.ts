@@ -17,7 +17,7 @@ import { QUEUES } from "@/jobs/queues";
 import { CheckoutError, processPaymentUpdate, startCheckout } from "@/orders/checkout";
 import { transitionOrder } from "@/orders/service";
 import { createMockPaymentProvider, setMockPaymentStatus } from "@/payments/mock";
-import { connectTestDb, createUserWithOrder, testDeps } from "./helpers";
+import { connectTestDb, createUserWithOrder, orderWithRealPreview, testDeps, useShortSongs } from "./helpers";
 
 const { db, pool } = connectTestDb();
 let boss: PgBoss;
@@ -206,7 +206,8 @@ describe("Zahlungsbestätigung (Webhook)", () => {
 
 describe("Bestellbestätigung per E-Mail (E16)", () => {
   it("enthält Preis, MwSt. und den Widerrufsverzicht – und wird nur einmal verschickt", async () => {
-    const { userId, order } = await orderWithPreview();
+    await useShortSongs(db);
+    const { userId, order } = await orderWithRealPreview(db, boss);
     const id = mockIdFrom(await checkout(order.publicRef, userId));
     await setMockPaymentStatus(db, id, "paid");
     await processPaymentUpdate(db, boss, provider(), id, "webhook");
