@@ -24,7 +24,9 @@ RUN APP_MODE=test PAYMENT_PROVIDER=mock LYRICS_PROVIDER=mock MUSIC_PROVIDER=mock
     BETTER_AUTH_SECRET=build-only-placeholder-not-a-secret-000000 \
     npx next build
 
-ENV NODE_ENV=production \
+ARG GIT_COMMIT=unbekannt
+ENV GIT_COMMIT=$GIT_COMMIT \
+    NODE_ENV=production \
     FFMPEG_PATH=/usr/bin/ffmpeg \
     FFPROBE_PATH=/usr/bin/ffprobe \
     VIDEO_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf \

@@ -20,7 +20,7 @@ $remote = @(
   "tar -xf /tmp/melomio-src.tar -C /opt/melomio/app/src",
   "rm /tmp/melomio-src.tar",
   "cd /opt/melomio/app/src",
-  "docker build -t melomio-app:latest --label commit=$commit .",
+  "docker build -t melomio-app:latest --label commit=$commit --build-arg GIT_COMMIT=$commit .",
   "cd /opt/melomio/app",
   "docker compose up -d --remove-orphans",
   "docker compose ps",

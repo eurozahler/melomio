@@ -31,7 +31,7 @@ Eingerichtet am 08.11.2026 (Modul M0).
 - `02-harden-ssh.sh`: SSH absichern (erst nach erfolgreichem Test von `deploy`)
 - `check.sh`: Zustandsprüfung, nur lesend: `scp` auf den Server, dann `sudo bash check.sh`
 
-## App (Modul M11) – vorbereitet, noch nicht freigeschaltet
+## App (Modul M11) – läuft seit 09.11.2026 unter https://staging.melomio.de
 
 Die App läuft auf dem Testserver in Docker: **Webseite**, **Worker** und **Caddy** (HTTPS + Passwortschutz).
 Sie verwendet eine eigene Datenbank `melomio_staging`, damit sie nicht mit deinem PC-Worker um Aufträge konkurriert.
@@ -62,3 +62,5 @@ Alle Bausteine laufen im Testmodus: keine echten Zahlungen, keine Kosten, E-Mail
 
 **Wieder schließen:** `sudo ufw delete allow 80/tcp && sudo ufw delete allow 443/tcp` (und die Regel in der Hetzner-Firewall entfernen).
 **Protokolle ansehen:** `ssh melomio-test "cd /opt/melomio/app && docker compose logs -f --tail 100 web worker"`.
+
+**Hinweis:** Der Virenscanner AVG auf dem PC liest HTTPS mit und zeigt deshalb ein eigenes Zertifikat an. Das echte Zertifikat stammt von Let's Encrypt und wird von Caddy automatisch erneuert.
