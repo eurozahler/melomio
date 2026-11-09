@@ -118,13 +118,9 @@ Das Pflichtenheft wollte im Admin ein Formular für API-Schlüssel (z. B. den Mo
 Stand: 08.11.2026, nach Abschluss der ersten Version (M0–M11). Sortiert nach Dringlichkeit.
 
 ### Entscheidungen, die du treffen musst
-1. **Testserver freischalten?** Alles ist vorbereitet (`infra/testserver/README.md`, Abschnitt „App“). Es fehlt:
-   - deine Zusage zur Subdomain (Vorschlag `staging.melomio.de`),
-   - der DNS-Eintrag bei Strato (Typ A, `test` → `2.31.55.169`),
-   - deine Freigabe, Port 80/443 zu öffnen.
-   
-   Die Seite ist dann nur mit Passwort erreichbar und wird nicht von Suchmaschinen erfasst.
-2. **F-13 E-Mail-Absender:** Welche Adresse bei Strato (z. B. `hallo@melomio.de`)? Ohne sie gehen keine echten E-Mails raus. Auf dem Testserver hilft bis dahin das Test-Postfach `/dev/mailbox`.
+1. ~~**Testserver freischalten**~~ → ✅ **erledigt am 09.11.2026:** https://staging.melomio.de (Passwortschutz, Let’s Encrypt, eigene Datenbank `melomio_staging`). Siehe `infra/testserver/README.md`.
+
+2. ~~**F-13 E-Mail-Absender**~~ → ✅ **erledigt am 09.11.2026:** `hallo@melomio.de` (Strato, `smtp.strato.de:465`), SPF „Standard STRATO Mailserver“ aktiv, DMARC Strato-Standard (`p=reject`). Offen vor dem Livegang: **DKIM** bei Strato aktivieren (bessere Zustellung bei Gmail & Co.) und klären, ob das Postfach für „größere E-Mail-Mengen“ freigeschaltet werden muss. Hinweis: Auf dem PC blockiert der E-Mail-Schutz von AVG den Versand (fremdes Zertifikat). Dort entweder `EMAIL_PROVIDER=console` oder in AVG „Ausgehende E-Mails scannen (SMTP)“ abschalten. Für Kunden spielt das keine Rolle, weil der Server versendet.
 3. **F-22 Claude für Songtexte:** Den Schlüssel hast du selbst eingetragen und testest. Offen sind:
    - Bist du mit der Qualität zufrieden?
    - Sollen echte Kosten pro Songtext gemessen werden (wenige Testaufrufe, kostenpflichtig)?
