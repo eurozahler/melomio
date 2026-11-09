@@ -6,7 +6,7 @@
 # /opt/melomio/app mit .env (Testbetrieb, zufällige Schlüssel) und caddy.env (Passwortschutz).
 set -euo pipefail
 
-DOMAIN="${1:-test.melomio.de}"
+DOMAIN="${1:-staging.melomio.de}"
 ACME_EMAIL="${2:-}"
 APP=/opt/melomio/app
 
@@ -59,13 +59,15 @@ if [ ! -f caddy.env ]; then
 SITE_DOMAIN=${DOMAIN}
 ACME_EMAIL=${ACME_EMAIL}
 BASIC_AUTH_USER=melomio
-BASIC_AUTH_HASH=${HASH}
+BASIC_AUTH_HASH=${HASH//\$/\$\$}
 EOF
   chown deploy:deploy caddy.env
-  echo
-  echo "   Passwortschutz der Testseite:  Benutzer melomio  /  Passwort: ${BASIC_PASS}"
-  echo "   (Nur hier angezeigt – bitte in deinen Passwortmanager übernehmen.)"
-  echo
+  printf "Passwortschutz der Testseite
+Benutzer: melomio
+Passwort: %s
+" "$BASIC_PASS" > zugang.txt
+  chown deploy:deploy zugang.txt
+  echo "   Passwort für den Passwortschutz liegt in $APP/zugang.txt (nur für deploy lesbar)."
 fi
 
 echo "== Fertig. Firewall unverändert: =="

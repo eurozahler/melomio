@@ -47,16 +47,16 @@ Alle Bausteine laufen im Testmodus: keine echten Zahlungen, keine Kosten, E-Mail
 
 ### Schritte (erst nach deiner Freigabe)
 
-1. **Subdomain festlegen** (Vorschlag `test.melomio.de`) und bei Strato einen DNS-Eintrag anlegen:
-   Typ `A`, Name `test`, Wert `2.31.55.169`. Die Hauptdomain bleibt unverändert (Umzug erst in C10).
+1. **Subdomain festlegen** (Vorschlag `staging.melomio.de`) und bei Strato einen DNS-Eintrag anlegen:
+   Typ `A`, Name `staging`, Wert `2.31.55.169`. Die Hauptdomain bleibt unverändert (Umzug erst in C10).
 2. **Vorbereiten** (öffnet nichts nach außen):
    `scp infra/testserver/03-app-vorbereiten.sh melomio-test:` und dann
-   `ssh melomio-test "sudo bash 03-app-vorbereiten.sh test.melomio.de deine@adresse.de"`.
-   Das Skript zeigt das Passwort für den Passwortschutz **einmal** an.
+   `ssh melomio-test "sudo bash 03-app-vorbereiten.sh staging.melomio.de deine@adresse.de"`.
+   Das Passwort für den Passwortschutz liegt danach in `/opt/melomio/app/zugang.txt`.
 3. **Übertragen und starten:** `.\scripts\testserver-deploy.ps1` (der erste Build dauert einige Minuten).
 4. **Freischalten:** Port 80 und 443 öffnen, in der Hetzner-Firewall `melomio-test-fw` **und** auf dem Server:
    `ssh melomio-test "sudo ufw allow 80/tcp && sudo ufw allow 443/tcp"`.
-   Danach holt Caddy das Zertifikat, und die Seite ist unter `https://test.melomio.de` erreichbar, aber nur mit Passwort.
+   Danach holt Caddy das Zertifikat, und die Seite ist unter `https://staging.melomio.de` erreichbar, aber nur mit Passwort.
 5. **Admin-Rolle:** auf der Testseite registrieren, dann
    `ssh melomio-test "cd /opt/melomio/app && docker compose run --rm web node node_modules/tsx/dist/cli.mjs scripts/admin/grant-role.ts deine@adresse.de owner"`.
 

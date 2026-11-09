@@ -119,7 +119,7 @@ Stand: 08.11.2026, nach Abschluss der ersten Version (M0–M11). Sortiert nach D
 
 ### Entscheidungen, die du treffen musst
 1. **Testserver freischalten?** Alles ist vorbereitet (`infra/testserver/README.md`, Abschnitt „App“). Es fehlt:
-   - deine Zusage zur Subdomain (Vorschlag `test.melomio.de`),
+   - deine Zusage zur Subdomain (Vorschlag `staging.melomio.de`),
    - der DNS-Eintrag bei Strato (Typ A, `test` → `2.31.55.169`),
    - deine Freigabe, Port 80/443 zu öffnen.
    
