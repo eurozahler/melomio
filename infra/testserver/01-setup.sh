@@ -42,7 +42,7 @@ systemctl enable --now fail2ban
 systemctl restart fail2ban
 
 echo "== 4. Docker =="
-apt-get -y -q install docker.io docker-compose-v2
+apt-get -y -q install docker.io docker-compose-v2 docker-buildx
 systemctl enable --now docker
 usermod -aG docker deploy
 

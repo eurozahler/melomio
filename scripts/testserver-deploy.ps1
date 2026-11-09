@@ -26,5 +26,8 @@ $remote = @(
   "docker compose ps",
   "docker image prune -f >/dev/null"
 ) -join " && "
-ssh melomio-test $remote
+# Docker schreibt Fortschritt nach stderr – PowerShell 5.1 hielte das sonst für einen Fehler
+$ErrorActionPreference = "Continue"
+ssh melomio-test $remote 2>&1 | ForEach-Object { "$_" }
+if ($LASTEXITCODE -ne 0) { throw "Fehler auf dem Server (Exit-Code $LASTEXITCODE)" }
 Write-Host "Fertig: Commit $commit läuft auf dem Testserver."
