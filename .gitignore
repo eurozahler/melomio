@@ -13,7 +13,7 @@ build/
 !.env.example
 
 # Lokaler Dateispeicher im Testbetrieb
-storage/
+/storage/
 
 # Tests
 coverage/
