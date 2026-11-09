@@ -14,7 +14,7 @@ sed -i '/^EMAIL_PROVIDER=/d; /^SMTP_/d' "$ENV"
 {
   echo "EMAIL_PROVIDER=smtp"
   echo "SMTP_HOST=smtp.strato.de"
-  echo "SMTP_PORT=465"
+  echo "SMTP_PORT=587"   # Hetzner sperrt 465 ausgehend
   echo "SMTP_USER=hallo@melomio.de"
   printf 'SMTP_PASSWORD=%s\n' "$PASS"
   echo "SMTP_FROM=melomio <hallo@melomio.de>"

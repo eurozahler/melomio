@@ -53,7 +53,12 @@ const smtpProvider: EmailProvider = {
     transport ??= nodemailer.createTransport({
       host: env.SMTP_HOST,
       port: Number(env.SMTP_PORT),
+      // 465: direkt verschlüsselt. Sonst (587): STARTTLS ist Pflicht, nie unverschlüsselt senden.
+      // Hinweis: Hetzner sperrt ausgehend Port 465 – auf dem Server deshalb 587.
       secure: Number(env.SMTP_PORT) === 465,
+      requireTLS: Number(env.SMTP_PORT) !== 465,
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
       auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
     });
     const info = await transport.sendMail({
