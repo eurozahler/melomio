@@ -1,6 +1,8 @@
 ﻿# Überträgt den aktuellen Programmstand (letzter Commit) auf den Testserver, baut dort das Image
 # und startet Webseite + Worker neu. Aufruf im Projektordner:  .\scripts\testserver-deploy.ps1
 # Voraussetzung: 03-app-vorbereiten.sh wurde auf dem Server ausgeführt (siehe infra/testserver/README.md).
+# Anderer Server (z. B. Produktion):  .\scripts\testserver-deploy.ps1 -Ziel melomio-live
+param([string]$Ziel = "melomio-test")
 $ErrorActionPreference = "Stop"
 
 $commit = (git rev-parse --short HEAD).Trim()
@@ -9,8 +11,10 @@ if (git status --porcelain) { Write-Warning "Es gibt nicht committete Änderunge
 $archive = Join-Path $env:TEMP "melomio-$commit.tar"
 git archive --format=tar -o $archive HEAD
 Write-Host "Übertrage Commit $commit ..."
-scp $archive melomio-test:/tmp/melomio-src.tar
-scp infra/testserver/app/compose.yaml infra/testserver/app/Caddyfile melomio-test:/opt/melomio/app/
+scp $archive ${Ziel}:/tmp/melomio-src.tar
+# Testserver: Caddyfile mit Passwortschutz; jeder andere Server: Produktions-Caddyfile
+$caddy = if ($Ziel -eq "melomio-test") { "infra/testserver/app/Caddyfile" } else { "infra/produktion/Caddyfile" }
+scp infra/testserver/app/compose.yaml $caddy ${Ziel}:/opt/melomio/app/
 Remove-Item $archive
 
 $remote = @(
@@ -28,6 +32,6 @@ $remote = @(
 ) -join " && "
 # Docker schreibt Fortschritt nach stderr – PowerShell 5.1 hielte das sonst für einen Fehler
 $ErrorActionPreference = "Continue"
-ssh melomio-test $remote 2>&1 | ForEach-Object { "$_" }
+ssh $Ziel $remote 2>&1 | ForEach-Object { "$_" }
 if ($LASTEXITCODE -ne 0) { throw "Fehler auf dem Server (Exit-Code $LASTEXITCODE)" }
-Write-Host "Fertig: Commit $commit läuft auf dem Testserver."
+Write-Host "Fertig: Commit $commit läuft auf $Ziel."

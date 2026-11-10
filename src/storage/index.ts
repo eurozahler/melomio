@@ -2,6 +2,8 @@ import { createReadStream } from "node:fs";
 import { copyFile, mkdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
+import { assertSafeKey } from "./keys";
+import { createS3Storage } from "./s3";
 
 /**
  * Dateispeicher hinter einer austauschbaren Schnittstelle (docs/ARCHITEKTUR.md, Abschnitt 3).
@@ -18,12 +20,7 @@ export interface StorageProvider {
   delete(key: string): Promise<void>;
 }
 
-/** Schlüssel nur aus erlaubten Zeichen – verhindert Pfade wie "../../geheim". */
-export function assertSafeKey(key: string): void {
-  if (!/^[a-z0-9][a-z0-9/_.-]*$/i.test(key) || key.includes("..") || key.startsWith("/")) {
-    throw new Error(`Ungültiger Speicherschlüssel: ${key}`);
-  }
-}
+export { assertSafeKey } from "./keys";
 
 export function createLocalStorage(baseDir: string): StorageProvider {
   const root = path.resolve(baseDir);
@@ -55,7 +52,30 @@ export function createLocalStorage(baseDir: string): StorageProvider {
   };
 }
 
-export function getStorage(env: { STORAGE_PROVIDER: string; STORAGE_LOCAL_DIR: string }): StorageProvider {
-  if (env.STORAGE_PROVIDER === "s3") throw new Error("STORAGE_PROVIDER=s3 ist noch nicht umgesetzt (folgt im Livebetrieb)");
+type StorageEnv = {
+  STORAGE_PROVIDER: string;
+  STORAGE_LOCAL_DIR: string;
+  S3_ENDPOINT?: string;
+  S3_REGION?: string;
+  S3_BUCKET?: string;
+  S3_ACCESS_KEY_ID?: string;
+  S3_SECRET_ACCESS_KEY?: string;
+};
+
+let s3Cache: StorageProvider | undefined;
+
+export function getStorage(env: StorageEnv): StorageProvider {
+  if (env.STORAGE_PROVIDER === "s3") {
+    if (!env.S3_ENDPOINT || !env.S3_REGION || !env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)
+      throw new Error("S3-Zugangsdaten fehlen");
+    s3Cache ??= createS3Storage({
+      endpoint: env.S3_ENDPOINT,
+      region: env.S3_REGION,
+      bucket: env.S3_BUCKET,
+      accessKeyId: env.S3_ACCESS_KEY_ID,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+    });
+    return s3Cache;
+  }
   return createLocalStorage(env.STORAGE_LOCAL_DIR);
 }
