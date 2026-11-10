@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rm } from "node:fs/promises";
 import { eq, sql } from "drizzle-orm";
 import type { PgBoss } from "pg-boss";
+import sharp from "sharp";
+import { addPhoto, listPhotos } from "@/orders/photos";
 import { seed } from "@/db/seed";
 import { orders, selectedTracks, videos } from "@/db/schema";
 import { createBoss } from "@/jobs/boss";
@@ -128,4 +130,44 @@ describe("Standardvideo (Abnahme M8) und Auslieferung (M9)", () => {
     expect(await db.select().from(videos).where(eq(videos.orderId, order.id))).toHaveLength(0);
     expect(await statusOf(order.id)).toBe("preview_ready");
   }, 120_000);
+});
+
+describe("Fotos im Video (C2)", () => {
+  it("hochgeladene Fotos laufen als Slideshow; nach dem Kauf sind Fotos nicht mehr änderbar", async () => {
+    const { userId, order } = await orderWithRealPreview(db, boss);
+    const deps = testDeps(db, boss);
+    const img = (c: string) =>
+      sharp({ create: { width: 1200, height: 900, channels: 3, background: c } })
+        .jpeg()
+        .toBuffer();
+    await addPhoto(db, deps.storage, order.publicRef, userId, await img("#aa3355"));
+    await addPhoto(db, deps.storage, order.publicRef, userId, await img("#3355aa"));
+    expect(await listPhotos(db, order.id)).toHaveLength(2);
+
+    const provider = createMockPaymentProvider(db, "http://localhost:3200");
+    const url = await startCheckout(db, provider, {
+      publicRef: order.publicRef,
+      userId,
+      accepted: { termsPrivacy: true, withdrawalWaiver: true },
+      ipHash: null,
+      baseUrl: "http://localhost:3200",
+      webhookUrl: null,
+    });
+    const id = url.split("/dev/zahlung/")[1]!;
+    await setMockPaymentStatus(db, id, "paid");
+    await processPaymentUpdate(db, boss, provider, id, "webhook");
+    await expect(
+      addPhoto(db, deps.storage, order.publicRef, userId, await img("#000")),
+    ).rejects.toMatchObject({
+      code: "locked",
+    });
+
+    await handleOrderPaid(deps, { orderId: order.id });
+    await handleVideoRender(deps, { orderId: order.id });
+    expect(await statusOf(order.id)).toBe("completed");
+    const [video] = await db.select().from(videos).where(eq(videos.orderId, order.id));
+    const info = await probeVideo(deps.tools, `${TEST_STORAGE_DIR}/${video!.storageKey}`);
+    expect(info).toMatchObject({ width: 1080, height: 1920, videoCodec: "h264", audioCodec: "aac" });
+    expect(Math.abs(info.durationMs - 60_000)).toBeLessThanOrEqual(1000);
+  }, 240_000);
 });

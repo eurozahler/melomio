@@ -64,6 +64,13 @@ async function Privacy() {
         Bitte geben Sie nur Angaben an, die Sie dafür verwenden dürfen, und keine besonders sensiblen Daten
         (z. B. zur Gesundheit).
       </p>
+      <h3>Fotos für das Video</h3>
+      <p>
+        Wenn Sie Fotos hochladen, verwenden wir sie nur für Ihr Video. Beim Hochladen entfernen wir automatisch
+        Metadaten wie Standort (GPS) und Kameradaten. Fotos werden nicht an KI-Anbieter übermittelt. Sie werden
+        zusammen mit der Hörprobe gelöscht, wenn Sie nicht kaufen, und sonst mit Ihrem Konto. Bitte laden Sie nur
+        Fotos hoch, die Sie verwenden dürfen.
+      </p>
       <h3>Bestellung, Zahlung und Rechnung</h3>
       <p>
         Wir speichern Bestelldaten, Preis, Zahlungsstatus und Rechnungen sowie Ihre beim Kauf abgegebenen

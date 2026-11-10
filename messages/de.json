@@ -328,6 +328,23 @@
     "shareCopied": "Kopiert!",
     "qrAlt": "QR-Code zur Song-Seite"
   },
+  "Photos": {
+    "title": "Fotos für dein Video (optional)",
+    "text": "Lade bis zu {max} Fotos hoch – sie laufen im Video als Diashow zur Musik. Ohne Fotos bekommt dein Video einen Farbverlauf.",
+    "add": "Fotos auswählen (noch {left} möglich)",
+    "uploading": "Wird hochgeladen …",
+    "alt": "Foto {n}",
+    "remove": "Foto {n} entfernen",
+    "rights": "Lade nur Fotos hoch, die du verwenden darfst, und frag die abgebildeten Personen. Standort- und Kameradaten entfernen wir automatisch.",
+    "errors": {
+      "not_image": "Diese Datei ist kein unterstütztes Bild (JPG, PNG oder WebP).",
+      "too_large": "Das Foto ist zu groß (höchstens 15 MB).",
+      "too_many": "Es sind höchstens {max} Fotos möglich.",
+      "locked": "Nach dem Kauf können keine Fotos mehr geändert werden.",
+      "not_found": "Bestellung nicht gefunden.",
+      "failed": "Das Hochladen hat nicht geklappt. Bitte versuche es noch einmal."
+    }
+  },
   "Legal": {
     "agbTitle": "Allgemeine Geschäftsbedingungen",
     "privacyTitle": "Datenschutzerklärung",

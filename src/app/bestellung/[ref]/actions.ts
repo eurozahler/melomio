@@ -6,10 +6,12 @@ import { getDb } from "@/db/client";
 import { CheckoutError, startCheckout, type CheckoutErrorCode } from "@/orders/checkout";
 import { disableSharePage, enableSharePage } from "@/orders/delivery";
 import { getAppPaymentProvider, getWebhookUrl, hashedClientIp } from "@/server/payments";
+import { removePhoto } from "@/orders/photos";
 import { discountFor, findValidVoucher } from "@/orders/vouchers";
 import { getSongPrice } from "@/server/catalog";
 import { getSenderBoss } from "@/server/jobs";
 import { getSessionUser } from "@/server/session";
+import { getStorage } from "@/storage";
 
 export type CheckoutResult =
   { ok: true; checkoutUrl: string } | { ok: false; error: CheckoutErrorCode | "generic" };
@@ -75,4 +77,17 @@ export async function previewVoucherAction(code: unknown): Promise<VoucherPrevie
   if (!voucher || !price) return { ok: false };
   const discountCents = discountFor(price.grossCents, voucher);
   return { ok: true, discountCents, grossCents: price.grossCents - discountCents };
+}
+
+/** Foto aus der Bestellung entfernen (vor dem Kauf). */
+export async function removePhotoAction(ref: unknown, photoId: unknown): Promise<{ ok: boolean }> {
+  const user = await getSessionUser();
+  if (!user?.emailVerified || typeof ref !== "string" || typeof photoId !== "string") return { ok: false };
+  try {
+    await removePhoto(getDb(), getStorage(getEnv()), ref, user.id, photoId);
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
 }

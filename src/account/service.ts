@@ -9,6 +9,7 @@ import {
   lyricsVersions,
   musicCandidates,
   musicJobs,
+  orderPhotos,
   orderStatusHistory,
   orders,
   payments,
@@ -64,7 +65,17 @@ async function contentFiles(db: Database, orderIds: string[]) {
   return [...candidates, ...clips, ...vids].map((r) => r.key);
 }
 
-/** Löscht Song, Hörprobe und Video – und ohne audioOnly auch Songtext und Antworten (Datensatz bleibt). */
+async function photoFiles(db: Database, orderIds: string[]) {
+  if (orderIds.length === 0) return [];
+  return (
+    await db
+      .select({ key: orderPhotos.storageKey })
+      .from(orderPhotos)
+      .where(inArray(orderPhotos.orderId, orderIds))
+  ).map((r) => r.key);
+}
+
+/** Löscht Song, Hörprobe, Video und Fotos – und ohne audioOnly auch Songtext und Antworten (Datensatz bleibt). */
 async function wipeOrderContent(
   db: Database,
   storage: StorageProvider,
@@ -72,13 +83,14 @@ async function wipeOrderContent(
   { audioOnly = false }: { audioOnly?: boolean } = {},
 ) {
   if (orderIds.length === 0) return 0;
-  const keys = await contentFiles(db, orderIds);
+  const keys = [...(await contentFiles(db, orderIds)), ...(await photoFiles(db, orderIds))];
   await db.transaction(async (tx) => {
     await tx.delete(sharePages).where(inArray(sharePages.orderId, orderIds));
     await tx.delete(videos).where(inArray(videos.orderId, orderIds));
     await tx.delete(videoJobs).where(inArray(videoJobs.orderId, orderIds));
     await tx.delete(selectedTracks).where(inArray(selectedTracks.orderId, orderIds));
     await tx.delete(musicJobs).where(inArray(musicJobs.orderId, orderIds)); // samt Kandidaten und Hörproben
+    await tx.delete(orderPhotos).where(inArray(orderPhotos.orderId, orderIds));
     if (audioOnly) return;
     await tx.delete(lyricsVersions).where(inArray(lyricsVersions.orderId, orderIds));
     await tx.delete(answers).where(inArray(answers.orderId, orderIds));

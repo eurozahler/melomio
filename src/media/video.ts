@@ -104,6 +104,8 @@ export async function renderStandardVideo(
     config?: VideoTemplateConfig;
     /** Gesungene Zeilen mit Zeiten → Songtext läuft im Video mit (C3). Ohne: nur der Titel. */
     lyrics?: TimedLine[] | null;
+    /** Fotos (lokale JPEG-Dateien) für die Slideshow (C2). Ohne: Farbverlauf als Hintergrund. */
+    photos?: string[];
   },
 ): Promise<void> {
   const { workDir, config = {} } = options;
@@ -115,13 +117,20 @@ export async function renderStandardVideo(
   // Schrift und Texte in den Arbeitsordner – FFmpeg läuft dort mit relativen Pfaden
   await copyFile(options.fontFile, path.join(workDir, "font.ttf"));
   const withLyrics = !!options.lyrics?.length;
-  // Mit Songtext: Titel klein oben, der Text läuft in der Bildmitte. Ohne: Titel groß in der Mitte.
-  const lines = withLyrics ? wrapTitle(options.title, 22, 2) : wrapTitle(options.title);
-  const fontSize = withLyrics ? 68 : lines.length <= 2 ? 104 : 88;
+  const photos = (options.photos ?? []).slice(0, 20);
+  // Mit Songtext oder Fotos: Titel klein oben. Sonst: Titel groß in der Bildmitte.
+  const compact = withLyrics || photos.length > 0;
+  const lines = compact ? wrapTitle(options.title, 22, 2) : wrapTitle(options.title);
+  const fontSize = compact ? 68 : lines.length <= 2 ? 104 : 88;
   const lineHeight = Math.round(fontSize * 1.25);
-  const blockTop = withLyrics ? 220 : Math.round(height / 2 - (lines.length * lineHeight) / 2);
+  const blockTop = compact ? 220 : Math.round(height / 2 - (lines.length * lineHeight) / 2);
 
   const filters: string[] = [];
+  if (photos.length) {
+    // Lesbarkeit: dunkler Verlauf oben (Titel) und ein Band hinter dem Songtext
+    filters.push(`drawbox=x=0:y=0:w=iw:h=520:color=black@0.30:t=fill`);
+    if (withLyrics) filters.push(`drawbox=x=0:y=ih/2-230:w=iw:h=520:color=black@0.35:t=fill`);
+  }
   for (const [i, line] of lines.entries()) {
     await writeFile(path.join(workDir, `line${i}.txt`), line, "utf8");
     filters.push(
@@ -136,7 +145,7 @@ export async function renderStandardVideo(
   if (options.testWatermark) {
     await writeFile(path.join(workDir, "test.txt"), "TEST", "utf8");
     filters.push(
-      `drawtext=fontfile=font.ttf:textfile=test.txt:fontcolor=white@0.30:fontsize=280:x=(w-text_w)/2:y=${withLyrics ? "h-620" : "260"}`,
+      `drawtext=fontfile=font.ttf:textfile=test.txt:fontcolor=white@0.30:fontsize=280:x=(w-text_w)/2:y=${compact ? "h-620" : "260"}`,
     );
   }
   if (withLyrics) {
@@ -150,6 +159,32 @@ export async function renderStandardVideo(
     filters.push("ass=lyrics.ass:fontsdir=.");
   }
 
+  // Hintergrund: Slideshow aus den Fotos oder bewegter Farbverlauf
+  let background: string[];
+  let graph: string;
+  if (photos.length) {
+    const seg = seconds / photos.length;
+    const fade = Math.min(0.6, seg / 4);
+    background = photos.flatMap((p) => ["-loop", "1", "-t", seg.toFixed(3), "-i", path.resolve(p)]);
+    const parts = photos.map(
+      (_, i) =>
+        `[${i + 1}:v]split[a${i}][b${i}];` +
+        `[a${i}]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:4,eq=brightness=-0.12[bg${i}];` +
+        `[b${i}]scale=${width}:${height}:force_original_aspect_ratio=decrease[fg${i}];` +
+        `[bg${i}][fg${i}]overlay=(W-w)/2:(H-h)/2,setsar=1,fps=25,format=yuv420p,` +
+        `fade=t=in:st=0:d=${fade.toFixed(2)},fade=t=out:st=${(seg - fade).toFixed(3)}:d=${fade.toFixed(2)}[p${i}]`,
+    );
+    graph = `${parts.join(";")};${photos.map((_, i) => `[p${i}]`).join("")}concat=n=${photos.length}:v=1:a=0,${filters.join(",")}[v]`;
+  } else {
+    background = [
+      "-f",
+      "lavfi",
+      "-i",
+      `gradients=s=${width}x${height}:c0=${hex(c0)}:c1=${hex(c1)}:x0=0:y0=0:x1=${width}:y1=${height}:speed=0.008:r=25:d=${seconds}`,
+    ];
+    graph = `[1:v]${filters.join(",")}[v]`;
+  }
+
   await run(
     tools.ffmpeg,
     [
@@ -158,12 +193,9 @@ export async function renderStandardVideo(
       "-y",
       "-i",
       path.resolve(options.audioFile),
-      "-f",
-      "lavfi",
-      "-i",
-      `gradients=s=${width}x${height}:c0=${hex(c0)}:c1=${hex(c1)}:x0=0:y0=0:x1=${width}:y1=${height}:speed=0.008:r=25:d=${seconds}`,
+      ...background,
       "-filter_complex",
-      `[1:v]${filters.join(",")}[v]`,
+      graph,
       "-map",
       "[v]",
       "-map",

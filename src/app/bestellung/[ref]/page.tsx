@@ -19,6 +19,8 @@ import { createSignedFilePath } from "@/delivery/signing";
 import { listInvoicesForOrder } from "@/invoices/service";
 import { getDeliveryFiles, getSharePage } from "@/orders/delivery";
 import { CheckoutForm } from "./checkout-form";
+import { PhotoUploader } from "./photo-uploader";
+import { listPhotos, MAX_PHOTOS } from "@/orders/photos";
 import { ShareControls } from "./share-controls";
 import { requireUser } from "@/server/session";
 
@@ -178,6 +180,13 @@ async function OrderContent({
 
       {order.status === "preview_ready" && returnedFromPayment && (
         <Notice kind="error">{t("paymentFailed")}</Notice>
+      )}
+      {(order.status === "preview_ready" || order.status === "awaiting_payment") && (
+        <PhotoUploader
+          publicRef={order.publicRef}
+          photos={(await listPhotos(db, order.id)).map((ph) => ({ id: ph.id }))}
+          max={MAX_PHOTOS}
+        />
       )}
       {order.status === "preview_ready" && (
         <section className="rounded-2xl border border-brand/40 p-5" aria-label={t("checkoutTitle")}>

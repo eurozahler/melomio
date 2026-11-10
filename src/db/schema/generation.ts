@@ -207,3 +207,20 @@ export const sharePages = pgTable("share_pages", {
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   disabledAt: timestamp({ withTimezone: true }),
 });
+
+/** Fotos des Kunden für die Slideshow im Video (C2). Gespeichert ohne Metadaten (EXIF/GPS entfernt). */
+export const orderPhotos = pgTable(
+  "order_photos",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    orderId: uuid()
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    storageKey: text().notNull(),
+    width: integer().notNull(),
+    height: integer().notNull(),
+    sort: integer().notNull().default(0),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.orderId)],
+);

@@ -1,4 +1,5 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { listPhotos } from "@/orders/photos";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
@@ -123,6 +124,16 @@ export async function renderCustomerVideo({ db, storage, tools, fontFile }: Vide
     const audioFile = path.join(workDir, "song.mp3");
     await writeFile(audioFile, Buffer.from(await new Response(audio.stream).arrayBuffer()));
 
+    // Fotos des Kunden (falls hochgeladen) für die Slideshow in den Arbeitsordner holen
+    const photoFiles: string[] = [];
+    for (const [i, photo] of (await listPhotos(db, orderId)).entries()) {
+      const file = await storage.open(photo.storageKey);
+      if (!file) continue;
+      const local = path.join(workDir, `foto${i}.jpg`);
+      await writeFile(local, Buffer.from(await new Response(file.stream).arrayBuffer()));
+      photoFiles.push(local);
+    }
+
     const outputFile = path.join(workDir, "video.mp4");
     const config = template.config as VideoTemplateConfig;
     await renderStandardVideo(tools, {
@@ -136,6 +147,7 @@ export async function renderCustomerVideo({ db, storage, tools, fontFile }: Vide
       config,
       // Songtext läuft mit, wenn der Musikanbieter Zeilenzeiten geliefert hat (abschaltbar per Vorlage)
       lyrics: config.showLyrics === false ? null : track.lyricsTiming,
+      photos: photoFiles,
     });
 
     // Prüfung: Format, Auflösung, Spuren, Länge = Songlänge

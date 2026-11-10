@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import sharp from "sharp";
 import { linkFromMailbox, orderWithPreview, registerAndVerify, uniqueEmail } from "./helpers";
 
 /** Abnahme M9: Song und Video herunterladen, Song-Seite per Link/QR, E-Mail „Song fertig“. */
@@ -23,6 +24,21 @@ test("Von der Bestellung bis zum Download – und Song-Seite zum Teilen", async 
   test.setTimeout(240_000);
   const email = uniqueEmail("download");
   const ref = await orderWithPreview(page, email, PASSWORD);
+
+  // Ein Foto für die Slideshow hochladen (wird vor dem Kauf angezeigt)
+  const photo = await sharp({ create: { width: 800, height: 600, channels: 3, background: "#cc6633" } })
+    .jpeg()
+    .toBuffer();
+  await page
+    .getByTestId("photo-input")
+    .setInputFiles({ name: "urlaub.jpg", mimeType: "image/jpeg", buffer: photo });
+  await expect(page.getByTestId("photo-list").getByRole("img")).toHaveCount(1);
+  // Kein Bild: wird abgelehnt
+  await page
+    .getByTestId("photo-input")
+    .setInputFiles({ name: "text.jpg", mimeType: "image/jpeg", buffer: Buffer.from("kein Bild") });
+  await expect(page.getByRole("alert").filter({ hasText: "kein unterstütztes Bild" })).toBeVisible();
+
   await buy(page, ref);
 
   await expect(page.getByText("Dein Song ist fertig! 🎉")).toBeVisible();
