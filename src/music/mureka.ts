@@ -110,7 +110,8 @@ export function createMurekaMusicProvider(apiKey: string, options: MurekaOptions
 
   return {
     name: "mureka",
-    estimateCostCents: () => options.costCents ?? 0,
+    // Gemessen am 10.11.2026: 0,15 $ pro Song (mureka-9.5, Trial-Paket) ≈ 14 Cent
+    estimateCostCents: () => options.costCents ?? 14,
 
     async generate(input: MusicInput, workDir: string): Promise<MusicResult> {
       const request: Record<string, unknown> = {
