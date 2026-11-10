@@ -32,6 +32,16 @@ Du brauchst drei Fenster im Projektordner `C:\dev\songgen`:
     - „**Schritt wiederholen**“ erscheint bei Fehlern.
     - „**Kandidat freigeben**“ erscheint, wenn die automatische Prüfung unsicher war.
   - **Einstellungen:** Preis, Anzahl KI-Neuformulierungen, Hörproben pro Konto, Tagesbudget und mehr. Jede Änderung steht im **Änderungsprotokoll**.
+  - **Übersicht (neu):** Lebenszeichen des Workers, Monatstabelle (Umsatz, Erstattungen, Musikkosten, Fehler) für Live- und Testbetrieb.
+  - **Bestelldetail (neu):** Hörprobe und Kundenvideo ansehen, „**Bestellung erstatten**“ (Geld zurück über Mollie, Stornorechnung, Downloads gesperrt).
+  - **Fragebögen:** neue Anlässe anlegen, Fragen bearbeiten (Entwurf → Veröffentlichen), Anlass ein-/ausblenden.
+  - **Prompt:** Anweisungen an Claude für die Songtexte ändern, mit Beispielbestellung testen, Fassung aktivieren oder zurückgehen.
+  - **Gutscheine:** Codes mit Prozent- oder Festbetrag-Rabatt, Ablaufdatum und Limit; 100 % = Gratis-Song.
+  - **Rechnungen:** alle Rechnungen als PDF, Stornieren, CSV-Export für den Steuerberater.
+  - **Firma:** Firmendaten für Rechnungen und Rechtstexte.
+- **Kundenkonto (neu):** „Meine Daten herunterladen“ und „Konto löschen“.
+- **Bestellseite (neu):** bis zu 10 Fotos für das Video hochladen, Gutscheincode, Rechnung auf eine Firma.
+- **Vorschau des Videos ohne Kosten:** `npx tsx scripts/video/vorschau.ts --fotos` (Ergebnis im Ordner `hoertest/video-vorschau`).
 
 ## 4. Echte Bausteine einschalten (nur mit Absprache)
 

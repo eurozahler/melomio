@@ -146,3 +146,57 @@ Stand: 08.11.2026, nach Abschluss der ersten Version (M0–M11). Sortiert nach D
 - **Admin ist nur auf Deutsch.** Die Kundenseiten sind mehrsprachig vorbereitet.
 - **Admin für Nicht-Admins:** Statt eines „echten“ 404-Status liefert Next.js wegen des Streamings Status 200 mit der Seite „Seite nicht gefunden“. Admin-Inhalte werden dabei nicht ausgeliefert. Kein Sicherheitsproblem.
 - **Barrierefreiheit:** Die automatische Prüfung (axe, WCAG 2.1 AA) ist auf allen Kundenseiten ohne Befund. Eine Prüfung von Hand (Screenreader, Tastatur) steht noch aus.
+
+## Teil E – Fragen nach dem Ausbau (Phase C, Stand 11.11.2026)
+
+Gebaut und auf dem Testserver: Rechtstexte (Entwurf), Konto löschen und Datenexport, Erstattung,
+Fragebogen-Builder, Prompt-Verwaltung, Dashboard, Alarme und Statusabfrage, Sicherung,
+Songtext im Video (Karaoke), Firmenrechnung, Gutscheine, Fotos mit Slideshow.
+Livegang-Ablauf: `docs/LIVEGANG.md`.
+
+### Sofort von dir zu erledigen
+1. **Firmendaten** im Admin unter „Firma“ eintragen (erscheinen in Rechnung, Impressum, AGB, Datenschutz).
+2. **Tägliche Sicherung auf dem Testserver einschalten** (ich durfte keinen Zeitplan anlegen):
+   `ssh melomio-test bash /opt/melomio/backup/cron-einrichten.sh`
+3. **Alarm-Empfänger:** Welche E-Mail-Adresse? Eintragen mit
+   `ssh -t melomio-test bash schluessel-eintragen.sh ALERT_EMAIL` (sonst gehen Alarme an die E-Mail aus „Firma“).
+
+### Entscheidungen
+4. **Nutzungsrechte der Kunden** (AGB § 8): Vorschlag „privat, auch soziale Netzwerke, nicht kommerziell,
+   nicht auf Streaming-Diensten“. Passt das, oder sollen Kunden mehr dürfen (z. B. Firmenkunden für Werbung)?
+5. **Mindestalter** (F-14): Vorschlag 18 Jahre oder mit Zustimmung der Eltern. Einverstanden?
+6. **Wie lange bleiben Song und Video im Konto abrufbar?** Vorschlag: solange das Konto besteht.
+7. **Speicherfrist Hörprobe ohne Kauf:** derzeit 14 Tage (Admin → Einstellungen). Passt das?
+8. **Zweiter Musik-Kandidat nach dem Kauf** (E4): Soll der Kunde nach dem Kauf eine zweite Version zur
+   Auswahl bekommen (kostet 14 Cent je Kauf)? Bisher ohne Wirkung.
+9. **Firmenkunden aus dem EU-Ausland:** Rechnungen enthalten immer 19 % MwSt. Für Firmen im EU-Ausland
+   mit USt-IdNr. wäre eigentlich „Reverse Charge“ (ohne deutsche MwSt.) nötig. Erst einmal nur
+   Deutschland anbieten (Vorschlag) – oder Steuerberater fragen?
+10. **Gratis-Bestellungen per 100-%-Gutschein:** Der Knopf heißt dann trotzdem „Zahlungspflichtig bestellen“.
+    Soll er bei 0 € „Kostenlos bestellen“ heißen? (kleine Änderung)
+11. **Virenscan für Fotos:** Fotos werden beim Hochladen komplett neu berechnet (dabei fällt alles außer
+    dem Bild weg). Ein zusätzlicher Virenscanner (ClamAV) braucht ca. 1–2 GB Arbeitsspeicher auf dem
+    Server. Vorschlag: vorerst ohne. Einverstanden?
+12. **Dateispeicher im Livebetrieb:** Hetzner Object Storage (Vorschlag, Baustein fertig, kostet ein paar
+    Euro im Monat ⚠️ Preis nicht geprüft) – oder vorerst Festplatte des Servers mit täglicher Sicherung?
+13. **Außer-Haus-Sicherung:** Hetzner Storage Box anmieten (⚠️ Preis nicht geprüft)? Ohne sie liegen die
+    Sicherungen nur auf demselben Server.
+14. **Überwachung von außen:** Einen kostenlosen Uptime-Dienst (z. B. UptimeRobot) auf
+    `https://melomio.de/api/health` einrichten? Dafür brauchst du ein eigenes Konto dort.
+15. **Songtext-Modell:** Standard ist Claude Opus 5.5. Im Admin unter „Prompt“ kannst du testweise
+    günstigere Modelle wählen. Willst du vergleichen (jeder Testlauf kostet wenige Cent)?
+
+### Für C7 (Veröffentlichung über EasyGMV/Dropbox) und C11 (Trauer)
+16. **F-15:** Kann EasyGMV Ordner im Bereich `/Apps/melomio/…` überwachen (dann reicht der sichere
+    „App-Ordner“-Zugriff), oder müssen es vorhandene Ordner außerhalb sein?
+17. **Ordner pro Anlass oder ein gemeinsamer Ordner** (E14)?
+18. **Was genau wird veröffentlicht** – nur das Video, mit oder ohne Fotos, mit Vorname oder anonym?
+19. **F-21 Trauer:** Juristische Prüfung der Einwilligung von Angehörigen und Bildern Verstorbener
+    (§ 22 KUG) – erst danach baue ich C11.
+20. **F-20 Rabatt für die Veröffentlichung:** weiterhin später?
+
+### Bekannte Lücken (zur Kenntnis)
+- Profil bearbeiten (Name, E-Mail ändern) gibt es noch nicht; Konto löschen und Datenexport schon.
+- Nur ein Steuersatz (19 %).
+- Rechtstexte sind Entwürfe nach gängigen Mustern – **juristische Prüfung vor dem Livegang nötig**.
+- Ältere Testbestellungen (vor dem 11.11.) haben keine Zeilenzeiten – deren Videos zeigen nur den Titel.

@@ -1,6 +1,6 @@
 # Entwicklungsplan
 
-Stand: 08.11.2026 (2. Fassung) · Status: **freigegeben am 08.11.2026**, Umsetzung läuft · M0 ✅ · M1 ✅ · M2 ✅ · M3 ✅ · M3b ✅ · M4 ✅ · M5 ✅ · M6 ✅ · M7 ✅ · M8 ✅ · M9 ✅ · M10 ✅ · M11 ✅ (08.11.2026, Testserver vorbereitet, noch nicht freigeschaltet) – offene Punkte: `OFFENE_FRAGEN.md` Teil D
+Stand: 11.11.2026 · Status: **freigegeben am 08.11.2026** · Erste Version M0–M11 ✅ · Testserver https://staging.melomio.de ✅ · Phase C: C1 ✅ · C2 ✅ · C3 ✅ · C4 ✅ · C5 ✅ · C6 ✅ · C8 ✅ · C9 ✅ · C10 vorbereitet (Livegang offen, siehe `LIVEGANG.md`) · C7 und C11 warten auf Antworten – offene Punkte: `OFFENE_FRAGEN.md` Teil E
 
 Die Umsetzung ist in kleine **Module** aufgeteilt. Jedes Modul endet mit einem **überprüfbaren Ergebnis**: etwas, das du selbst im Browser ansehen kannst, und automatische Tests, die grün sein müssen. Erst wenn ein Modul abgenommen ist, beginnt das nächste.
 
@@ -120,16 +120,16 @@ Ohne echte Zugänge läuft alles im **gekennzeichneten Testbetrieb** (siehe `ARC
 ## Danach: Phase C – Ausbau (Reihenfolge nach Absprache)
 | Modul | Inhalt |
 |---|---|
-| C1 | Echte E-Mails, Zustellprotokoll |
-| C2 | Foto-Upload (Validierung, Virenscan, Metadaten entfernen) und synchronisierte Slideshow |
-| C3 | Songtext im Video, zeitlich synchron (Verfahren abhängig vom Musikanbieter) |
-| C4 | Konto-Ausbau: Profil, Konto löschen, Datenexport |
-| C5 | Gutscheine, mehrere Steuersätze, Rechnungen/Belege |
-| C6 | Ausführlicher Admin: Fragebogen-Builder, Prompt-Verwaltung mit Test und Rollback, Dashboard (Umsatz, Kosten, Fehlerraten) |
+| C1 ✅ | Echte E-Mails, Zustellprotokoll |
+| C2 ✅ | Foto-Upload (Validierung, Metadaten entfernen) und Slideshow im Video – Virenscan offen (Teil E) |
+| C3 ✅ | Songtext im Video, zeitlich synchron (Karaoke mit Mureka-Wortzeiten) |
+| C4 ✅ | Konto-Ausbau: Konto löschen, Datenexport (Profil-Bearbeitung offen) |
+| C5 ✅ | Gutscheine, Rechnungen/Belege, Firmenrechnung (mehrere Steuersätze offen) |
+| C6 ✅ | Ausführlicher Admin: Fragebogen-Builder, Prompt-Verwaltung mit Test und Rollback, Dashboard (Umsatz, Kosten, Fehlerraten) |
 | C7 | **Veröffentlichung über EasyGMV:** Einwilligung (Fotos nur mit Bestätigung, sonst Fassung ohne Fotos), Admin-Freigabe, „Mit Dropbox verbinden“, **Ordner pro Anlass oder ein gemeinsamer Ordner** (E14), Upload in den Ordner |
-| C8 | Rückerstattungsablauf (Gewährleistung), Lösch- und Exportanfragen (DSGVO), Aufbewahrungsfristen, automatisches Löschen von Hörproben ohne Kauf |
-| C9 | Monitoring: Fehlertracking, Kosten- und Warteschlangen-Überwachung, Alarme |
-| C10 | Livebetrieb auf Hetzner: Produktionsserver, Backups, Domain von Strato auf Hetzner zeigen lassen, Livegang-Checkliste (rechtliche Texte, AV-Verträge, Lasttest) |
+| C8 ✅ | Rückerstattungsablauf (Gewährleistung), Lösch- und Exportanfragen (DSGVO), Aufbewahrungsfristen, automatisches Löschen von Hörproben ohne Kauf |
+| C9 ✅ | Monitoring: Alarme per E-Mail, Wächter (hängende Bestellungen, Budget, Guthaben), Lebenszeichen, /api/health |
+| C10 (vorbereitet) | Livebetrieb auf Hetzner: Produktionsserver, Backups, Domain von Strato auf Hetzner zeigen lassen, Livegang-Checkliste (rechtliche Texte, AV-Verträge, Lasttest) |
 | C11 | **Trauer: Vorlage „Abschiedsvideo“** (E15): ein Foto in Schwarz-Weiß, Name, geboren/verstorben, Spruch, Aufruf zum Teilen („… auf eine letzte Reise um die Welt schicken“). Eigene Fragen im Fragebogen (Daten, Spruch), ausdrückliche Beauftragung der Veröffentlichung, Pflicht zur Admin-Freigabe. Braucht C2 und C7. |
 
 ## Phase D – Skalierung
