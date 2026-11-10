@@ -186,11 +186,26 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array
   data.lines.forEach((line, i) => {
     y -= 18;
     draw(page, String(i + 1), cols.pos, y);
-    draw(page, line.description, cols.desc, y);
     draw(page, String(line.quantity), cols.qty + 20, y, { alignRight: true });
     draw(page, formatMoney(line.netCents, data.currency), cols.net + 30, y, { alignRight: true });
     draw(page, formatRate(line.taxRateBp), cols.rate + 30, y, { alignRight: true });
     draw(page, formatMoney(line.grossCents, data.currency), cols.gross, y, { alignRight: true });
+    // Beschreibung bricht um, damit sie nicht in die Spalte „Menge“ läuft
+    const maxWidth = cols.qty - 15 - cols.desc;
+    const rows: string[] = [];
+    let current = "";
+    for (const word of safe(regular, line.description).split(" ")) {
+      const next = current ? `${current} ${word}` : word;
+      if (current && regular.widthOfTextAtSize(next, 10) > maxWidth) {
+        rows.push(current);
+        current = word;
+      } else current = next;
+    }
+    if (current) rows.push(current);
+    rows.forEach((row, r) => {
+      if (r > 0) y -= 13;
+      draw(page, row, cols.desc, y);
+    });
   });
   y -= 12;
   page.drawLine({ start: { x: left, y }, end: { x: right, y }, thickness: 0.6, color: GREY });
