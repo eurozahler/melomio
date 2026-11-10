@@ -76,23 +76,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-neutral-200 px-4 py-6 text-center text-sm text-neutral-500 dark:border-neutral-800">
-        <p>
-          <Link href="/impressum" className="underline">
-            {t("footerImprint")}
-          </Link>{" "}
-          ·{" "}
-          <Link href="/datenschutz" className="underline">
-            {t("footerPrivacy")}
-          </Link>{" "}
-          ·{" "}
-          <Link href="/agb" className="underline">
-            AGB
-          </Link>
-        </p>
-        <p className="mt-1 text-xs">{t("footerLegalPending")}</p>
-      </footer>
     </>
   );
 }

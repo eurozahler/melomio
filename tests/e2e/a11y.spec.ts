@@ -27,6 +27,9 @@ test("öffentliche Seiten", async ({ page }) => {
     ["/anmelden", "Anmelden"],
     ["/registrieren", "Registrieren"],
     ["/agb", "AGB"],
+    ["/impressum", "Impressum"],
+    ["/datenschutz", "Datenschutz"],
+    ["/widerruf", "Widerrufsbelehrung"],
     ["/song/geburtstag", "Fragebogen"],
   ] as const) {
     await page.goto(path);
