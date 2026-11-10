@@ -97,3 +97,41 @@ export function SaveField({
     </form>
   );
 }
+
+/** Knopf mit Rückfrage und optionalem Grund (z. B. Erstattung). */
+export function ReasonButton({
+  label,
+  question,
+  action,
+  testId,
+}: {
+  label: string;
+  question: string;
+  action: (reason: string | null) => Promise<AdminResult>;
+  testId?: string;
+}) {
+  const [pending, start] = useTransition();
+  const [result, setResult] = useState<AdminResult | null>(null);
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        disabled={pending}
+        data-testid={testId}
+        className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-60 dark:border-red-800 dark:text-red-300"
+        onClick={() => {
+          const reason = window.prompt(`${question}\n\nGrund (optional):`);
+          if (reason === null) return;
+          start(async () => setResult(await action(reason || null)));
+        }}
+      >
+        {label}
+      </button>
+      {result && (
+        <p role="status" className={`text-xs ${result.ok ? "text-green-700" : "text-red-700"}`}>
+          {result.ok ? result.message : result.error}
+        </p>
+      )}
+    </div>
+  );
+}

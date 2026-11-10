@@ -46,7 +46,18 @@ export interface PaymentProvider {
   createPayment(input: CreatePaymentInput): Promise<CreatedPayment>;
   /** Status direkt beim Anbieter abfragen. null = Zahlung existiert beim Anbieter nicht. */
   getPayment(providerPaymentId: string): Promise<FetchedPayment | null>;
+  /** Betrag (ganz oder teilweise) erstatten. Das Geld geht an das ursprüngliche Zahlungsmittel. */
+  refund(
+    input: RefundInput,
+  ): Promise<{ providerRefundId: string; status: "pending" | "processing" | "refunded" }>;
 }
+
+export type RefundInput = {
+  providerPaymentId: string;
+  amountCents: number;
+  currency: string;
+  description: string;
+};
 
 /** Bruttopreis in Netto und Steuer zerlegen (Verbraucherpreise sind Bruttopreise). */
 export function splitGross(grossCents: number, taxRateBp: number): { netCents: number; taxCents: number } {

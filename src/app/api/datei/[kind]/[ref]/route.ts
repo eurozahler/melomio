@@ -32,7 +32,8 @@ export async function GET(request: Request, { params }: RouteContext<"/api/datei
 
   const db = getDb();
   const order = await getOwnedOrder(db, ref, user.id);
-  if (!order?.paidAt) return new Response("Nicht gefunden", { status: 404 });
+  // Nach einer Erstattung keine Downloads mehr
+  if (!order?.paidAt || order.status === "refunded") return new Response("Nicht gefunden", { status: 404 });
 
   const files = await getDeliveryFiles(db, order.id);
   const file = kind === "song" ? files.song : files.video;

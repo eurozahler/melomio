@@ -7,7 +7,8 @@ import { attachDraftToUser, DRAFT_COOKIE, isValidDraftCookieId, listUserDrafts }
 import { listOrdersForUser } from "@/server/orders";
 import { requireUser } from "@/server/session";
 import { WORKING_STATUSES } from "@/domain/order-status";
-import { logoutAction } from "./actions";
+import { deleteAccountAction, logoutAction } from "./actions";
+import { DeleteAccount } from "./delete-account";
 import { AutoRefresh } from "@/components/auto-refresh";
 
 export default function AccountPage({ searchParams }: PageProps<"/konto">) {
@@ -123,6 +124,21 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/konto">, "searc
             ))}
           </ul>
         )}
+      </section>
+
+      <section aria-labelledby="my-data" className="flex flex-col gap-3">
+        <h2 id="my-data" className="text-xl font-bold">
+          {t("dataTitle")}
+        </h2>
+        <p className="text-sm text-neutral-600 dark:text-neutral-300">{t("dataText")}</p>
+        <a
+          href="/api/konto/export"
+          className="self-start text-sm font-semibold text-brand underline"
+          data-testid="export-data"
+        >
+          {t("export")}
+        </a>
+        <DeleteAccount action={deleteAccountAction} />
       </section>
 
       <div className="flex flex-wrap gap-3">

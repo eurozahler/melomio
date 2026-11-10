@@ -73,5 +73,25 @@ export function createMollieProvider(
         orderId: p.metadata?.orderId ?? null,
       };
     },
+
+    async refund({ providerPaymentId, amountCents, currency, description }) {
+      if (!/^tr_[A-Za-z0-9]+$/.test(providerPaymentId)) throw new Error("Mollie: ungültige Zahlungs-ID");
+      const res = await doFetch(`${API}/payments/${providerPaymentId}/refunds`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ amount: { currency, value: centsToDecimal(amountCents) }, description }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { detail?: string };
+        throw new Error(
+          `Mollie: Erstattung abgelehnt (HTTP ${res.status})${body.detail ? `: ${body.detail}` : ""}`,
+        );
+      }
+      const r = (await res.json()) as { id: string; status: string };
+      // queued/pending → pending; processing; refunded
+      const status =
+        r.status === "refunded" ? "refunded" : r.status === "processing" ? "processing" : "pending";
+      return { providerRefundId: r.id, status };
+    },
   };
 }

@@ -52,6 +52,8 @@ export const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
     "paid",
     "video_rendering",
     "canceled",
+    // bezahlte Bestellung, die nicht fertig wird → Geld zurück
+    "refunded",
   ],
   canceled: [],
 };

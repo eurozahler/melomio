@@ -57,6 +57,13 @@
       "when": 1794341408470,
       "tag": "0007_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794345856939,
+      "tag": "0008_account_deleted_at",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   emailVerified: boolean().notNull().default(false),
   image: text(),
   locale: text().notNull().default("de"),
+  /** Konto gelöscht (Daten entfernt, E-Mail anonymisiert). Bestellungen/Rechnungen bleiben für Aufbewahrungspflichten. */
+  deletedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });

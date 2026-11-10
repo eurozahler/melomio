@@ -6,6 +6,7 @@ import { buildLyricsInput, getActiveSystemPrompt, lyricsSchema, type LyricsProvi
 import type { MediaTools } from "@/media/ffmpeg";
 import type { MusicProvider } from "@/music/types";
 import { createInvoiceForOrder } from "@/invoices/service";
+import { expireOldPreviews } from "@/account/service";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
 import { sendOrderConfirmation, sendSongReady } from "./order-paid";
@@ -223,13 +224,14 @@ export async function handleVideoRender(deps: HandlerDeps, { orderId }: OrderJob
   return result;
 }
 
-/** Aufräumen: Fragebogen-Entwürfe nach Ablauf (30 Tage) löschen. */
-export async function handleCleanupDrafts({ db }: HandlerDeps) {
+/** Aufräumen (täglich): Fragebogen-Entwürfe nach 30 Tagen und Hörproben ohne Kauf nach Ablauf löschen. */
+export async function handleCleanupDrafts({ db, storage }: Pick<HandlerDeps, "db" | "storage">) {
   const deleted = await db
     .delete(questionnaireDrafts)
     .where(lt(questionnaireDrafts.expiresAt, new Date()))
     .returning({ id: questionnaireDrafts.id });
-  return `${deleted.length} abgelaufene Entwürfe gelöscht`;
+  const previews = await expireOldPreviews(db, storage);
+  return `${deleted.length} abgelaufene Entwürfe gelöscht, ${previews.orders} Hörproben ohne Kauf abgelaufen (${previews.files} Dateien)`;
 }
 
 /**

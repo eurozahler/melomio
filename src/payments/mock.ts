@@ -47,6 +47,11 @@ export function createMockPaymentProvider(db: Database, baseUrl: string): Paymen
         orderId: row.metadata.orderId ?? null,
       };
     },
+    async refund({ providerPaymentId }) {
+      const [row] = await db.select().from(devMockPayments).where(eq(devMockPayments.id, providerPaymentId));
+      if (!row || row.status !== "paid") throw new Error("Test-Zahlung nicht erstattbar (nicht bezahlt)");
+      return { providerRefundId: `mock_re_${providerPaymentId.slice(0, 8)}`, status: "refunded" };
+    },
   };
 }
 

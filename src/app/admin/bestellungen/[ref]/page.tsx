@@ -8,8 +8,8 @@ import { getApprovedLyrics } from "@/orders/delivery";
 import { listLyricsVersions } from "@/orders/lyrics";
 import { requireAdmin } from "@/server/admin";
 import { LyricsView } from "@/app/bestellung/[ref]/songtext/lyrics-review";
-import { approveCandidateAction, retryOrderAction } from "../../actions";
-import { ActionButton } from "../../admin-ui";
+import { approveCandidateAction, refundOrderAction, retryOrderAction } from "../../actions";
+import { ActionButton, ReasonButton } from "../../admin-ui";
 
 export default function AdminOrderDetail({ params }: PageProps<"/admin/bestellungen/[ref]">) {
   return (
@@ -62,6 +62,22 @@ async function Detail({ params }: Pick<PageProps<"/admin/bestellungen/[ref]">, "
             label="Schritt wiederholen"
             action={retryAction}
             confirmText="Den fehlgeschlagenen Schritt wiederholen?"
+          />
+        </section>
+      )}
+
+      {order.paidAt && ["paid", "completed", "failed"].includes(order.status) && (
+        <section className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+          <h2 className="mb-1 text-xl font-bold">Erstattung</h2>
+          <p className="mb-2 text-sm text-neutral-600 dark:text-neutral-300">
+            Bucht den vollen Betrag über den Zahlungsanbieter zurück, erstellt die Stornorechnung und sperrt
+            Downloads und Song-Seite.
+          </p>
+          <ReasonButton
+            label="Bestellung erstatten"
+            question={`Bestellung ${order.publicRef} wirklich erstatten? Das Geld geht sofort zurück, das lässt sich nicht rückgängig machen.`}
+            action={refundOrderAction.bind(null, order.publicRef)}
+            testId="refund-order"
           />
         </section>
       )}

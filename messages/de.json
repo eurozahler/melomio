@@ -178,7 +178,15 @@
     "tooManyOpen": "Du hast bereits mehrere offene Bestellungen. Bitte schließe zuerst eine davon ab.",
     "orderNumber": "Bestellnummer {ref}",
     "openLyrics": "Songtext ansehen und prüfen",
-    "orderDetails": "Bestellung ansehen"
+    "orderDetails": "Bestellung ansehen",
+    "dataTitle": "Meine Daten",
+    "dataText": "Du kannst alle Daten zu deinem Konto herunterladen oder dein Konto löschen. Beim Löschen entfernen wir Songtexte, Antworten, Songs und Videos. Rechnungen bewahren wir aus gesetzlichen Gründen auf.",
+    "export": "Meine Daten herunterladen (JSON)",
+    "delete": "Konto löschen",
+    "deleting": "Wird gelöscht …",
+    "deleteConfirm": "Konto wirklich löschen? Songtexte, Songs und Videos werden endgültig gelöscht und können nicht wiederhergestellt werden. Lade vorher alles herunter, was du behalten möchtest.",
+    "deleteBusy": "Gerade wird noch an einer Bestellung gearbeitet. Bitte versuche es in ein paar Minuten noch einmal.",
+    "deleteFailed": "Das hat nicht geklappt. Bitte versuche es später noch einmal oder schreib uns."
   },
   "Mailbox": {
     "title": "Test-Postfach",

@@ -13,6 +13,8 @@ import { getDb } from "@/db/client";
 import { SETTING_KEYS, type SettingKey } from "@/db/settings";
 import { CompanyProfileError, saveCompanyProfile } from "@/invoices/company";
 import { cancelInvoice, InvoiceActionError } from "@/invoices/service";
+import { refundOrder, RefundError } from "@/orders/refund";
+import { getPaymentProvider } from "@/payments";
 import { getAdminUser } from "@/server/admin";
 import { getSenderBoss } from "@/server/jobs";
 import { getStorage } from "@/storage";
@@ -122,5 +124,40 @@ export async function cancelInvoiceAction(invoiceId: unknown, reason: unknown): 
     }
     console.error("[Admin]", error);
     return { ok: false, error: "Das hat nicht geklappt." };
+  }
+}
+
+export async function refundOrderAction(ref: unknown, reason: unknown): Promise<AdminResult> {
+  const admin = await getAdminUser();
+  if (!admin) return { ok: false, error: "Keine Berechtigung." };
+  if (typeof ref !== "string") return { ok: false, error: "Nicht gefunden." };
+  try {
+    const db = getDb();
+    const env = getEnv();
+    const result = await refundOrder(
+      db,
+      getPaymentProvider(env, db),
+      getStorage(env),
+      ref,
+      admin.id,
+      typeof reason === "string" ? reason : null,
+    );
+    refresh();
+    return {
+      ok: true,
+      message: `Erstattet${result.stornoNumber ? ` – Stornorechnung ${result.stornoNumber}` : ""}. Der Kunde erhält das Geld über das ursprüngliche Zahlungsmittel.`,
+    };
+  } catch (error) {
+    if (error instanceof RefundError) {
+      const text = {
+        not_found: "Nicht gefunden.",
+        not_paid: "Diese Bestellung ist nicht bezahlt.",
+        wrong_status: "Gerade läuft noch ein Schritt – bitte warten oder Seite neu laden.",
+        already_refunded: "Bereits erstattet.",
+      }[error.code];
+      return { ok: false, error: text };
+    }
+    console.error("[Admin] Erstattung", error);
+    return { ok: false, error: error instanceof Error ? error.message : "Das hat nicht geklappt." };
   }
 }
