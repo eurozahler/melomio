@@ -4,7 +4,7 @@ import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Notice } from "@/components/auth-ui";
-import { startCheckoutAction } from "./actions";
+import { previewVoucherAction, startCheckoutAction } from "./actions";
 
 /**
  * Kaufformular (E16): Preis inkl. MwSt., zwei Pflicht-Haken (NICHT vorangekreuzt),
@@ -24,6 +24,11 @@ export function CheckoutForm({
   const [terms, setTerms] = useState(false);
   const [waiver, setWaiver] = useState(false);
   const [business, setBusiness] = useState(false);
+  const [code, setCode] = useState("");
+  const [voucher, setVoucher] = useState<{ code: string; discount: string; gross: string } | null>(null);
+  const [voucherError, setVoucherError] = useState(false);
+  const euro = (cents: number) =>
+    new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100);
   const [billing, setBilling] = useState({
     company: "",
     contact: "",
@@ -44,6 +49,7 @@ export function CheckoutForm({
         publicRef,
         { termsPrivacy: terms, withdrawalWaiver: waiver },
         business ? billing : null,
+        voucher?.code ?? null,
       );
       if (result.ok) window.location.assign(result.checkoutUrl);
       else setError(t(`errors.${result.error}`));
@@ -58,9 +64,62 @@ export function CheckoutForm({
       <div>
         <p className="text-sm text-neutral-500">{t("priceLabel")}</p>
         <p className="text-3xl font-bold" data-testid="checkout-price">
-          {grossLabel}
+          {voucher ? voucher.gross : grossLabel}
         </p>
+        {voucher && (
+          <p className="text-sm text-green-700 dark:text-green-400" data-testid="voucher-applied">
+            {t("voucherApplied", { code: voucher.code, discount: voucher.discount })}
+          </p>
+        )}
         <p className="text-sm text-neutral-500">{vatLabel}</p>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor={`${id}-voucher`} className="text-sm font-semibold">
+          {t("voucherLabel")}
+        </label>
+        <div className="flex gap-2">
+          <input
+            id={`${id}-voucher`}
+            value={code}
+            autoCapitalize="characters"
+            autoComplete="off"
+            data-testid="voucher-code"
+            onChange={(e) => {
+              setCode(e.target.value);
+              setVoucherError(false);
+            }}
+            className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 uppercase dark:border-neutral-700 dark:bg-neutral-900"
+          />
+          <button
+            type="button"
+            disabled={!code.trim() || pending}
+            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-semibold disabled:opacity-50 dark:border-neutral-700"
+            onClick={() =>
+              startTransition(async () => {
+                const r = await previewVoucherAction(code);
+                if (r.ok) {
+                  setVoucher({
+                    code: code.trim().toUpperCase(),
+                    discount: euro(r.discountCents),
+                    gross: euro(r.grossCents),
+                  });
+                  setVoucherError(false);
+                } else {
+                  setVoucher(null);
+                  setVoucherError(true);
+                }
+              })
+            }
+          >
+            {t("voucherApply")}
+          </button>
+        </div>
+        {voucherError && (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            {t("errors.voucher_invalid")}
+          </p>
+        )}
       </div>
 
       <label htmlFor={`${id}-terms`} className="flex gap-3 text-sm">

@@ -14,6 +14,7 @@ import { SETTING_KEYS, type SettingKey } from "@/db/settings";
 import { CompanyProfileError, saveCompanyProfile } from "@/invoices/company";
 import { cancelInvoice, InvoiceActionError } from "@/invoices/service";
 import { refundOrder, RefundError } from "@/orders/refund";
+import { createVoucher, setVoucherActive, VoucherError } from "@/orders/vouchers";
 import { getPaymentProvider } from "@/payments";
 import { getAdminUser } from "@/server/admin";
 import { getSenderBoss } from "@/server/jobs";
@@ -160,4 +161,26 @@ export async function refundOrderAction(ref: unknown, reason: unknown): Promise<
     console.error("[Admin] Erstattung", error);
     return { ok: false, error: error instanceof Error ? error.message : "Das hat nicht geklappt." };
   }
+}
+
+export async function createVoucherAction(input: unknown): Promise<AdminResult> {
+  const admin = await getAdminUser();
+  if (!admin) return { ok: false, error: "Keine Berechtigung." };
+  try {
+    const v = await createVoucher(getDb(), input, admin.id);
+    refresh();
+    return { ok: true, message: `Gutschein ${v.code} angelegt.` };
+  } catch (error) {
+    if (error instanceof VoucherError) return { ok: false, error: error.problems.join(" · ") };
+    console.error("[Admin Gutschein]", error);
+    return { ok: false, error: "Das hat nicht geklappt." };
+  }
+}
+
+export async function setVoucherActiveAction(id: unknown, active: unknown): Promise<AdminResult> {
+  return run(async (userId) => {
+    if (typeof id !== "string" || typeof active !== "boolean") throw new AdminActionError("invalid");
+    await setVoucherActive(getDb(), id, active, userId);
+    return active ? "Aktiviert." : "Deaktiviert.";
+  });
 }

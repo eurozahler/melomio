@@ -6,6 +6,9 @@ import { getDb } from "@/db/client";
 import { CheckoutError, startCheckout, type CheckoutErrorCode } from "@/orders/checkout";
 import { disableSharePage, enableSharePage } from "@/orders/delivery";
 import { getAppPaymentProvider, getWebhookUrl, hashedClientIp } from "@/server/payments";
+import { discountFor, findValidVoucher } from "@/orders/vouchers";
+import { getSongPrice } from "@/server/catalog";
+import { getSenderBoss } from "@/server/jobs";
 import { getSessionUser } from "@/server/session";
 
 export type CheckoutResult =
@@ -19,6 +22,7 @@ export async function startCheckoutAction(
   ref: unknown,
   accepted: unknown,
   billing?: unknown,
+  voucherCode?: unknown,
 ): Promise<CheckoutResult> {
   const user = await getSessionUser();
   if (!user?.emailVerified || typeof ref !== "string") return { ok: false, error: "not_found" };
@@ -32,6 +36,8 @@ export async function startCheckoutAction(
       baseUrl: getEnv().APP_BASE_URL,
       webhookUrl: getWebhookUrl(),
       billing: billing ?? null,
+      voucherCode: typeof voucherCode === "string" ? voucherCode : null,
+      boss: await getSenderBoss(),
     });
     return { ok: true, checkoutUrl };
   } catch (error) {
@@ -55,4 +61,18 @@ export async function disableShareAction(ref: unknown): Promise<void> {
   if (!user?.emailVerified || typeof ref !== "string") return;
   await disableSharePage(getDb(), ref, user.id);
   refresh();
+}
+
+export type VoucherPreview = { ok: true; discountCents: number; grossCents: number } | { ok: false };
+
+/** Gutschein vorab prüfen und den neuen Preis anzeigen (es wird noch nichts gespeichert). */
+export async function previewVoucherAction(code: unknown): Promise<VoucherPreview> {
+  const user = await getSessionUser();
+  if (!user?.emailVerified || typeof code !== "string") return { ok: false };
+  const db = getDb();
+  const voucher = await findValidVoucher(db, code);
+  const price = await getSongPrice();
+  if (!voucher || !price) return { ok: false };
+  const discountCents = discountFor(price.grossCents, voucher);
+  return { ok: true, discountCents, grossCents: price.grossCents - discountCents };
 }

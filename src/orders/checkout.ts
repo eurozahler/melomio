@@ -1,6 +1,7 @@
 import { and, count, desc, eq, inArray, lte } from "drizzle-orm";
 import { getCompanyProfile } from "@/invoices/company";
 import { billingSchema, type BillingAddress } from "./billing";
+import { discountFor, findValidVoucher, type Voucher } from "./vouchers";
 import type { PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
 import {
@@ -13,6 +14,7 @@ import {
   prices,
   products,
   taxRates,
+  voucherRedemptions,
 } from "@/db/schema";
 import { CONSENT_TEXTS } from "@/domain/consents";
 import { enqueue } from "@/jobs/enqueue";
@@ -29,7 +31,13 @@ import { transitionOrder } from "./service";
  */
 
 export type CheckoutErrorCode =
-  "not_found" | "wrong_status" | "consents_required" | "no_price" | "seller_incomplete" | "billing_invalid";
+  | "not_found"
+  | "wrong_status"
+  | "consents_required"
+  | "no_price"
+  | "seller_incomplete"
+  | "billing_invalid"
+  | "voucher_invalid";
 
 export class CheckoutError extends Error {
   constructor(public readonly code: CheckoutErrorCode) {
@@ -41,9 +49,19 @@ export class CheckoutError extends Error {
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 /** Preis-Snapshot der Bestellung – beim ersten Checkout aus dem aktuellen Preis erzeugt. */
-async function ensurePriceSnapshot(tx: Tx, orderId: string) {
+async function ensurePriceSnapshot(tx: Tx, orderId: string, voucher: Voucher | null = null) {
   const [existing] = await tx.select().from(priceSnapshots).where(eq(priceSnapshots.orderId, orderId));
-  if (existing) return existing;
+  if (existing) {
+    const [redemption] = await tx
+      .select()
+      .from(voucherRedemptions)
+      .where(eq(voucherRedemptions.orderId, orderId));
+    if ((redemption?.voucherId ?? null) === (voucher?.id ?? null)) return existing;
+    // Gutschein geändert (vor der Zahlung): Preis neu einfrieren
+    await tx.delete(voucherRedemptions).where(eq(voucherRedemptions.orderId, orderId));
+    await tx.delete(priceSnapshots).where(eq(priceSnapshots.orderId, orderId));
+    await tx.delete(orderItems).where(eq(orderItems.orderId, orderId));
+  }
   // Aktuell gültiger Preis des Songs (neuester mit validFrom ≤ jetzt)
   const [row] = await tx
     .select({ price: prices, product: products, tax: taxRates })
@@ -55,7 +73,9 @@ async function ensurePriceSnapshot(tx: Tx, orderId: string) {
     .limit(1);
   if (!row) throw new CheckoutError("no_price");
   const { price, product, tax } = row;
-  const { netCents, taxCents } = splitGross(price.grossCents, tax.rateBp);
+  const discount = voucher ? discountFor(price.grossCents, voucher) : 0;
+  const gross = price.grossCents - discount;
+  const { netCents, taxCents } = splitGross(gross, tax.rateBp);
   await tx
     .insert(orderItems)
     .values({ orderId, productId: product.id, quantity: 1, unitGrossCents: price.grossCents });
@@ -65,15 +85,28 @@ async function ensurePriceSnapshot(tx: Tx, orderId: string) {
       orderId,
       items: [
         { productSlug: product.slug, name: product.name.de, quantity: 1, unitGrossCents: price.grossCents },
+        ...(voucher && discount > 0
+          ? [
+              {
+                productSlug: "voucher",
+                name: `Gutschein ${voucher.code}`,
+                quantity: 1,
+                unitGrossCents: -discount,
+              },
+            ]
+          : []),
       ],
       netCents,
       taxCents,
-      grossCents: price.grossCents,
+      grossCents: gross,
       taxRateBp: tax.rateBp,
       currency: price.currency,
     })
     .returning();
   if (!snapshot) throw new CheckoutError("no_price");
+  if (voucher && discount > 0) {
+    await tx.insert(voucherRedemptions).values({ voucherId: voucher.id, orderId, discountCents: discount });
+  }
   return snapshot;
 }
 
@@ -86,6 +119,10 @@ export type StartCheckoutInput = {
   webhookUrl: string | null;
   /** Optionale Rechnungsanschrift (Firmenkunden); null/undefined = Rechnung an das Konto. */
   billing?: unknown;
+  /** Optionaler Gutscheincode. */
+  voucherCode?: string | null;
+  /** Warteschlange – nur nötig, wenn ein 100-%-Gutschein die Zahlung überspringt. */
+  boss?: PgBoss;
 };
 
 /** Startet (oder setzt fort) die Zahlung und liefert die Adresse der Bezahlseite. */
@@ -124,9 +161,13 @@ export async function startCheckout(db: Database, provider: PaymentProvider, inp
   // Ohne vollständige Firmendaten keine echte Rechnung – dann auch kein echter Verkauf
   if (!order.isTest && !(await getCompanyProfile(db)).complete) throw new CheckoutError("seller_incomplete");
 
+  // Gutschein (optional)
+  const voucher = input.voucherCode?.trim() ? await findValidVoucher(db, input.voucherCode) : null;
+  if (input.voucherCode?.trim() && !voucher) throw new CheckoutError("voucher_invalid");
+
   // Preis einfrieren und Einwilligungen festhalten
   const snapshot = await db.transaction(async (tx) => {
-    const snap = await ensurePriceSnapshot(tx, order.id);
+    const snap = await ensurePriceSnapshot(tx, order.id, voucher);
     await tx.insert(consents).values(
       (["terms_privacy", "withdrawal_waiver"] as const).map((type) => ({
         userId: input.userId,
@@ -138,6 +179,41 @@ export async function startCheckout(db: Database, provider: PaymentProvider, inp
     );
     return snap;
   });
+
+  // 100-%-Gutschein: nichts zu bezahlen → direkt „bezahlt“, ohne Bezahlseite
+  if (snapshot.grossCents === 0) {
+    await db.transaction(async (tx) => {
+      const [locked] = await tx.select().from(orders).where(eq(orders.id, order.id)).for("update");
+      if (locked?.status === "preview_ready") {
+        await transitionOrder(tx, order.id, "awaiting_payment", {
+          actor: input.userId,
+          reason: "Gutschein 100 %",
+        });
+      }
+      if (locked && (locked.status === "preview_ready" || locked.status === "awaiting_payment")) {
+        await tx
+          .insert(payments)
+          .values({
+            orderId: order.id,
+            provider: "voucher",
+            providerPaymentId: `voucher-${order.id}`,
+            status: "paid",
+            amountCents: 0,
+            currency: snapshot.currency,
+            mode: provider.mode,
+          })
+          .onConflictDoNothing();
+        await transitionOrder(tx, order.id, "paid", {
+          actor: input.userId,
+          reason: "Gutschein 100 % – nichts zu bezahlen",
+          markPaid: true,
+        });
+        if (!input.boss) throw new Error("Warteschlange fehlt (Gratis-Bestellung)");
+        await enqueue(input.boss, QUEUES.orderPaid, { orderId: order.id }, { tx, singletonKey: order.id });
+      }
+    });
+    return `${input.baseUrl}/bestellung/${order.publicRef}?zahlung=zurueck`;
+  }
 
   // Zahlung beim Anbieter anlegen (Netzwerkaufruf außerhalb der Transaktion)
   const [attempts] = await db.select({ n: count() }).from(payments).where(eq(payments.orderId, order.id));

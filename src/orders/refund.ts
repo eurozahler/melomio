@@ -47,13 +47,16 @@ export async function refundOrder(
   if (done) throw new RefundError("already_refunded");
 
   const cleanReason = reason?.trim().slice(0, 200) || null;
-  // 1. Geld zurück (Netzwerkaufruf – bei Fehler passiert sonst nichts)
-  const result = await provider.refund({
-    providerPaymentId: payment.providerPaymentId,
-    amountCents: payment.amountCents,
-    currency: payment.currency,
-    description: `Erstattung Bestellung ${order.publicRef}`,
-  });
+  // 1. Geld zurück (Netzwerkaufruf – bei Fehler passiert sonst nichts). Gratis (Gutschein): nichts zu erstatten
+  const result =
+    payment.amountCents === 0 || payment.provider === "voucher"
+      ? { providerRefundId: `none-${payment.id.slice(0, 8)}`, status: "refunded" as const }
+      : await provider.refund({
+          providerPaymentId: payment.providerPaymentId,
+          amountCents: payment.amountCents,
+          currency: payment.currency,
+          description: `Erstattung Bestellung ${order.publicRef}`,
+        });
   await db.insert(refunds).values({
     paymentId: payment.id,
     providerRefundId: result.providerRefundId,

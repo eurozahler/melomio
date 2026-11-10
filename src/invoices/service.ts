@@ -15,6 +15,7 @@ import {
   type InvoiceLine,
 } from "@/db/schema";
 import { invoiceBuyer } from "@/orders/billing";
+import { splitGross } from "@/payments/types";
 import type { StorageProvider } from "@/storage";
 import { CompanyProfileError, getCompanyProfile, TEST_SELLER, toSeller } from "./company";
 import { formatDate, renderInvoicePdf } from "./pdf";
@@ -96,19 +97,50 @@ export async function createInvoiceForOrder(
     .where(and(eq(payments.orderId, orderId), eq(payments.status, "paid")))
     .orderBy(desc(payments.updatedAt))
     .limit(1);
-  const via = payment?.provider === "mollie" ? " über Mollie" : payment ? " (Testzahlung)" : "";
+  const via =
+    payment?.provider === "mollie"
+      ? " über Mollie"
+      : payment?.provider === "voucher"
+        ? " (vollständig mit Gutschein)"
+        : payment
+          ? " (Testzahlung)"
+          : "";
 
-  const item = snapshot.items[0];
-  const lines: InvoiceLine[] = [
-    {
-      description: `${item?.name ?? "Persönlicher Song mit Video"} (digitaler Inhalt, Bestellung ${order.publicRef})`,
-      quantity: item?.quantity ?? 1,
-      netCents: snapshot.netCents,
-      taxCents: snapshot.taxCents,
-      grossCents: snapshot.grossCents,
+  // Positionen aus dem eingefrorenen Preis (Song, ggf. Gutschein). Netto/Steuer je Position;
+  // Rundungsdifferenzen landen in der letzten Position, damit die Summen exakt stimmen.
+  const items = snapshot.items.length
+    ? snapshot.items
+    : [
+        {
+          productSlug: "song",
+          name: "Persönlicher Song mit Video",
+          quantity: 1,
+          unitGrossCents: snapshot.grossCents,
+        },
+      ];
+  let restNet = snapshot.netCents;
+  let restTax = snapshot.taxCents;
+  const lines: InvoiceLine[] = items.map((item, i) => {
+    const gross = item.unitGrossCents * item.quantity;
+    const last = i === items.length - 1;
+    const split = splitGross(gross, snapshot.taxRateBp);
+    const netCents = last ? restNet : split.netCents;
+    const taxCents = last ? restTax : split.taxCents;
+    restNet -= netCents;
+    restTax -= taxCents;
+    const description =
+      item.productSlug === "voucher"
+        ? item.name
+        : `${item.name} (digitaler Inhalt, Bestellung ${order.publicRef})`;
+    return {
+      description,
+      quantity: item.quantity,
+      netCents,
+      taxCents,
+      grossCents: netCents + taxCents,
       taxRateBp: snapshot.taxRateBp,
-    },
-  ];
+    };
+  });
 
   return db.transaction(async (tx) => {
     // Gleichzeitige Versuche für dieselbe Bestellung nacheinander

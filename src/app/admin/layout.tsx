@@ -20,6 +20,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Link href="/admin/prompts" className={link}>
           Prompt
         </Link>
+        <Link href="/admin/gutscheine" className={link}>
+          Gutscheine
+        </Link>
         <Link href="/admin/rechnungen" className={link}>
           Rechnungen
         </Link>
