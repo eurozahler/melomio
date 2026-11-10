@@ -206,3 +206,71 @@ describe("Rechnungen", () => {
     await expect(attempt).rejects.toMatchObject({ code: "seller_incomplete" });
   });
 });
+
+describe("Firmenrechnung", () => {
+  it("die Rechnungsanschrift aus dem Kauf steht auf der Rechnung", async () => {
+    const { userId, order } = await createUserWithOrder(db);
+    for (const to of [
+      "lyrics_generating",
+      "lyrics_review",
+      "lyrics_approved",
+      "music_generating",
+      "preview_ready",
+    ] as const) {
+      await transitionOrder(db, order.id, to, { actor: "test" });
+    }
+    const billing = {
+      company: "Musterfirma GmbH",
+      contact: "Erika Muster",
+      street: "Hauptstraße 5",
+      postalCode: "80331",
+      city: "München",
+      country: "Deutschland",
+      vatId: "DE123456789",
+    };
+    const url = await startCheckout(db, provider(), {
+      publicRef: order.publicRef,
+      userId,
+      accepted: { termsPrivacy: true, withdrawalWaiver: true },
+      ipHash: "hash",
+      baseUrl: BASE,
+      webhookUrl: null,
+      billing,
+    });
+    const id = url.split("/dev/zahlung/")[1]!;
+    await setMockPaymentStatus(db, id, "paid");
+    await processPaymentUpdate(db, boss, provider(), id, "webhook");
+    const invoice = await createInvoiceForOrder(db, storage(), order.id);
+    expect(invoice.buyer.name).toBe("Musterfirma GmbH");
+    expect(invoice.buyer.lines).toEqual([
+      "z. Hd. Erika Muster",
+      "Hauptstraße 5",
+      "80331 München",
+      "USt-IdNr.: DE123456789",
+    ]);
+  });
+
+  it("eine unvollständige Rechnungsanschrift wird abgelehnt", async () => {
+    const { userId, order } = await createUserWithOrder(db);
+    for (const to of [
+      "lyrics_generating",
+      "lyrics_review",
+      "lyrics_approved",
+      "music_generating",
+      "preview_ready",
+    ] as const) {
+      await transitionOrder(db, order.id, to, { actor: "test" });
+    }
+    await expect(
+      startCheckout(db, provider(), {
+        publicRef: order.publicRef,
+        userId,
+        accepted: { termsPrivacy: true, withdrawalWaiver: true },
+        ipHash: "hash",
+        baseUrl: BASE,
+        webhookUrl: null,
+        billing: { company: "X" },
+      }),
+    ).rejects.toMatchObject({ code: "billing_invalid" });
+  });
+});

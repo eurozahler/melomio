@@ -14,6 +14,7 @@ import {
   users,
   type InvoiceLine,
 } from "@/db/schema";
+import { invoiceBuyer } from "@/orders/billing";
 import type { StorageProvider } from "@/storage";
 import { CompanyProfileError, getCompanyProfile, TEST_SELLER, toSeller } from "./company";
 import { formatDate, renderInvoicePdf } from "./pdf";
@@ -121,7 +122,7 @@ export async function createInvoiceForOrder(
     const issuedAt = new Date();
     const number = await nextNumber(tx, "RE", order.isTest, berlinYear(issuedAt));
     const storageKey = storageKeyFor(number, issuedAt);
-    const buyer = { name: user.name || user.email, lines: [], email: user.email };
+    const buyer = invoiceBuyer(order.billing ?? null, user);
     const paymentNote = `Bezahlt am ${formatDate(order.paidAt!)}${via}. Es ist kein Betrag offen.`;
     const pdf = await renderInvoicePdf({
       kind: "invoice",

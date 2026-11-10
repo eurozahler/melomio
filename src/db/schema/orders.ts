@@ -3,6 +3,17 @@ import { consentTypeEnum, modeEnum, orderStatusEnum, paymentStatusEnum, refundSt
 import { genres, moods, occasions, products, questionnaireVersions, questions, voices } from "./catalog";
 import { users } from "./users";
 
+/** Rechnungsanschrift für Firmenkunden (Prüfung: src/orders/billing.ts). */
+export type BillingAddress = {
+  company: string;
+  contact: string;
+  street: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  vatId: string;
+};
+
 export const orders = pgTable(
   "orders",
   {
@@ -29,6 +40,8 @@ export const orders = pgTable(
     isTest: boolean().notNull(),
     /** Zeitpunkt der serverseitig bestätigten Zahlung. Voraussetzung für Video und volle Datei (E12). */
     paidAt: timestamp({ withTimezone: true }),
+    /** Rechnungsanschrift für Firmenkunden (optional, beim Kauf angegeben). */
+    billing: jsonb().$type<BillingAddress | null>(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

@@ -15,7 +15,11 @@ export type CheckoutResult =
  * Checkout starten. Von außen direkt aufrufbar – deshalb wird hier alles geprüft:
  * Anmeldung, eigene Bestellung, Status, BEIDE Pflicht-Haken (müssen ausdrücklich true sein).
  */
-export async function startCheckoutAction(ref: unknown, accepted: unknown): Promise<CheckoutResult> {
+export async function startCheckoutAction(
+  ref: unknown,
+  accepted: unknown,
+  billing?: unknown,
+): Promise<CheckoutResult> {
   const user = await getSessionUser();
   if (!user?.emailVerified || typeof ref !== "string") return { ok: false, error: "not_found" };
   const a = (accepted ?? {}) as { termsPrivacy?: unknown; withdrawalWaiver?: unknown };
@@ -27,6 +31,7 @@ export async function startCheckoutAction(ref: unknown, accepted: unknown): Prom
       ipHash: await hashedClientIp(),
       baseUrl: getEnv().APP_BASE_URL,
       webhookUrl: getWebhookUrl(),
+      billing: billing ?? null,
     });
     return { ok: true, checkoutUrl };
   } catch (error) {

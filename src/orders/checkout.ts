@@ -1,5 +1,6 @@
 import { and, count, desc, eq, inArray, lte } from "drizzle-orm";
 import { getCompanyProfile } from "@/invoices/company";
+import { billingSchema, type BillingAddress } from "./billing";
 import type { PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
 import {
@@ -28,7 +29,7 @@ import { transitionOrder } from "./service";
  */
 
 export type CheckoutErrorCode =
-  "not_found" | "wrong_status" | "consents_required" | "no_price" | "seller_incomplete";
+  "not_found" | "wrong_status" | "consents_required" | "no_price" | "seller_incomplete" | "billing_invalid";
 
 export class CheckoutError extends Error {
   constructor(public readonly code: CheckoutErrorCode) {
@@ -83,6 +84,8 @@ export type StartCheckoutInput = {
   ipHash: string | null;
   baseUrl: string;
   webhookUrl: string | null;
+  /** Optionale Rechnungsanschrift (Firmenkunden); null/undefined = Rechnung an das Konto. */
+  billing?: unknown;
 };
 
 /** Startet (oder setzt fort) die Zahlung und liefert die Adresse der Bezahlseite. */
@@ -109,6 +112,15 @@ export async function startCheckout(db: Database, provider: PaymentProvider, inp
   if (order.status !== "preview_ready" && order.status !== "awaiting_payment") {
     throw new CheckoutError("wrong_status");
   }
+  // Rechnungsanschrift (optional) prüfen und an der Bestellung speichern
+  let billing: BillingAddress | null = null;
+  if (input.billing) {
+    const parsed = billingSchema.safeParse(input.billing);
+    if (!parsed.success) throw new CheckoutError("billing_invalid");
+    billing = parsed.data;
+  }
+  await db.update(orders).set({ billing }).where(eq(orders.id, order.id));
+
   // Ohne vollständige Firmendaten keine echte Rechnung – dann auch kein echter Verkauf
   if (!order.isTest && !(await getCompanyProfile(db)).complete) throw new CheckoutError("seller_incomplete");
 

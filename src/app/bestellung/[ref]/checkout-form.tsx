@@ -23,6 +23,16 @@ export function CheckoutForm({
   const id = useId();
   const [terms, setTerms] = useState(false);
   const [waiver, setWaiver] = useState(false);
+  const [business, setBusiness] = useState(false);
+  const [billing, setBilling] = useState({
+    company: "",
+    contact: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    country: "Deutschland",
+    vatId: "",
+  });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -30,7 +40,11 @@ export function CheckoutForm({
     e.preventDefault();
     if (!terms || !waiver) return setError(t("consentsMissing"));
     startTransition(async () => {
-      const result = await startCheckoutAction(publicRef, { termsPrivacy: terms, withdrawalWaiver: waiver });
+      const result = await startCheckoutAction(
+        publicRef,
+        { termsPrivacy: terms, withdrawalWaiver: waiver },
+        business ? billing : null,
+      );
       if (result.ok) window.location.assign(result.checkoutUrl);
       else setError(t(`errors.${result.error}`));
     });
@@ -82,6 +96,44 @@ export function CheckoutForm({
         />
         <span>{t("consentWaiver")}</span>
       </label>
+
+      <label htmlFor={`${id}-business`} className="flex gap-3 text-sm">
+        <input
+          id={`${id}-business`}
+          type="checkbox"
+          className={checkbox}
+          checked={business}
+          onChange={(e) => setBusiness(e.target.checked)}
+        />
+        <span>{t("billingToggle")}</span>
+      </label>
+      {business && (
+        <fieldset className="grid gap-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+          <legend className="px-1 text-sm font-semibold">{t("billingTitle")}</legend>
+          {(
+            [
+              ["company", "billingCompany", "organization"],
+              ["contact", "billingContact", "name"],
+              ["street", "billingStreet", "street-address"],
+              ["postalCode", "billingPostalCode", "postal-code"],
+              ["city", "billingCity", "address-level2"],
+              ["country", "billingCountry", "country-name"],
+              ["vatId", "billingVatId", "off"],
+            ] as const
+          ).map(([key, label, autoComplete]) => (
+            <label key={key} htmlFor={`${id}-${key}`} className="flex flex-col gap-1 text-sm">
+              {t(label)}
+              <input
+                id={`${id}-${key}`}
+                autoComplete={autoComplete}
+                value={billing[key]}
+                onChange={(e) => setBilling({ ...billing, [key]: e.target.value })}
+                className="rounded-lg border border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+              />
+            </label>
+          ))}
+        </fieldset>
+      )}
 
       {error && <Notice kind="error">{error}</Notice>}
       <button
