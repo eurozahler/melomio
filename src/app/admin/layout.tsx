@@ -14,6 +14,12 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Link href="/admin/bestellungen" className={link}>
           Bestellungen
         </Link>
+        <Link href="/admin/rechnungen" className={link}>
+          Rechnungen
+        </Link>
+        <Link href="/admin/firma" className={link}>
+          Firma
+        </Link>
         <Link href="/admin/einstellungen" className={link}>
           Einstellungen
         </Link>

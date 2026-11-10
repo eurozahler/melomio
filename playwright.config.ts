@@ -37,7 +37,9 @@ export default defineConfig({
         NEXT_DIST_DIR: ".next-e2e",
         DATABASE_URL: testDb,
         APP_MODE: "test",
+        // Tests nie mit echten Anbietern – unabhängig davon, was in .env.local steht
         EMAIL_PROVIDER: "console",
+        PAYMENT_PROVIDER: "mock",
         APP_BASE_URL: `http://localhost:${PORT}`,
         // Die Tests melden sich schneller an, als ein Mensch es je täte
         AUTH_RATE_LIMIT: "off",
@@ -56,6 +58,8 @@ export default defineConfig({
         APP_MODE: "test",
         LYRICS_PROVIDER: "mock",
         MUSIC_PROVIDER: "mock",
+        EMAIL_PROVIDER: "console",
+        PAYMENT_PROVIDER: "mock",
         MOCK_MUSIC_DELAY_MS: "300",
         MOCK_MUSIC_DURATION_S: "60",
         STORAGE_LOCAL_DIR: ".e2e-storage",

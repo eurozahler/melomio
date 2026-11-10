@@ -7,4 +7,6 @@ import { existsSync } from "node:fs";
  */
 export function loadLocalEnv() {
   if (existsSync(".env.local")) process.loadEnvFile(".env.local");
+  // Tests verschicken nie echte E-Mails (sonst: SMTP-Versand an Testadressen) – immer ins Test-Postfach
+  process.env.EMAIL_PROVIDER = "console";
 }

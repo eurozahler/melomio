@@ -8,10 +8,14 @@ import {
   updateSetting,
   updateSongPrice,
 } from "@/admin/service";
+import { getEnv } from "@/config/env";
 import { getDb } from "@/db/client";
 import { SETTING_KEYS, type SettingKey } from "@/db/settings";
+import { CompanyProfileError, saveCompanyProfile } from "@/invoices/company";
+import { cancelInvoice, InvoiceActionError } from "@/invoices/service";
 import { getAdminUser } from "@/server/admin";
 import { getSenderBoss } from "@/server/jobs";
+import { getStorage } from "@/storage";
 
 /**
  * Server-Aktionen des Admins. Jede prüft selbst die Admin-Rolle (das Layout allein schützt nicht –
@@ -74,4 +78,49 @@ export async function updatePriceAction(euroText: unknown) {
     await updateSongPrice(getDb(), cents, userId);
     return "Preis gespeichert – gilt ab sofort für neue Käufe.";
   });
+}
+
+export async function saveCompanyAction(values: unknown): Promise<AdminResult> {
+  const admin = await getAdminUser();
+  if (!admin) return { ok: false, error: "Keine Berechtigung." };
+  try {
+    await saveCompanyProfile(getDb(), values, admin.id);
+    refresh();
+    return { ok: true, message: "Firmendaten gespeichert. Sie gelten für alle neuen Rechnungen." };
+  } catch (error) {
+    if (error instanceof CompanyProfileError) return { ok: false, error: error.problems.join(" · ") };
+    console.error("[Admin]", error);
+    return { ok: false, error: "Das hat nicht geklappt." };
+  }
+}
+
+export async function cancelInvoiceAction(invoiceId: unknown, reason: unknown): Promise<AdminResult> {
+  const admin = await getAdminUser();
+  if (!admin) return { ok: false, error: "Keine Berechtigung." };
+  if (typeof invoiceId !== "string") return { ok: false, error: "Nicht gefunden." };
+  try {
+    const storno = await cancelInvoice(
+      getDb(),
+      getStorage(getEnv()),
+      invoiceId,
+      admin.id,
+      typeof reason === "string" ? reason : null,
+    );
+    refresh();
+    return {
+      ok: true,
+      message: `Stornorechnung ${storno.number} erstellt. Die Rückzahlung bitte in Mollie auslösen.`,
+    };
+  } catch (error) {
+    if (error instanceof InvoiceActionError) {
+      const text = {
+        not_found: "Nicht gefunden.",
+        already_cancelled: "Diese Rechnung ist bereits storniert.",
+        not_cancellable: "Eine Stornorechnung kann nicht storniert werden.",
+      }[error.code];
+      return { ok: false, error: text };
+    }
+    console.error("[Admin]", error);
+    return { ok: false, error: "Das hat nicht geklappt." };
+  }
 }

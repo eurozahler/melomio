@@ -32,10 +32,13 @@ function fakeMureka(final: Record<string, unknown>) {
   const fetch = (async (url: string | URL, init?: RequestInit) => {
     const u = String(url);
     calls.push({ url: u, init });
-    if (u.endsWith("/v1/song/generate")) return json({ id: "task-1", status: "preparing", model: "mureka-9.5" });
+    if (u.endsWith("/v1/song/generate"))
+      return json({ id: "task-1", status: "preparing", model: "mureka-9.5" });
     if (u.includes("/v1/song/query/task-1")) {
       polls++;
-      return json(polls < 3 ? { id: "task-1", status: "running" } : { id: "task-1", model: "mureka-9.5", ...final });
+      return json(
+        polls < 3 ? { id: "task-1", status: "running" } : { id: "task-1", model: "mureka-9.5", ...final },
+      );
     }
     if (u === "https://cdn.mureka.ai/song.mp3") return new Response(new Uint8Array([1, 2, 3]));
     return json({ error: { message: "unbekannt" } }, 404);
@@ -56,7 +59,9 @@ describe("Mureka-Musikbaustein", () => {
     expect(toMurekaLyrics(INPUT.lyrics)).toBe(
       "[Verse]\nHeute ist dein Tag, liebe Anna\ndie Sonne lacht für dich\n\n[Chorus]\nHappy Birthday, Anna",
     );
-    expect(toMurekaPrompt(INPUT)).toBe("modern German pop, joyful, soft female vocals, sung in German, clear German pronunciation");
+    expect(toMurekaPrompt(INPUT)).toBe(
+      "modern German pop, joyful, soft female vocals, sung in German, clear German pronunciation",
+    );
   });
 
   it("startet den Auftrag, fragt bis zum Ergebnis ab und lädt die MP3 herunter", async () => {
@@ -99,14 +104,25 @@ describe("Mureka-Musikbaustein", () => {
 
   it("übersetzt Fehlercodes in verständliche Hinweise", async () => {
     const fetch = (async () =>
-      new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 })) as typeof globalThis.fetch;
+      new Response(JSON.stringify({ error: { message: "quota" } }), {
+        status: 429,
+      })) as typeof globalThis.fetch;
     const provider = createMurekaMusicProvider("geheim", { fetch });
-    await expect(provider.generate(INPUT, dir)).rejects.toThrow(/HTTP 429 \(zu viele gleichzeitige Aufträge oder Guthaben aufgebraucht\)/);
+    await expect(provider.generate(INPUT, dir)).rejects.toThrow(
+      /HTTP 429 \(zu viele gleichzeitige Aufträge oder Guthaben aufgebraucht\)/,
+    );
   });
 
   it("schickt bei Modellen ohne Längensteuerung keine Ziellänge mit", async () => {
-    const { fetch, calls } = fakeMureka({ status: "succeeded", choices: [{ url: "https://cdn.mureka.ai/song.mp3" }] });
-    const provider = createMurekaMusicProvider("geheim", { fetch, sleep: async () => {}, model: "mureka-o2" });
+    const { fetch, calls } = fakeMureka({
+      status: "succeeded",
+      choices: [{ url: "https://cdn.mureka.ai/song.mp3" }],
+    });
+    const provider = createMurekaMusicProvider("geheim", {
+      fetch,
+      sleep: async () => {},
+      model: "mureka-o2",
+    });
     const result = await provider.generate(INPUT, dir);
     expect(JSON.parse(String(calls[0]!.init!.body)).duration).toBeUndefined();
     expect(result.sections).toBeNull();

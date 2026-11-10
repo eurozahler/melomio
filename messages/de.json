@@ -283,6 +283,7 @@
       "wrong_status": "Diese Bestellung kann gerade nicht gekauft werden. Bitte lade die Seite neu.",
       "consents_required": "Bitte bestätige beide Punkte, um fortzufahren.",
       "no_price": "Der Preis konnte nicht ermittelt werden. Bitte versuche es später noch einmal.",
+      "seller_incomplete": "Der Kauf ist gerade nicht möglich. Bitte versuche es später noch einmal.",
       "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
     },
     "videoRendering": "Dein Video wird gerade erstellt … Das dauert etwa eine Minute. Die Seite aktualisiert sich von selbst.",
@@ -292,6 +293,9 @@
     "videoLabel": "Dein Video",
     "downloadSong": "Song herunterladen (MP3)",
     "downloadVideo": "Video herunterladen (MP4)",
+    "invoicesTitle": "Rechnung",
+    "invoiceLink": "Rechnung {number} (PDF)",
+    "cancellationLink": "Stornorechnung {number} (PDF)",
     "linkHint": "Die Download-Links gelten {minutes} Minuten. Danach einfach die Seite neu laden.",
     "shareTitle": "Song-Seite zum Teilen",
     "shareText": "Eine eigene Seite mit Player und Songtext – zum Verschicken oder als QR-Code auf einer Karte. Du kannst sie jederzeit wieder abschalten.",

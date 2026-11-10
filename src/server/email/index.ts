@@ -19,6 +19,8 @@ export type EmailMessage = {
   template: string;
   userId?: string | null;
   orderId?: string | null;
+  /** Anhänge, z. B. die Rechnung als PDF. */
+  attachments?: Array<{ filename: string; content: Buffer; contentType: string }>;
 };
 
 interface EmailProvider {
@@ -37,6 +39,13 @@ const consoleProvider: EmailProvider = {
         template: message.template,
         text: message.text,
         html: message.html,
+        ...(message.attachments?.length
+          ? {
+              text: `${message.text}
+
+[Anhang: ${message.attachments.map((a) => a.filename).join(", ")}]`,
+            }
+          : {}),
       })
       .returning({ id: devMailbox.id });
     console.log(`[E-Mail/Test] an ${message.to}: „${message.subject}“ → im Test-Postfach /dev/mailbox`);
@@ -67,6 +76,7 @@ const smtpProvider: EmailProvider = {
       subject: message.subject,
       text: message.text,
       html: message.html,
+      attachments: message.attachments,
     });
     return { providerMessageId: info.messageId ?? null };
   },

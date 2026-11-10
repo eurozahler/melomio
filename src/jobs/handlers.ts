@@ -5,6 +5,7 @@ import { lyricsVersions, orders, questionnaireDrafts } from "@/db/schema";
 import { buildLyricsInput, getActiveSystemPrompt, lyricsSchema, type LyricsProvider } from "@/lyrics";
 import type { MediaTools } from "@/media/ffmpeg";
 import type { MusicProvider } from "@/music/types";
+import { createInvoiceForOrder } from "@/invoices/service";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
 import { sendOrderConfirmation, sendSongReady } from "./order-paid";
@@ -165,17 +166,35 @@ export async function handleMusicGenerate(deps: HandlerDeps, { orderId }: OrderJ
 }
 
 /**
- * order.paid: (1) Bestellbestätigung verschicken (rechtlich wichtig, E16), (2) Video starten –
+ * order.paid: (1) Rechnung ausstellen, (2) Bestellbestätigung mit Rechnung verschicken (rechtlich
+ * wichtig, E16), (3) Video starten –
  * beide Schritte jeweils höchstens einmal. Schlägt ein Schritt fehl, wird der Auftrag wiederholt;
  * der bereits erledigte Schritt wird dabei übersprungen.
  */
 export async function handleOrderPaid(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
+  const invoiceKey = `invoice.create:${orderId}`;
+  failIfBusy(
+    invoiceKey,
+    await runIdempotent(
+      deps.db,
+      invoiceKey,
+      async () => `Rechnung ${(await createInvoiceForOrder(deps.db, deps.storage, orderId)).number}`,
+      { attempt },
+    ),
+  );
   const mailKey = `email:order-confirmation:${orderId}`;
   failIfBusy(
     mailKey,
-    await runIdempotent(deps.db, mailKey, () => sendOrderConfirmation(deps.db, deps.baseUrl, orderId), {
-      attempt,
-    }),
+    await runIdempotent(
+      deps.db,
+      mailKey,
+      async () => {
+        // Die Rechnung existiert hier sicher (Schritt 1); createInvoiceForOrder liefert die vorhandene
+        const invoice = await createInvoiceForOrder(deps.db, deps.storage, orderId);
+        return sendOrderConfirmation(deps.db, deps.baseUrl, orderId, { invoice, storage: deps.storage });
+      },
+      { attempt },
+    ),
   );
   const videoKey = `video.start:${orderId}`;
   return failIfBusy(

@@ -66,3 +66,37 @@ test("Admin sieht Bestellungen und ändert eine Einstellung mit Protokoll", asyn
   await page.getByTestId("setting-preview_expiry_days").locator("xpath=following-sibling::button").click();
   await expect(page.getByRole("status").filter({ hasText: "Ungültiger Wert." })).toBeVisible();
 });
+
+test("Admin pflegt die Firmendaten für Rechnungen", async ({ page }) => {
+  const email = uniqueEmail("firma");
+  await registerAndVerify(page, email, PASSWORD);
+  await makeAdmin(email);
+  await page.goto("/admin/firma");
+  await expect(page.getByRole("heading", { level: 1, name: "Firma" })).toBeVisible();
+
+  // Unvollständig → verständliche Fehlermeldung
+  await page.getByTestId("company-name").fill("Beispiel UG (haftungsbeschränkt)");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Straße fehlt" })).toBeVisible();
+
+  for (const [key, value] of [
+    ["street", "Hauptstraße 5"],
+    ["postalCode", "80331"],
+    ["city", "München"],
+    ["managingDirector", "Erika Muster"],
+    ["registerCourt", "Amtsgericht München"],
+    ["registerNumber", "HRB 123456"],
+    ["vatId", "DE123456789"],
+    ["email", "hallo@melomio.de"],
+  ] as const) {
+    await page.getByTestId(`company-${key}`).fill(value);
+  }
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Firmendaten gespeichert" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("company-status")).toContainText("Vollständig");
+  await expect(page.getByTestId("company-city")).toHaveValue("München");
+
+  await page.goto("/admin/rechnungen");
+  await expect(page.getByRole("heading", { level: 1, name: "Rechnungen" })).toBeVisible();
+});

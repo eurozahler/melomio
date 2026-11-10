@@ -50,6 +50,13 @@
       "when": 1794169593572,
       "tag": "0006_payment_checkout_url",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794341408470,
+      "tag": "0007_invoices",
+      "breakpoints": true
     }
   ]
 }

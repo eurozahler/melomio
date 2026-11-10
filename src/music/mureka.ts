@@ -34,10 +34,9 @@ const SECTION_TAGS: Record<Lyrics["sections"][number]["type"], string> = {
 
 /** Songtext im Mureka-Format: Abschnitte mit [Verse], [Chorus] … */
 export function toMurekaLyrics(lyrics: Lyrics): string {
-  const text = lyrics.sections
-    .map((s) => `[${SECTION_TAGS[s.type]}]\n${s.lines.join("\n")}`)
-    .join("\n\n");
-  if (text.length > LYRICS_MAX) throw new Error(`Songtext zu lang für Mureka (${text.length} > ${LYRICS_MAX} Zeichen)`);
+  const text = lyrics.sections.map((s) => `[${SECTION_TAGS[s.type]}]\n${s.lines.join("\n")}`).join("\n\n");
+  if (text.length > LYRICS_MAX)
+    throw new Error(`Songtext zu lang für Mureka (${text.length} > ${LYRICS_MAX} Zeichen)`);
   return text;
 }
 
@@ -99,10 +98,13 @@ export function createMurekaMusicProvider(apiKey: string, options: MurekaOptions
     const body = (await res.json().catch(() => ({}))) as MurekaTask & { error?: { message?: string } };
     if (!res.ok) {
       const hint =
-        res.status === 401 ? " (API-Schlüssel ungültig)"
-        : res.status === 403 ? " (Region nicht unterstützt)"
-        : res.status === 429 ? " (zu viele gleichzeitige Aufträge oder Guthaben aufgebraucht)"
-        : "";
+        res.status === 401
+          ? " (API-Schlüssel ungültig)"
+          : res.status === 403
+            ? " (Region nicht unterstützt)"
+            : res.status === 429
+              ? " (zu viele gleichzeitige Aufträge oder Guthaben aufgebraucht)"
+              : "";
       throw new Error(`Mureka: HTTP ${res.status}${hint}: ${body.error?.message ?? "unbekannter Fehler"}`);
     }
     return body;
@@ -132,16 +134,21 @@ export function createMurekaMusicProvider(apiKey: string, options: MurekaOptions
       let task = started;
       while (task.status !== "succeeded") {
         if (task.status && FINAL_FAILURES.has(task.status))
-          throw new Error(`Mureka-Auftrag ${taskId}: ${task.status}${task.failed_reason ? ` – ${task.failed_reason}` : ""}`);
-        if (Date.now() > deadline) throw new Error(`Mureka-Auftrag ${taskId}: keine Antwort nach ${timeoutMs / 60_000} Minuten`);
+          throw new Error(
+            `Mureka-Auftrag ${taskId}: ${task.status}${task.failed_reason ? ` – ${task.failed_reason}` : ""}`,
+          );
+        if (Date.now() > deadline)
+          throw new Error(`Mureka-Auftrag ${taskId}: keine Antwort nach ${timeoutMs / 60_000} Minuten`);
         await sleep(pollIntervalMs);
         task = await call(`/v1/song/query/${encodeURIComponent(taskId)}`);
       }
 
       const song = task.choices?.[0];
-      if (!song?.url || !/^https:\/\//.test(song.url)) throw new Error(`Mureka-Auftrag ${taskId}: keine Audio-Adresse`);
+      if (!song?.url || !/^https:\/\//.test(song.url))
+        throw new Error(`Mureka-Auftrag ${taskId}: keine Audio-Adresse`);
       const audio = await doFetch(song.url, { signal: AbortSignal.timeout(120_000) });
-      if (!audio.ok) throw new Error(`Mureka-Auftrag ${taskId}: Download fehlgeschlagen (HTTP ${audio.status})`);
+      if (!audio.ok)
+        throw new Error(`Mureka-Auftrag ${taskId}: Download fehlgeschlagen (HTTP ${audio.status})`);
       const file = path.join(workDir, `mureka-${randomUUID()}.mp3`);
       await writeFile(file, Buffer.from(await audio.arrayBuffer()));
 

@@ -41,6 +41,15 @@ test("Von der Bestellung bis zum Download – und Song-Seite zum Teilen", async 
   expect(video.status()).toBe(200);
   expect(video.headers()["content-type"]).toBe("video/mp4");
 
+  // Rechnung (PDF) nur für das eigene Konto
+  const invoiceLink = page.getByTestId("invoices").getByRole("link");
+  await expect(invoiceLink).toHaveText(/^Rechnung TEST-RE-\d{4}-\d{5} \(PDF\)$/);
+  const invoiceHref = (await invoiceLink.getAttribute("href"))!;
+  const invoice = await page.request.get(invoiceHref);
+  expect(invoice.status()).toBe(200);
+  expect(invoice.headers()["content-type"]).toBe("application/pdf");
+  expect((await invoice.body()).subarray(0, 5).toString()).toBe("%PDF-");
+
   // Manipulierter Link → ungültig
   expect((await page.request.get(songHref.replace(/sig=[^&]+/, "sig=falsch"))).status()).toBe(403);
   expect((await page.request.get(songHref.replace(/exp=\d+/, "exp=9999999999"))).status()).toBe(403);
@@ -55,6 +64,7 @@ test("Von der Bestellung bis zum Download – und Song-Seite zum Teilen", async 
   const stranger = await other.newPage();
   await registerAndVerify(stranger, uniqueEmail("fremd"), PASSWORD);
   expect((await stranger.request.get(songHref)).status()).toBe(404);
+  expect((await stranger.request.get(invoiceHref)).status()).toBe(404);
   await other.close();
 
   // Song-Seite einschalten → öffentlich erreichbar, mit QR-Code

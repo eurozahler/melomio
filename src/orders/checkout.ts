@@ -1,4 +1,5 @@
 import { and, count, desc, eq, inArray, lte } from "drizzle-orm";
+import { getCompanyProfile } from "@/invoices/company";
 import type { PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
 import {
@@ -26,7 +27,8 @@ import { transitionOrder } from "./service";
  * - Jede Benachrichtigung wird protokolliert; doppelte Benachrichtigungen bewirken nichts
  */
 
-export type CheckoutErrorCode = "not_found" | "wrong_status" | "consents_required" | "no_price";
+export type CheckoutErrorCode =
+  "not_found" | "wrong_status" | "consents_required" | "no_price" | "seller_incomplete";
 
 export class CheckoutError extends Error {
   constructor(public readonly code: CheckoutErrorCode) {
@@ -107,6 +109,8 @@ export async function startCheckout(db: Database, provider: PaymentProvider, inp
   if (order.status !== "preview_ready" && order.status !== "awaiting_payment") {
     throw new CheckoutError("wrong_status");
   }
+  // Ohne vollständige Firmendaten keine echte Rechnung – dann auch kein echter Verkauf
+  if (!order.isTest && !(await getCompanyProfile(db)).complete) throw new CheckoutError("seller_incomplete");
 
   // Preis einfrieren und Einwilligungen festhalten
   const snapshot = await db.transaction(async (tx) => {

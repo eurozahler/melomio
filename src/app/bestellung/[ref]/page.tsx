@@ -16,6 +16,7 @@ import QRCode from "qrcode";
 import { getEnv } from "@/config/env";
 import { getSetting } from "@/db/settings-store";
 import { createSignedFilePath } from "@/delivery/signing";
+import { listInvoicesForOrder } from "@/invoices/service";
 import { getDeliveryFiles, getSharePage } from "@/orders/delivery";
 import { CheckoutForm } from "./checkout-form";
 import { ShareControls } from "./share-controls";
@@ -101,6 +102,7 @@ async function OrderContent({
   const songPath = files.song ? createSignedFilePath(secret, "song", order.publicRef, ttl) : null;
   const videoPath = files.video ? createSignedFilePath(secret, "video", order.publicRef, ttl) : null;
   const share = order.paidAt ? await getSharePage(db, order.id) : null;
+  const orderInvoices = order.paidAt ? await listInvoicesForOrder(db, order.id) : [];
   const shareUrl = share?.active ? `${getEnv().APP_BASE_URL}/s/${share.token}` : null;
   const qrSvg = shareUrl
     ? await QRCode.toString(shareUrl, { type: "svg", margin: 1, color: { dark: "#040a2e" } })
@@ -258,6 +260,29 @@ async function OrderContent({
       {order.status === "completed" && (
         <section className="rounded-2xl border border-neutral-200 p-5 dark:border-neutral-800">
           <ShareControls publicRef={order.publicRef} shareUrl={shareUrl} qrSvg={qrSvg} />
+        </section>
+      )}
+
+      {orderInvoices.length > 0 && (
+        <section
+          className="flex flex-col gap-1 text-sm"
+          aria-label={t("invoicesTitle")}
+          data-testid="invoices"
+        >
+          <p className="font-semibold">{t("invoicesTitle")}</p>
+          {orderInvoices.map((inv) => (
+            <a
+              key={inv.id}
+              href={`/api/rechnung/${inv.number}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-brand underline"
+            >
+              {inv.kind === "cancellation"
+                ? t("cancellationLink", { number: inv.number })
+                : t("invoiceLink", { number: inv.number })}
+            </a>
+          ))}
         </section>
       )}
 

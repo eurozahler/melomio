@@ -93,6 +93,8 @@ export type OrderConfirmationData = {
   orderUrl: string;
   consents: Array<{ text: string; version: string; grantedAt: Date }>;
   isTest: boolean;
+  /** Nummer der angehängten Rechnung (PDF). */
+  invoiceNumber?: string | null;
 };
 
 const money = (cents: number, currency: string) =>
@@ -113,6 +115,9 @@ export function orderConfirmationTemplate(p: OrderConfirmationData): Rendered {
     `Produkt: ${p.productName}`,
     `Preis: ${money(p.grossCents, p.currency)} (darin enthalten ${(p.taxRateBp / 100).toLocaleString("de-DE")} % MwSt.: ${money(p.taxCents, p.currency)})`,
     `Bezahlt am: ${dateTime(p.paidAt)}`,
+    ...(p.invoiceNumber
+      ? [`Deine Rechnung ${p.invoiceNumber} findest du im Anhang (PDF) und jederzeit in deinem Konto.`]
+      : []),
     "Du hast beim Kauf Folgendes bestätigt:",
     ...p.consents.map((c) => `„${c.text}“ (bestätigt am ${dateTime(c.grantedAt)}, Fassung ${c.version})`),
     ...(p.isTest ? ["TESTBETRIEB: Es wurde kein echtes Geld bezahlt."] : []),

@@ -2,14 +2,21 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import { consents, orders, priceSnapshots, users } from "@/db/schema";
 import { CONSENT_TEXTS } from "@/domain/consents";
+import { readInvoicePdf, type Invoice } from "@/invoices/service";
 import { sendEmail } from "@/server/email";
+import type { StorageProvider } from "@/storage";
 import { orderConfirmationTemplate, songReadyTemplate } from "@/server/email/templates";
 
 /**
  * Nach bestätigter Zahlung (M7): Bestellbestätigung per E-Mail mit Vertragsinhalt und den
  * bestätigten Einwilligungen (E16). In M8 kommt hier das Video dazu.
  */
-export async function sendOrderConfirmation(db: Database, baseUrl: string, orderId: string): Promise<string> {
+export async function sendOrderConfirmation(
+  db: Database,
+  baseUrl: string,
+  orderId: string,
+  invoice?: { invoice: Invoice; storage: StorageProvider } | null,
+): Promise<string> {
   const [row] = await db
     .select({ order: orders, user: users, snapshot: priceSnapshots })
     .from(orders)
@@ -39,12 +46,22 @@ export async function sendOrderConfirmation(db: Database, baseUrl: string, order
   });
 
   const item = row.snapshot.items[0];
+  const attachments = invoice
+    ? [
+        {
+          filename: `Rechnung-${invoice.invoice.number}.pdf`,
+          content: await readInvoicePdf(invoice.storage, invoice.invoice),
+          contentType: "application/pdf",
+        },
+      ]
+    : undefined;
   await sendEmail(
     {
       to: row.user.email,
       userId: row.user.id,
       orderId,
       template: "order-confirmation",
+      attachments,
       ...orderConfirmationTemplate({
         name: row.user.name,
         publicRef: row.order.publicRef,
@@ -57,11 +74,14 @@ export async function sendOrderConfirmation(db: Database, baseUrl: string, order
         orderUrl: `${baseUrl}/bestellung/${row.order.publicRef}`,
         consents: latest,
         isTest: row.order.isTest,
+        invoiceNumber: invoice?.invoice.number ?? null,
       }),
     },
     db,
   );
-  return "Bestellbestätigung verschickt";
+  return invoice
+    ? `Bestellbestätigung mit Rechnung ${invoice.invoice.number} verschickt`
+    : "Bestellbestätigung verschickt";
 }
 
 /** E-Mail „Dein Song ist fertig“ – nach Abschluss des Videos (M9). */
