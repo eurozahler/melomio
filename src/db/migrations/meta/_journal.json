@@ -64,6 +64,13 @@
       "when": 1794345856939,
       "tag": "0008_account_deleted_at",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794349914715,
+      "tag": "0009_lyrics_timing",
+      "breakpoints": true
     }
   ]
 }

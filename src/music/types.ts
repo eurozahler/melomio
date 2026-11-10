@@ -1,4 +1,4 @@
-import type { MusicSection } from "@/db/schema";
+import type { MusicSection, TimedLine } from "@/db/schema";
 import type { Lyrics } from "@/lyrics/types";
 
 /**
@@ -22,6 +22,8 @@ export type MusicResult = {
   format: "mp3";
   /** Abschnittszeiten (Strophe, Refrain …), falls der Anbieter sie liefert (F-19). */
   sections: MusicSection[] | null;
+  /** Gesungene Zeilen mit Zeitstempeln (für den Songtext im Video), falls verfügbar. */
+  lines?: TimedLine[] | null;
   providerJobId: string | null;
   model: string;
 };

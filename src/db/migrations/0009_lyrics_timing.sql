@@ -1,0 +1,1 @@
+ALTER TABLE "music_candidates" ADD COLUMN "lyrics_timing" jsonb;

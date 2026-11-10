@@ -41,7 +41,17 @@ export function createMockMusicProvider(tools: MediaTools): MusicProvider {
       const file = path.join(workDir, `mock-${randomUUID()}.mp3`);
       const mode = process.env.MOCK_MUSIC_MODE === "silent" ? "silent" : "normal";
       await generateTestSong(tools, file, { durationS, introS: durationS * 0.1, mode });
-      return { file, format: "mp3", sections, providerJobId: null, model: "mock" };
+      // Zeilen gleichmäßig über Strophen/Refrains verteilen (Test für den Songtext im Video)
+      const sung = sections.filter((s) => s.label !== "intro");
+      const all = input.lyrics.sections.flatMap((s) => s.lines);
+      const span = { start: sung[0]?.startMs ?? 0, end: sung.at(-1)?.endMs ?? durationS * 1000 };
+      const step = all.length ? (span.end - span.start) / all.length : 0;
+      const lines = all.map((text, i) => ({
+        startMs: Math.round(span.start + i * step),
+        endMs: Math.round(span.start + (i + 1) * step - 150),
+        text,
+      }));
+      return { file, format: "mp3", sections, lines, providerJobId: null, model: "mock" };
     },
   };
 }

@@ -158,6 +158,7 @@ export async function runPreviewMusic(
               model: result.model,
             },
             sections: result.sections,
+            lyricsTiming: result.lines ?? null,
           })
           .returning();
         if (!row) throw new Error("Kandidat konnte nicht gespeichert werden");

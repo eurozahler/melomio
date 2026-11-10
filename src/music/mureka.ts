@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { MusicSection } from "@/db/schema";
+import type { MusicSection, TimedLine } from "@/db/schema";
 import type { Lyrics } from "@/lyrics/types";
 import type { MusicInput, MusicProvider, MusicResult } from "./types";
 
@@ -55,12 +55,36 @@ function genderOf(voiceHint: string | null): "male" | "female" | undefined {
   return undefined;
 }
 
+type MurekaWord = { start?: number; end?: number; text?: string };
 type MurekaSong = {
   id?: string;
   url?: string;
   duration?: number;
-  lyrics_sections?: Array<{ section_type?: string; start?: number; end?: number }>;
+  lyrics_sections?: Array<{
+    section_type?: string;
+    start?: number;
+    end?: number;
+    lines?: Array<{ start?: number; end?: number; text?: string; words?: MurekaWord[] }>;
+  }>;
 };
+
+const num = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+/** Gesungene Zeilen mit Zeitstempeln aus der Mureka-Antwort (für den Songtext im Video). */
+export function timedLinesFrom(song: MurekaSong): TimedLine[] | null {
+  const lines: TimedLine[] = [];
+  for (const section of song.lyrics_sections ?? []) {
+    for (const l of section.lines ?? []) {
+      const text = l.text?.trim();
+      if (!text || !num(l.start) || !num(l.end) || l.end <= l.start) continue;
+      const words = (l.words ?? [])
+        .filter((w) => w.text?.trim() && num(w.start) && num(w.end))
+        .map((w) => ({ startMs: w.start!, endMs: w.end!, text: w.text!.trim() }));
+      lines.push({ startMs: l.start, endMs: l.end, text, ...(words.length ? { words } : {}) });
+    }
+  }
+  return lines.length ? lines.sort((a, b) => a.startMs - b.startMs) : null;
+}
 type MurekaTask = {
   id?: string;
   model?: string;
@@ -171,6 +195,7 @@ export function createMurekaMusicProvider(apiKey: string, options: MurekaOptions
         file,
         format: "mp3",
         sections: sections?.length ? sections : null,
+        lines: timedLinesFrom(song),
         providerJobId: song.id ? `${taskId}/${song.id}` : taskId,
         model: task.model ?? model,
       };

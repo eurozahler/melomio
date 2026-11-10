@@ -100,7 +100,11 @@ export async function renderCustomerVideo({ db, storage, tools, fontFile }: Vide
     .where(eq(videoJobs.id, job.id));
 
   const [track] = await db
-    .select({ storageKey: musicCandidates.storageKey, durationMs: musicCandidates.durationMs })
+    .select({
+      storageKey: musicCandidates.storageKey,
+      durationMs: musicCandidates.durationMs,
+      lyricsTiming: musicCandidates.lyricsTiming,
+    })
     .from(selectedTracks)
     .innerJoin(musicCandidates, eq(selectedTracks.candidateId, musicCandidates.id))
     .where(eq(selectedTracks.orderId, orderId));
@@ -130,6 +134,8 @@ export async function renderCustomerVideo({ db, storage, tools, fontFile }: Vide
       fontFile: resolveFontFile(fontFile),
       testWatermark: order.isTest,
       config,
+      // Songtext läuft mit, wenn der Musikanbieter Zeilenzeiten geliefert hat (abschaltbar per Vorlage)
+      lyrics: config.showLyrics === false ? null : track.lyricsTiming,
     });
 
     // Prüfung: Format, Auflösung, Spuren, Länge = Songlänge

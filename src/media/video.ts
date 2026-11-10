@@ -1,4 +1,6 @@
 import { execFile } from "node:child_process";
+import type { TimedLine } from "@/db/schema";
+import { buildLyricsAss, fontFamilyFor } from "./lyrics-ass";
 import { copyFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -18,6 +20,8 @@ export type VideoTemplateConfig = {
   colors?: string[];
   width?: number;
   height?: number;
+  /** Songtext im Video mitlaufen lassen (Standard: ja, wenn Zeilenzeiten vorhanden). */
+  showLyrics?: boolean;
 };
 
 export type ProbeVideoResult = {
@@ -98,6 +102,8 @@ export async function renderStandardVideo(
     fontFile: string;
     testWatermark: boolean;
     config?: VideoTemplateConfig;
+    /** Gesungene Zeilen mit Zeiten → Songtext läuft im Video mit (C3). Ohne: nur der Titel. */
+    lyrics?: TimedLine[] | null;
   },
 ): Promise<void> {
   const { workDir, config = {} } = options;
@@ -108,10 +114,12 @@ export async function renderStandardVideo(
 
   // Schrift und Texte in den Arbeitsordner – FFmpeg läuft dort mit relativen Pfaden
   await copyFile(options.fontFile, path.join(workDir, "font.ttf"));
-  const lines = wrapTitle(options.title);
-  const fontSize = lines.length <= 2 ? 104 : 88;
+  const withLyrics = !!options.lyrics?.length;
+  // Mit Songtext: Titel klein oben, der Text läuft in der Bildmitte. Ohne: Titel groß in der Mitte.
+  const lines = withLyrics ? wrapTitle(options.title, 22, 2) : wrapTitle(options.title);
+  const fontSize = withLyrics ? 68 : lines.length <= 2 ? 104 : 88;
   const lineHeight = Math.round(fontSize * 1.25);
-  const blockTop = Math.round(height / 2 - (lines.length * lineHeight) / 2);
+  const blockTop = withLyrics ? 220 : Math.round(height / 2 - (lines.length * lineHeight) / 2);
 
   const filters: string[] = [];
   for (const [i, line] of lines.entries()) {
@@ -128,8 +136,18 @@ export async function renderStandardVideo(
   if (options.testWatermark) {
     await writeFile(path.join(workDir, "test.txt"), "TEST", "utf8");
     filters.push(
-      `drawtext=fontfile=font.ttf:textfile=test.txt:fontcolor=white@0.30:fontsize=280:x=(w-text_w)/2:y=260`,
+      `drawtext=fontfile=font.ttf:textfile=test.txt:fontcolor=white@0.30:fontsize=280:x=(w-text_w)/2:y=${withLyrics ? "h-620" : "260"}`,
     );
+  }
+  if (withLyrics) {
+    const ass = buildLyricsAss(options.lyrics!, {
+      width,
+      height,
+      fontFamily: fontFamilyFor(options.fontFile),
+      songDurationMs: options.durationMs,
+    });
+    await writeFile(path.join(workDir, "lyrics.ass"), ass, "utf8");
+    filters.push("ass=lyrics.ass:fontsdir=.");
   }
 
   await run(

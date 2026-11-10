@@ -71,6 +71,13 @@ export const musicJobs = pgTable(
 );
 
 export type MusicSection = { label: string; startMs: number; endMs: number };
+/** Zeitstempel einer gesungenen Zeile (und, falls geliefert, ihrer Wörter) – für den Songtext im Video (C3). */
+export type TimedLine = {
+  startMs: number;
+  endMs: number;
+  text: string;
+  words?: Array<{ startMs: number; endMs: number; text: string }>;
+};
 
 export const musicCandidates = pgTable(
   "music_candidates",
@@ -87,6 +94,8 @@ export const musicCandidates = pgTable(
     qcResult: jsonb().$type<Record<string, unknown>>(),
     /** Abschnittszeiten, falls der Anbieter sie liefert (F-19). */
     sections: jsonb().$type<MusicSection[]>(),
+    /** Zeilen mit Zeitstempeln, falls der Anbieter sie liefert (Songtext im Video). */
+    lyricsTiming: jsonb().$type<TimedLine[]>(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index().on(t.jobId)],
