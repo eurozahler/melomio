@@ -125,7 +125,7 @@ Stand: 08.11.2026, nach Abschluss der ersten Version (M0–M11). Sortiert nach D
    - Bist du mit der Qualität zufrieden?
    - Sollen echte Kosten pro Songtext gemessen werden (wenige Testaufrufe, kostenpflichtig)?
    - Soll der Testserver ebenfalls Claude nutzen? Standard dort ist der Test-Baustein ohne Kosten.
-4. **F-2 Musikanbieter:** Das ist der größte offene Punkt. Ohne echten Anbieter ist die „Musik“ ein Testton. Vorschlag: Hörtest mit 3–5 deutschen Texten (kostenpflichtig, wenige Euro), danach Entscheidung und Adapter.
+4. ✅ **F-2 Musikanbieter: Mureka** (entschieden 10.11.2026). ElevenLabs klang im Hörtest nicht gut, Suno schied aus (AGB verbieten Weiterverkauf, Automatisierung und Konkurrenzdienste). Mureka (Modell mureka-9.5) klang gut, Deutsch wird unterstützt, Abschnittszeiten kommen mit. Kosten gemessen: 0,15 $ pro Song. Läuft seit 10.11. auf dem Testserver (Testpaket 10 $, 1 Auftrag gleichzeitig). **Offen vor dem Livegang:** Mureka-Nutzungsbedingungen juristisch prüfen (laut FAQ kommerzielle Nutzung erlaubt, ToS-Text nicht gelesen); Paket für den Livebetrieb wählen (Basic 1.000 $ = 5 gleichzeitige Aufträge, 12 Monate gültig, keine Erstattung).
 5. **F-23 Mollie-Konto:** Ein kostenloser Testschlüssel genügt für den Test. Der Webhook funktioniert erst auf dem Testserver.
 6. **Zweiter Musik-Kandidat nach dem Kauf** (E4, Einstellung `music_extra_candidates_after_purchase`): ist noch ohne Wirkung. Gehört er zur ersten Version oder zu Phase C?
 
