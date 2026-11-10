@@ -1,4 +1,4 @@
-# Überträgt den aktuellen Programmstand (letzter Commit) auf den Testserver, baut dort das Image
+﻿# Überträgt den aktuellen Programmstand (letzter Commit) auf den Testserver, baut dort das Image
 # und startet Webseite + Worker neu. Aufruf im Projektordner:  .\scripts\testserver-deploy.ps1
 # Voraussetzung: 03-app-vorbereiten.sh wurde auf dem Server ausgeführt (siehe infra/testserver/README.md).
 $ErrorActionPreference = "Stop"
