@@ -31,4 +31,6 @@ export interface MusicProvider {
   /** Geschätzte Kosten in Cent für einen Kandidaten (für Tagesbudget und Auswertung). */
   estimateCostCents(input: MusicInput): number;
   generate(input: MusicInput, workDir: string): Promise<MusicResult>;
+  /** Restguthaben beim Anbieter in (US-)Cent, falls abfragbar – für den Guthaben-Alarm. */
+  getBalanceCents?(): Promise<number | null>;
 }

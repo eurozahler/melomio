@@ -16,6 +16,7 @@ import { ensureQueues, QUEUES, type LyricsJobData } from "../src/jobs/queues";
 import { getLyricsProvider } from "../src/lyrics";
 import { getMusicProvider, mediaToolsFromEnv } from "../src/music";
 import { getStorage } from "../src/storage";
+import { runWatchdog, writeHeartbeat } from "../src/monitoring/watchdog";
 import { workerVersion } from "./version";
 
 // Die Konfiguration wird erst beim ersten getEnv() gelesen – daher reicht es, sie hier zu laden
@@ -115,6 +116,17 @@ async function main() {
   // Täglich um 3:30 Uhr (deutsche Zeit) aufräumen
   await boss.schedule(QUEUES.cleanupDrafts, "30 3 * * *", null, { tz: "Europe/Berlin" });
 
+  // Wächter alle 15 Minuten, Lebenszeichen jede Minute (C9)
+  await boss.work(QUEUES.watchdog, async () => {
+    const findings = await runWatchdog(db, music, { lowBalanceCents: env.MUREKA_LOW_BALANCE_CENTS });
+    if (findings.length) console.log(`[worker] Wächter: ${findings.join(", ")}`);
+  });
+  await boss.schedule(QUEUES.watchdog, "*/15 * * * *", null, { tz: "Europe/Berlin" });
+  const beat = () =>
+    writeHeartbeat(db, workerVersion()).catch((e) => console.error("[worker] Lebenszeichen:", e));
+  await beat();
+  const heartbeat = setInterval(beat, 60_000);
+
   console.log(
     `[worker] bereit – ${env.isTestOperation ? "TESTBETRIEB" : "LIVEBETRIEB"} – Stand ${workerVersion()} – Songtext: ${lyrics.name} – Musik: ${music.name} – Warteschlangen: ${Object.values(QUEUES).join(", ")}`,
   );
@@ -123,6 +135,7 @@ async function main() {
   async function shutdown(signal: string) {
     if (stopping) return;
     stopping = true;
+    clearInterval(heartbeat);
     console.log(`[worker] ${signal} empfangen – laufende Aufträge werden noch beendet …`);
     await boss.stop({ graceful: true, timeout: 30_000 });
     await pool.end();

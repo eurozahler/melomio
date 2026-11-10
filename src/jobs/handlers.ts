@@ -7,6 +7,7 @@ import type { MediaTools } from "@/media/ffmpeg";
 import type { MusicProvider } from "@/music/types";
 import { createInvoiceForOrder } from "@/invoices/service";
 import { expireOldPreviews } from "@/account/service";
+import { sendAlert } from "@/monitoring/alerts";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
 import { sendOrderConfirmation, sendSongReady } from "./order-paid";
@@ -252,6 +253,21 @@ export async function withFinalFailure(
         `${job.name} fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}`.slice(0, 500);
       await transitionOrder(db, job.data.orderId, "failed", { actor: "worker", reason }).catch((e) =>
         console.error(`[worker] Konnte Bestellung ${job.data.orderId} nicht auf failed setzen:`, e),
+      );
+      const [o] = await db
+        .select({ ref: orders.publicRef, test: orders.isTest })
+        .from(orders)
+        .where(eq(orders.id, job.data.orderId));
+      await sendAlert(
+        db,
+        `failed:${job.data.orderId}`,
+        `Bestellung ${o?.ref ?? job.data.orderId} fehlgeschlagen`,
+        [
+          reason,
+          o?.test
+            ? "(Testbestellung)"
+            : "Kundenbestellung – bitte im Admin prüfen und „Schritt wiederholen“ oder erstatten.",
+        ],
       );
     }
     throw error;

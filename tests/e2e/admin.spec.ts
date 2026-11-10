@@ -100,3 +100,48 @@ test("Admin pflegt die Firmendaten für Rechnungen", async ({ page }) => {
   await page.goto("/admin/rechnungen");
   await expect(page.getByRole("heading", { level: 1, name: "Rechnungen" })).toBeVisible();
 });
+
+test("Fragebogen-Builder: neuer Anlass bis zum Kunden-Fragebogen", async ({ page }) => {
+  test.setTimeout(120_000);
+  const email = uniqueEmail("builder");
+  await registerAndVerify(page, email, PASSWORD);
+  await makeAdmin(email);
+  const slug = `jubilaeum-${Date.now().toString(36)}`;
+
+  await page.goto("/admin/fragebogen");
+  await page.getByTestId("new-occasion-name").fill("Jubiläum");
+  await page.getByTestId("new-occasion-slug").fill(slug);
+  await page.getByRole("button", { name: "Anlass anlegen" }).click();
+  await expect(page).toHaveURL(new RegExp(`/admin/fragebogen/${slug}$`));
+
+  // Startfrage ist da, eine zweite Frage dazu
+  await expect(page.getByTestId("question-card")).toHaveCount(1);
+  await page.getByTestId("add-question").click();
+  await page.getByTestId("question-label").nth(1).fill("Was habt ihr gemeinsam erlebt?");
+  await page.getByTestId("save-draft").click();
+  await expect(page.getByRole("status").filter({ hasText: "Entwurf gespeichert." })).toBeVisible();
+
+  page.once("dialog", (d) => d.accept());
+  await page.getByTestId("publish-draft").click();
+  await expect(page.getByTestId("published-questions")).toContainText("Was habt ihr gemeinsam erlebt?");
+
+  await page.getByTestId("occasion-active").check();
+  await page.getByRole("button", { name: "Speichern" }).first().click();
+  await expect(page.getByRole("status").filter({ hasText: "Gespeichert." })).toBeVisible();
+
+  // Kunde sieht den neuen Fragebogen
+  await page.goto(`/song/${slug}`);
+  await expect(
+    page.getByText("Wie heißt die Person, für die der Song ist?").filter({ visible: true }),
+  ).toBeVisible();
+});
+
+test("Prompt-Seite zeigt die aktive Fassung und testet mit dem Test-Baustein", async ({ page }) => {
+  const email = uniqueEmail("prompt");
+  await registerAndVerify(page, email, PASSWORD);
+  await makeAdmin(email);
+  await page.goto("/admin/prompts");
+  await expect(page.getByTestId("prompt-template")).toHaveValue(/Songtexterin/);
+  await page.getByTestId("prompt-test").click();
+  await expect(page.getByTestId("prompt-preview")).toBeVisible({ timeout: 30_000 });
+});

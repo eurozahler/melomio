@@ -115,6 +115,16 @@ export function createMurekaMusicProvider(apiKey: string, options: MurekaOptions
     // Gemessen am 10.11.2026: 0,15 $ pro Song (mureka-9.5, Trial-Paket) ≈ 14 Cent
     estimateCostCents: () => options.costCents ?? 14,
 
+    async getBalanceCents() {
+      const res = await doFetch(`${MUREKA_BASE_URL}/v1/account/billing`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) return null;
+      const body = (await res.json().catch(() => ({}))) as { balance?: number };
+      return typeof body.balance === "number" ? body.balance : null;
+    },
+
     async generate(input: MusicInput, workDir: string): Promise<MusicResult> {
       const request: Record<string, unknown> = {
         lyrics: toMurekaLyrics(input.lyrics),

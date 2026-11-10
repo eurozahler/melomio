@@ -9,7 +9,8 @@
 
 	# Zahlungs-Webhook ohne Passwort (der Zahlungsanbieter kennt es nicht). Die App fragt den
 	# Zahlungsstatus ohnehin immer selbst beim Anbieter nach.
-	@webhook path /api/webhooks/zahlung
+	# Statusabfrage für die Überwachung von außen – verrät nur „läuft / läuft nicht“.
+	@webhook path /api/webhooks/zahlung /api/health
 	handle @webhook {
 		reverse_proxy 127.0.0.1:3000
 	}

@@ -1,14 +1,15 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { getKpis, listOrders } from "@/admin/service";
+import { getKpis, getMonthlyStats, listOrders } from "@/admin/service";
 import { getDb } from "@/db/client";
+import { workerStatus } from "@/monitoring/watchdog";
 import { requireAdmin } from "@/server/admin";
 
-export default function AdminHome() {
+export default function AdminHome({ searchParams }: PageProps<"/admin">) {
   return (
     <Suspense fallback={null}>
-      <Dashboard />
+      <Dashboard searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -35,20 +36,33 @@ function Kpi({
   );
 }
 
-async function Dashboard() {
+async function Dashboard({ searchParams }: Pick<PageProps<"/admin">, "searchParams">) {
   await requireAdmin("/admin");
   const db = getDb();
-  const [k, attention, tStatus] = await Promise.all([
+  const test = (await searchParams).modus === "test";
+  const [k, attention, tStatus, months] = await Promise.all([
     getKpis(db),
     listOrders(db, { status: "attention" }, 10),
     getTranslations("OrderStatus"),
+    getMonthlyStats(db, { test }),
   ]);
+  const w = await workerStatus(db);
   const euro = (cents: number) =>
     new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100);
 
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-3xl font-bold tracking-tight">Übersicht</h1>
+      <p
+        data-testid="worker-status"
+        className={`rounded-xl p-3 text-sm ${w.ok ? "bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200"}`}
+      >
+        {w.ok
+          ? `✓ Hintergrund-Worker läuft (Stand ${w.version}, Lebenszeichen vor ${w.ageMin} Min.)`
+          : w.ageMin !== null
+            ? `⚠ Hintergrund-Worker meldet sich seit ${w.ageMin} Minuten nicht – Songs und Videos werden nicht erstellt.`
+            : "⚠ Vom Hintergrund-Worker ist noch kein Lebenszeichen angekommen."}
+      </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <Kpi
           label="Hörproben heute"
@@ -80,6 +94,49 @@ async function Dashboard() {
           testId="kpi-attention"
         />
       </div>
+
+      <section>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-xl font-bold">Monate {test ? "(Testbetrieb)" : "(Livebetrieb)"}</h2>
+          <Link href={test ? "/admin" : "/admin?modus=test"} className="text-sm text-brand underline">
+            {test ? "Livebetrieb anzeigen" : "Testbetrieb anzeigen"}
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-sm tabular-nums" data-testid="monthly-stats">
+            <thead className="text-xs text-neutral-500 uppercase">
+              <tr>
+                <th className="py-2 pr-3 text-left">Monat</th>
+                <th className="py-2 pr-3">Bestellungen</th>
+                <th className="py-2 pr-3">Hörproben</th>
+                <th className="py-2 pr-3">Käufe</th>
+                <th className="py-2 pr-3">Umsatz brutto</th>
+                <th className="py-2 pr-3">Erstattet</th>
+                <th className="py-2 pr-3">Musikkosten</th>
+                <th className="py-2 pr-3">Fehler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {months.map((m) => (
+                <tr key={m.month} className="border-t border-neutral-200 dark:border-neutral-800">
+                  <td className="py-2 pr-3 text-left">{m.month.split("-").reverse().join("/")}</td>
+                  <td className="py-2 pr-3">{m.orders}</td>
+                  <td className="py-2 pr-3">{m.previews}</td>
+                  <td className="py-2 pr-3">{m.paid}</td>
+                  <td className="py-2 pr-3">{euro(m.revenueCents)}</td>
+                  <td className="py-2 pr-3">{euro(m.refundedCents)}</td>
+                  <td className="py-2 pr-3">{euro(m.musicCostCents)}</td>
+                  <td className="py-2 pr-3">{m.failed}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-xs text-neutral-500">
+          Musikkosten sind Schätzwerte (Mureka ca. 0,15 $ je Song). Songtext-Kosten (Claude) sind nicht
+          enthalten.
+        </p>
+      </section>
 
       <section>
         <h2 className="mb-3 text-xl font-bold">Braucht Aufmerksamkeit</h2>

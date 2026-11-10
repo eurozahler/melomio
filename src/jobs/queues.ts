@@ -17,6 +17,8 @@ export const QUEUES = {
   videoRender: "video.render",
   /** Aufräumen: abgelaufene Fragebogen-Entwürfe löschen. */
   cleanupDrafts: "maintenance.cleanup-drafts",
+  /** Wächter: hängende Bestellungen, Kostenbremse, Guthaben (C9). */
+  watchdog: "maintenance.watchdog",
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -65,6 +67,7 @@ export const QUEUE_OPTIONS: Record<QueueName, QueueOptions> = {
     heartbeatSeconds: 30,
   },
   [QUEUES.cleanupDrafts]: { retryLimit: 2, retryDelay: 300, expireInSeconds: 600 },
+  [QUEUES.watchdog]: { retryLimit: 0, expireInSeconds: 300 },
 };
 
 /** Legt fehlende Warteschlangen an und überträgt geänderte Regeln auf vorhandene. */

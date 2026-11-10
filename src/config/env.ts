@@ -70,6 +70,14 @@ const baseSchema = z.object({
     z.coerce.number().int().min(0).max(1000).optional(),
   ),
 
+  /** Empfänger für Alarme (Fehler, hängende Bestellungen, Guthaben). Ohne Angabe: E-Mail aus „Firma“. */
+  ALERT_EMAIL: optionalString,
+  /** Guthaben-Alarm beim Musikanbieter unter diesem Betrag in Cent (Standard 300 = 3 $). */
+  MUREKA_LOW_BALANCE_CENTS: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.coerce.number().int().min(0).max(1_000_000).optional(),
+  ),
+
   SMTP_HOST: optionalString,
   SMTP_PORT: optionalString,
   SMTP_USER: optionalString,

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import {
   genres,
@@ -12,6 +12,7 @@ import {
   musicJobs,
   orders,
   previewClips,
+  previewUsage,
   voices,
 } from "@/db/schema";
 import { getSetting } from "@/db/settings-store";
@@ -114,6 +115,18 @@ export async function runPreviewMusic(
       const input = await buildMusicInput(db, orderId);
       for (let i = 0; i < wanted && passed.length === 0; i++) {
         const result = await music.generate(input, workDir);
+        // Kosten festhalten (Dashboard, Tagesbudget) – je erzeugtem Kandidaten
+        const cost = music.estimateCostCents(input);
+        if (cost > 0) {
+          await db
+            .update(musicJobs)
+            .set({ costEstimateCents: sql`coalesce(${musicJobs.costEstimateCents}, 0) + ${cost}` })
+            .where(eq(musicJobs.id, job.id));
+          await db
+            .update(previewUsage)
+            .set({ costEstimateCents: sql`coalesce(${previewUsage.costEstimateCents}, 0) + ${cost}` })
+            .where(eq(previewUsage.orderId, orderId));
+        }
         let probe: Awaited<ReturnType<typeof probeAudio>> | null = null;
         try {
           probe = await probeAudio(tools, result.file);

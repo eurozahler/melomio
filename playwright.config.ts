@@ -40,6 +40,8 @@ export default defineConfig({
         // Tests nie mit echten Anbietern – unabhängig davon, was in .env.local steht
         EMAIL_PROVIDER: "console",
         PAYMENT_PROVIDER: "mock",
+        LYRICS_PROVIDER: "mock",
+        MUSIC_PROVIDER: "mock",
         APP_BASE_URL: `http://localhost:${PORT}`,
         // Die Tests melden sich schneller an, als ein Mensch es je täte
         AUTH_RATE_LIMIT: "off",

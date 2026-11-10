@@ -381,3 +381,68 @@ export async function grantRole(db: Database, email: string, role: "owner" | "ad
   });
   return user;
 }
+
+// --- Dashboard: Monatsübersicht (C6) --------------------------------------
+
+export type MonthRow = {
+  month: string;
+  orders: number;
+  previews: number;
+  paid: number;
+  revenueCents: number;
+  refundedCents: number;
+  musicCostCents: number;
+  failed: number;
+};
+
+/** Die letzten Monate: Bestellungen, Hörproben, Käufe, Umsatz (brutto, nach Rechnungen), Musikkosten, Fehler. */
+export async function getMonthlyStats(
+  db: Database,
+  opts: { test: boolean; months?: number },
+): Promise<MonthRow[]> {
+  const months = opts.months ?? 6;
+  const rows = await db.execute<{
+    month: string;
+    orders: string;
+    previews: string;
+    paid: string;
+    revenue: string | null;
+    refunded: string | null;
+    music: string | null;
+    failed: string;
+  }>(sql`
+    with m as (
+      select to_char(d, 'YYYY-MM') as month
+      from generate_series(
+        date_trunc('month', now() at time zone 'Europe/Berlin') - ${months - 1} * interval '1 month',
+        date_trunc('month', now() at time zone 'Europe/Berlin'),
+        interval '1 month'
+      ) d
+    ),
+    o as (select * from orders where is_test = ${opts.test})
+    select m.month,
+      (select count(*) from o where to_char(o.created_at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as orders,
+      (select count(*) from preview_usage p join o on o.id = p.order_id
+        where to_char(p.created_at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as previews,
+      (select count(*) from o where to_char(o.paid_at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as paid,
+      (select sum(i.gross_cents) from invoices i where i.is_test = ${opts.test} and i.kind = 'invoice'
+        and to_char(i.issued_at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as revenue,
+      (select -sum(i.gross_cents) from invoices i where i.is_test = ${opts.test} and i.kind = 'cancellation'
+        and to_char(i.issued_at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as refunded,
+      (select sum(j.cost_estimate_cents) from music_jobs j join o on o.id = j.order_id
+        where to_char(j.created_at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as music,
+      (select count(distinct h.order_id) from order_status_history h join o on o.id = h.order_id
+        where h.to_status = 'failed' and to_char(h.at at time zone 'Europe/Berlin', 'YYYY-MM') = m.month) as failed
+    from m order by m.month desc
+  `);
+  return rows.rows.map((r) => ({
+    month: r.month,
+    orders: Number(r.orders),
+    previews: Number(r.previews),
+    paid: Number(r.paid),
+    revenueCents: Number(r.revenue ?? 0),
+    refundedCents: Number(r.refunded ?? 0),
+    musicCostCents: Number(r.music ?? 0),
+    failed: Number(r.failed),
+  }));
+}

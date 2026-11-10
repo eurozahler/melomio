@@ -82,6 +82,35 @@ async function Detail({ params }: Pick<PageProps<"/admin/bestellungen/[ref]">, "
         </section>
       )}
 
+      {["preview_ready", "awaiting_payment", "paid", "video_rendering", "completed", "refunded"].includes(
+        order.status,
+      ) && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xl font-bold">Hörprobe und Video</h2>
+          <div>
+            <p className="mb-1 text-sm font-semibold">Hörprobe (wie der Kunde sie hört)</p>
+            <audio
+              controls
+              preload="none"
+              className="w-full"
+              src={`/api/admin/datei/hoerprobe/${order.publicRef}`}
+            />
+          </div>
+          {["completed", "refunded"].includes(order.status) && (
+            <div>
+              <p className="mb-1 text-sm font-semibold">Kundenvideo</p>
+              <video
+                controls
+                preload="none"
+                playsInline
+                className="max-h-[60vh] rounded-xl bg-black"
+                src={`/api/admin/datei/video/${order.publicRef}`}
+              />
+            </div>
+          )}
+        </section>
+      )}
+
       <section>
         <h2 className="mb-2 text-xl font-bold">Musik-Kandidaten</h2>
         {detail.candidates.length === 0 && <p className="text-neutral-500">Noch keine.</p>}
