@@ -76,18 +76,33 @@ const input: MusicInput = {
   targetDurationS: 150,
 };
 
-const provider = createMurekaMusicProvider(apiKey, { model: process.env.MUREKA_MODEL?.trim() || undefined });
-const work = await mkdtemp(path.join(tmpdir(), "melomio-hoertest-"));
-const started = Date.now();
-console.log(`Erzeuge Song (${genre[1]}) bei Mureka … das dauert meist 1–3 Minuten.`);
-try {
-  const result = await provider.generate(input, work);
-  await mkdir("hoertest", { recursive: true });
-  const target = path.join("hoertest", `${genreSlug}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.mp3`);
-  await copyFile(result.file, target);
-  console.log(`✓ Fertig nach ${Math.round((Date.now() - started) / 1000)} s – Modell ${result.model}`);
-  console.log(`  Datei: ${path.resolve(target)}`);
-  if (result.sections) console.log(`  Abschnitte: ${result.sections.map((s) => `${s.label} ${Math.round(s.startMs / 1000)}s`).join(", ")}`);
-} finally {
-  await rm(work, { recursive: true, force: true });
+async function main() {
+  const provider = createMurekaMusicProvider(apiKey!, {
+    model: process.env.MUREKA_MODEL?.trim() || undefined,
+  });
+  const work = await mkdtemp(path.join(tmpdir(), "melomio-hoertest-"));
+  const started = Date.now();
+  console.log(`Erzeuge Song (${genre![1]}) bei Mureka … das dauert meist 1–3 Minuten.`);
+  try {
+    const result = await provider.generate(input, work);
+    await mkdir("hoertest", { recursive: true });
+    const target = path.join(
+      "hoertest",
+      `${genreSlug}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.mp3`,
+    );
+    await copyFile(result.file, target);
+    console.log(`✓ Fertig nach ${Math.round((Date.now() - started) / 1000)} s – Modell ${result.model}`);
+    console.log(`  Datei: ${path.resolve(target)}`);
+    if (result.sections)
+      console.log(
+        `  Abschnitte: ${result.sections.map((s) => `${s.label} ${Math.round(s.startMs / 1000)}s`).join(", ")}`,
+      );
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
 }
+
+main().catch((error) => {
+  console.error(`✗ ${error instanceof Error ? error.message : error}`);
+  process.exit(1);
+});
