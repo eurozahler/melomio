@@ -61,6 +61,14 @@ const baseSchema = z.object({
   MOLLIE_API_KEY: optionalString,
   ANTHROPIC_API_KEY: optionalString,
   ELEVENLABS_API_KEY: optionalString,
+  MUREKA_API_KEY: optionalString,
+  /** Mureka-Modell, Standard mureka-9.5 (siehe src/music/mureka.ts). */
+  MUREKA_MODEL: optionalString,
+  /** Geschätzte Kosten pro Song in Cent (Tagesbudget/Auswertung). */
+  MUREKA_COST_CENTS: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.coerce.number().int().min(0).max(1000).optional(),
+  ),
 
   SMTP_HOST: optionalString,
   SMTP_PORT: optionalString,
@@ -107,6 +115,11 @@ const REQUIRED_BY_ADAPTER: Array<{
     keys: ["ELEVENLABS_API_KEY"],
   },
   {
+    when: (e) => e.MUSIC_PROVIDER === "mureka",
+    label: "MUSIC_PROVIDER=mureka",
+    keys: ["MUREKA_API_KEY"],
+  },
+  {
     when: (e) => e.EMAIL_PROVIDER === "smtp",
     label: "EMAIL_PROVIDER=smtp",
     keys: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"],
@@ -128,7 +141,7 @@ const PROVIDER_KEYS = [
 
 /** Adapter, die noch nicht gebaut sind, dürfen nicht ausgewählt werden. */
 const NOT_YET_IMPLEMENTED: Partial<Record<(typeof PROVIDER_KEYS)[number], string[]>> = {
-  MUSIC_PROVIDER: ["lyria", "mureka", "acestep"],
+  MUSIC_PROVIDER: ["elevenlabs", "lyria", "acestep"],
 };
 
 export type AppEnv = BaseEnv & {

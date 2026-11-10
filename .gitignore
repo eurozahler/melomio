@@ -37,3 +37,6 @@ Thumbs.db
 .tmp/
 .test-storage/
 .e2e-storage/
+
+# Hörtest-Ergebnisse (scripts/music/hoertest.ts)
+/hoertest/
