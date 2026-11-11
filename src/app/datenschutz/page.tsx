@@ -89,6 +89,20 @@ async function Privacy() {
         Wenn Sie die Song-Seite einschalten, ist sie für alle erreichbar, die den Link kennen. Sie zeigt
         Titel, Songtext, Song und Video. Sie können die Seite jederzeit wieder abschalten.
       </p>
+      <h3>Freiwillige Veröffentlichung</h3>
+      <p>
+        Wenn Sie beim Kauf zustimmen, veröffentlichen wir das Video nach unserer Prüfung auf eigenen Kanälen in
+        sozialen Netzwerken (Art. 6 Abs. 1 lit. a DSGVO). Fotos und der Songtitel erscheinen nur, wenn Sie das
+        gewählt haben. Dazu übergeben wir das Video an Dropbox und unseren Veröffentlichungsdienst. Sie können
+        die Einwilligung jederzeit auf Ihrer Bestellseite widerrufen; wir veröffentlichen dann nichts mehr und
+        entfernen bereits übergebene Videos.
+      </p>
+      <h3>Partnerprogramm</h3>
+      <p>
+        Für Partner (Affiliates) verarbeiten wir Name, Anschrift, Bankverbindung und steuerliche Angaben zur
+        Abrechnung der Provisionen (Art. 6 Abs. 1 lit. b und c DSGVO). Gutschriften bewahren wir nach den
+        gesetzlichen Fristen auf. Partner erhalten von Kunden nur Bestellnummern und Beträge.
+      </p>
 
       <h2>4. Cookies</h2>
       <p>
