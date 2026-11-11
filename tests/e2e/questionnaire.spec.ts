@@ -8,16 +8,17 @@ const next = (page: Page) => page.getByRole("button", { name: "Weiter", exact: t
 test("Startseite zeigt Anlässe und Preis", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Dein persönlicher Song" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Geburtstag/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Liebe/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Hochzeit/ })).toBeVisible();
+  // Anfang des Linktexts, damit z. B. „Hochzeitstag & Jubiläum“ nicht mitzählt
+  await expect(page.getByRole("link", { name: /^Geburtstag\s/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Liebe\s/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Hochzeit\s/ })).toBeVisible();
   await expect(page.getByTestId("price")).toHaveText(/9,99\s€/);
   await expect(page.getByTestId("test-mode-banner")).toBeVisible();
 });
 
 test("Fragebogen ausfüllen und nach dem Neuladen weitermachen", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: /Geburtstag/ }).click();
+  await page.getByRole("link", { name: /^Geburtstag\s/ }).click();
 
   // Pflichtfrage ohne Antwort → Hinweis
   await expect(heading(page)).toHaveText("Für wen ist der Song?");

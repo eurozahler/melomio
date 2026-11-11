@@ -41,7 +41,7 @@ describe("Migrationen und Beispieldaten (M2)", () => {
   });
 
   it("spielt die Beispieldaten vollständig ein", async () => {
-    expect(await countRows("occasions")).toBe(4); // + Abschied (Trauer, C11);
+    expect(await countRows("occasions")).toBe(SEED_OCCASIONS.length); // 20: 3 + Abschied (C11) + 16 Anlässe vom 11.11.2026
     expect(await countRows("genres")).toBe(6);
     expect(await countRows("moods")).toBe(4);
     expect(await countRows("voices")).toBe(4);
