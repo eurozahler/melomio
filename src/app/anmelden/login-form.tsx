@@ -51,6 +51,7 @@ export function LoginForm({
       setBusy(false);
       if (error.code === "EMAIL_NOT_VERIFIED") return setError(t("login.errorUnverified"));
       if (error.code === "INVALID_EMAIL_OR_PASSWORD") return setError(t("login.errorInvalid"));
+      if (error.code === "ACCOUNT_BLOCKED") return setError(t("login.errorBlocked"));
       return setError(t("login.errorGeneric"));
     }
     window.location.assign(next);

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, inArray, or, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, inArray, isNull, or, sql, sum } from "drizzle-orm";
 import type { PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
 import {
@@ -34,7 +34,10 @@ export async function isAdmin(db: Database, userId: string): Promise<boolean> {
   const rows = await db
     .select({ role: userRoles.role })
     .from(userRoles)
-    .where(and(eq(userRoles.userId, userId), inArray(userRoles.role, [...ADMIN_ROLES])));
+    .innerJoin(users, eq(userRoles.userId, users.id))
+    .where(
+      and(eq(userRoles.userId, userId), inArray(userRoles.role, [...ADMIN_ROLES]), isNull(users.blockedAt)),
+    );
   return rows.length > 0;
 }
 

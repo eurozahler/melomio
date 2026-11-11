@@ -132,6 +132,7 @@
       "linkSentTitle": "Schau in dein Postfach",
       "linkSent": "Wir haben dir einen Anmeldelink an {email} geschickt. Er ist 15 Minuten gültig.",
       "errorInvalid": "E-Mail-Adresse oder Passwort stimmt nicht.",
+      "errorBlocked": "Dieses Konto ist gesperrt. Bei Fragen schreib uns bitte eine E-Mail.",
       "errorUnverified": "Bitte bestätige zuerst deine E-Mail-Adresse. Wir haben dir den Link noch einmal geschickt.",
       "errorLink": "Der Anmeldelink ist abgelaufen oder wurde schon benutzt. Bitte fordere einen neuen an.",
       "errorGeneric": "Das hat nicht geklappt. Bitte versuche es noch einmal."

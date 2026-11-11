@@ -23,6 +23,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Link href="/admin/veroeffentlichungen" className={link}>
           Veröffentlichungen
         </Link>
+        <Link href="/admin/benutzer" className={link}>
+          Benutzer
+        </Link>
         <Link href="/admin/affiliates" className={link}>
           Affiliates
         </Link>

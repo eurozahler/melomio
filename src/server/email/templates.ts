@@ -226,3 +226,19 @@ export function affiliatePayoutTemplate(p: {
     html: layout(subject, lines, { label: "Zum Partnerbereich", url: p.partnerUrl }, ""),
   };
 }
+
+/** Einladung in den Admin-Bereich (Benutzerverwaltung). */
+export function staffInviteTemplate(p: { role: "owner" | "admin"; loginUrl: string; isTest: boolean }): Rendered {
+  const subject = `${p.isTest ? "[TEST] " : ""}Einladung in den melomio-Admin-Bereich`;
+  const lines = [
+    "Hallo,",
+    `du wurdest als ${p.role === "owner" ? "Inhaber" : "Admin"} in den melomio-Admin-Bereich eingeladen.`,
+    "Melde dich mit dieser E-Mail-Adresse über „Mit E-Mail-Link“ an. Ein Passwort kannst du danach jederzeit über „Passwort vergessen“ festlegen.",
+    "Falls du mit dieser Einladung nichts anfangen kannst, ignoriere diese E-Mail einfach.",
+  ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nAnmelden: ${p.loginUrl}`,
+    html: layout(subject, lines, { label: "Jetzt anmelden", url: p.loginUrl }, ""),
+  };
+}

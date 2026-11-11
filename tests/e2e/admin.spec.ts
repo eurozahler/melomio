@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { grantRole } from "../../src/admin/service";
 import { createDb } from "../../src/db/client";
-import { orderViaQuestionnaire, registerAndVerify, uniqueEmail } from "./helpers";
+import { linkFromMailbox, orderViaQuestionnaire, registerAndVerify, uniqueEmail } from "./helpers";
 
 /** Abnahme M10: nur Admins sehen den Admin-Bereich; Bestellungen, Einstellungen mit Protokoll. */
 
@@ -144,4 +144,60 @@ test("Prompt-Seite zeigt die aktive Fassung und testet mit dem Test-Baustein", a
   await expect(page.getByTestId("prompt-template")).toHaveValue(/Songtexterin/);
   await page.getByTestId("prompt-test").click();
   await expect(page.getByTestId("prompt-preview")).toBeVisible({ timeout: 30_000 });
+});
+
+test("Inhaber sperrt einen Kunden und lädt einen neuen Admin ein", async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  // Kunde mit eigener Sitzung in einem zweiten Browser
+  const customerContext = await browser.newContext();
+  const customer = await customerContext.newPage();
+  const customerEmail = uniqueEmail("gesperrt");
+  await registerAndVerify(customer, customerEmail, PASSWORD);
+
+  const ownerEmail = uniqueEmail("inhaber");
+  await registerAndVerify(page, ownerEmail, PASSWORD);
+  const { db, pool } = createDb(process.env.DATABASE_URL_TEST!, { max: 1 });
+  try {
+    await grantRole(db, ownerEmail, "owner");
+  } finally {
+    await pool.end();
+  }
+
+  // Sperren
+  await page.goto(`/admin/benutzer?q=${encodeURIComponent(customerEmail)}`);
+  await expect(page.getByRole("heading", { level: 1, name: "Benutzer" })).toBeVisible();
+  const row = page.getByTestId("user-row").filter({ hasText: customerEmail });
+  await expect(row).toHaveCount(1);
+  page.once("dialog", (d) => d.accept("Test-Sperre"));
+  await row.getByRole("button", { name: "Sperren" }).click();
+  await expect(row.getByText("Gesperrt", { exact: true })).toBeVisible();
+
+  // Der Kunde ist abgemeldet und kommt nicht wieder hinein
+  await customer.goto("/konto");
+  await expect(customer).toHaveURL(/\/anmelden/);
+  await customer.getByRole("tab", { name: "Mit Passwort" }).click();
+  await customer.getByLabel("E-Mail-Adresse").filter({ visible: true }).fill(customerEmail);
+  await customer.getByLabel("Passwort").filter({ visible: true }).fill(PASSWORD);
+  await customer.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await expect(customer.getByText("Dieses Konto ist gesperrt.", { exact: false })).toBeVisible();
+  await customerContext.close();
+
+  // Neuen Admin einladen – er meldet sich per E-Mail-Link an und sieht den Admin-Bereich
+  const inviteEmail = uniqueEmail("eingeladen");
+  await page.goto("/admin/benutzer");
+  await page.getByTestId("invite-email").fill(inviteEmail);
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Einladen" }).click();
+  await expect(page.getByText(`Einladung an ${inviteEmail} verschickt.`)).toBeVisible();
+  await linkFromMailbox(page, inviteEmail, /Einladung in den melomio-Admin-Bereich/);
+
+  const invitedContext = await browser.newContext();
+  const invited = await invitedContext.newPage();
+  await invited.goto("/anmelden?next=%2Fadmin");
+  await invited.getByLabel("E-Mail-Adresse").filter({ visible: true }).fill(inviteEmail);
+  await invited.getByRole("button", { name: "Link senden" }).click();
+  await invited.goto(await linkFromMailbox(invited, inviteEmail, /Anmeldelink/));
+  await invited.goto("/admin");
+  await expect(invited.getByRole("heading", { name: "Übersicht" })).toBeVisible();
+  await invitedContext.close();
 });

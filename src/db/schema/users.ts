@@ -15,6 +15,9 @@ export const users = pgTable("users", {
   locale: text().notNull().default("de"),
   /** Konto gelöscht (Daten entfernt, E-Mail anonymisiert). Bestellungen/Rechnungen bleiben für Aufbewahrungspflichten. */
   deletedAt: timestamp({ withTimezone: true }),
+  /** Vom Admin gesperrt: keine Anmeldung mehr möglich, bestehende Sitzungen werden beendet. */
+  blockedAt: timestamp({ withTimezone: true }),
+  blockedReason: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });

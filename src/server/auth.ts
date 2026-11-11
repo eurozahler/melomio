@@ -1,5 +1,7 @@
 import "server-only";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
+import { isBlocked } from "@/admin/users";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins/magic-link";
@@ -37,6 +39,17 @@ function createAuth() {
     },
     account: { modelName: "accounts" },
     verification: { modelName: "verifications" },
+    databaseHooks: {
+      session: {
+        create: {
+          // Vom Admin gesperrte Konten können sich nicht mehr anmelden (gilt für Passwort und E-Mail-Link).
+          before: async (session) => {
+            if (await isBlocked(getDb(), session.userId))
+              throw new APIError("FORBIDDEN", { message: "Account blocked", code: "ACCOUNT_BLOCKED" });
+          },
+        },
+      },
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
