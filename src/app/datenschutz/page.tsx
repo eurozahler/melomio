@@ -126,6 +126,11 @@ async function Privacy() {
           der Musik mit KI. Übermittelt werden der freigegebene Songtext und die Stilbeschreibung, nicht Ihre
           E-Mail-Adresse.
         </li>
+        <li>
+          <strong>Dropbox</strong> (Dropbox International Unlimited Company, Dublin, Irland) und
+          <strong> EasyGMV</strong> [⚠️ Betreiber und Vertrag prüfen]: nur bei freiwilliger Veröffentlichung –
+          Ablage und Veröffentlichung des Videos.
+        </li>
       </ul>
       <p>
         Eine Weitergabe an sonstige Dritte erfolgt nur, wenn wir gesetzlich dazu verpflichtet sind (z. B. an
