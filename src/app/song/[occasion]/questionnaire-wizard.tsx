@@ -11,6 +11,7 @@ import {
   type AnswerValue,
   type QuestionDef,
 } from "@/domain/questionnaire";
+import { resolveAttribution, type Attribution } from "@/domain/attribution";
 import type { ChoiceLists } from "@/server/catalog";
 import { saveDraftAction } from "./actions";
 
@@ -42,6 +43,18 @@ export function QuestionnaireWizard({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
+  // Herkunft (Werbung, Suche …) einmal beim Öffnen ermitteln; gespeichert wird sie mit dem Entwurf
+  const attributionRef = useRef<Attribution | undefined>(initialDraft.attribution);
+  useEffect(() => {
+    attributionRef.current ??= resolveAttribution(
+      new URLSearchParams(window.location.search),
+      document.referrer,
+      window.location.hostname,
+    );
+  }, []);
+  const withAttribution = (d: DraftData): DraftData =>
+    d.attribution || !attributionRef.current ? d : { ...d, attribution: attributionRef.current };
+
   // Schritte: alle sichtbaren Fragen, dann Auswahl (Genre usw.), dann Zusammenfassung
   const visible = useMemo(() => visibleQuestions(questions, draft.answers), [questions, draft.answers]);
   const steps = useMemo(() => [...visible.map((q) => q.key), STYLE_STEP, SUMMARY_STEP], [visible]);
@@ -60,7 +73,7 @@ export function QuestionnaireWizard({
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
-        const result = await saveDraftAction(occasionSlug, draft);
+        const result = await saveDraftAction(occasionSlug, withAttribution(draft));
         if (!cancelled) setSaveState(result.ok ? "saved" : "failed");
       } catch {
         if (!cancelled) setSaveState("failed");
@@ -110,7 +123,7 @@ export function QuestionnaireWizard({
   const continueToAccount = async () => {
     setContinuing(true);
     try {
-      const result = await saveDraftAction(occasionSlug, draft);
+      const result = await saveDraftAction(occasionSlug, withAttribution(draft));
       if (!result.ok) throw new Error(result.error);
       // Volle Seitennavigation nötig: /weiter ist ein Route Handler mit Weiterleitungen, keine Seite
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination

@@ -1,4 +1,5 @@
 import { boolean, index, integer, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import type { Attribution } from "../../domain/attribution";
 import { consentTypeEnum, modeEnum, orderStatusEnum, paymentStatusEnum, refundStatusEnum } from "./enums";
 import { genres, moods, occasions, products, questionnaireVersions, questions, voices } from "./catalog";
 import { users } from "./users";
@@ -52,6 +53,8 @@ export const orders = pgTable(
     billing: jsonb().$type<BillingAddress | null>(),
     /** Zustimmung zur Veröffentlichung (null = keine Veröffentlichung). */
     publication: jsonb().$type<PublicationChoice | null>(),
+    /** Herkunft des Kunden (Werbung, Suche, Partner …) beim Start des Fragebogens – für die Auswertung. */
+    attribution: jsonb().$type<Attribution | null>(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

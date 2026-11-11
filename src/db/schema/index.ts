@@ -8,3 +8,4 @@ export * from "./invoices";
 export * from "./vouchers";
 export * from "./affiliates";
 export * from "./publications";
+export * from "./marketing";

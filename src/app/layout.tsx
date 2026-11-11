@@ -4,8 +4,10 @@ import { Geist } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { SiteFooter } from "@/components/site-footer";
+import { MarketingHead } from "@/components/marketing-head";
 import { SiteHeader } from "@/components/site-header";
 import { TestModeBanner } from "@/components/test-mode-banner";
+import { VisitBeacon } from "@/components/visit-beacon";
 import { DEFAULT_LOCALE } from "@/i18n/request";
 import "./globals.css";
 
@@ -37,6 +39,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteHeader />
           {children}
           <SiteFooter />
+          <Suspense fallback={null}>
+            <VisitBeacon />
+          </Suspense>
+          <Suspense fallback={null}>
+            <MarketingHead />
+          </Suspense>
         </NextIntlClientProvider>
       </body>
     </html>

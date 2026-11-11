@@ -190,11 +190,13 @@ describe("Bestellung aus Entwurf anlegen", () => {
       occasionName: q.occasion.name,
       questionnaireVersionId: q.versionId,
       questions: q.questions,
-      draft: completeDraft(),
+      draft: { ...completeDraft(), attribution: { source: "google", medium: "cpc", campaign: "test", gclid: "Abc" } },
       isTest: true,
       draftCookieId: "c".repeat(43),
     });
 
+    // Herkunft aus dem Entwurf landet in der Bestellung (Auswertung)
+    expect(order.attribution).toMatchObject({ source: "google", medium: "cpc", gclid: "Abc" });
     expect(order.publicRef).toMatch(/^M-[A-HJ-NP-Z2-9]{6}$/);
     expect(order.status).toBe("created");
     expect(await db.select().from(answers).where(eq(answers.orderId, order.id))).toHaveLength(4);

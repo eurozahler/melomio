@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConsentSettingsButton } from "./consent";
 
 /** Fußzeile mit den Rechtstexten – auf jeder Seite erreichbar (Impressumspflicht). */
 export function SiteFooter() {
@@ -21,6 +22,7 @@ export function SiteFooter() {
         <Link href="/partner" className={link}>
           Partnerprogramm
         </Link>
+        <ConsentSettingsButton className={link} />
       </nav>
     </footer>
   );

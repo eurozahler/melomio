@@ -6,6 +6,9 @@ import { connection } from "next/server";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { getActiveOccasions, getSongPrice } from "@/server/catalog";
+import { TrackedLink } from "@/components/tracked-link";
+import { getDb } from "@/db/client";
+import { listPublishedLandings } from "@/marketing/landing";
 
 export default function HomePage() {
   const t = useTranslations("Home");
@@ -83,7 +86,11 @@ export default function HomePage() {
 async function OccasionsAndPrice() {
   await connection();
   const t = await getTranslations("Home");
-  const [occasions, price] = await Promise.all([getActiveOccasions(), getSongPrice()]);
+  const [occasions, price, landings] = await Promise.all([
+    getActiveOccasions(),
+    getSongPrice(),
+    listPublishedLandings(getDb()).catch(() => []),
+  ]);
   const formatted = price
     ? new Intl.NumberFormat("de-DE", { style: "currency", currency: price.currency }).format(
         price.grossCents / 100,
@@ -95,7 +102,7 @@ async function OccasionsAndPrice() {
       <ul className="grid gap-4 sm:grid-cols-3">
         {occasions.map((o) => (
           <li key={o.slug}>
-            <Link
+            <TrackedLink
               href={`/song/${o.slug}`}
               className="flex h-full flex-col rounded-2xl border border-neutral-200 p-5 transition hover:border-brand/50 hover:shadow-md dark:border-neutral-800"
             >
@@ -104,10 +111,23 @@ async function OccasionsAndPrice() {
                 <span className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">{o.description}</span>
               )}
               <span className="mt-4 text-sm font-semibold text-brand">{t("cta")} →</span>
-            </Link>
+            </TrackedLink>
           </li>
         ))}
       </ul>
+      {landings.length > 0 && (
+        <nav aria-label="Mehr zu den Anlässen" className="mt-6 text-center text-sm text-neutral-600 dark:text-neutral-300">
+          Mehr erfahren:{" "}
+          {landings.map((l, i) => (
+            <span key={l.slug}>
+              {i > 0 && " · "}
+              <Link href={`/lieder/${l.slug}`} className="underline hover:text-brand">
+                {l.occasionName}
+              </Link>
+            </span>
+          ))}
+        </nav>
+      )}
       {formatted && (
         <p className="mt-8 text-center">
           <span className="text-sm text-neutral-500">{t("priceLabel")}</span>

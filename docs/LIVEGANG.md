@@ -71,6 +71,10 @@ Empfehlung: **eigener Server** für den Livebetrieb (Testserver bleibt für Test
 
 ## F. Nach dem Start (erste Woche)
 
+- [ ] Google Search Console: Property für die echte Adresse, Bestätigungscode in Admin → Marketing → Google, Sitemap einreichen.
+- [ ] Google Ads: Conversion „Kauf“ anlegen, ID + Label eintragen, einschalten; mit dem Google Tag Assistant prüfen, dass der Tag erst nach „Akzeptieren“ lädt.
+- [ ] Landingpages veröffentlichen und in den Anzeigen als Ziel-URL verwenden (Link-Baukasten).
+
 - [ ] Täglich Admin-Übersicht: Lebenszeichen des Workers, „Braucht Aufmerksamkeit“, Kosten.
 - [ ] Sicherungen kontrollieren (`/opt/melomio/backups/backup.log`).
 - [ ] Mureka-Guthaben und Anthropic-Kosten beobachten.

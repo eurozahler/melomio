@@ -37,9 +37,9 @@ async function Privacy() {
       <h2>2. Überblick</h2>
       <p>
         melomio erstellt personalisierte Songs mit Video. Dafür verarbeiten wir die Daten, die Sie uns geben
-        (Konto, Fragebogen, Songtext), und Daten, die bei der Nutzung technisch anfallen. Wir verwenden keine
-        Werbe- oder Analyse-Cookies und keine Tracking-Dienste. Schriften werden von unserem eigenen Server
-        geladen.
+        (Konto, Fragebogen, Songtext), und Daten, die bei der Nutzung technisch anfallen. Werbe-Cookies
+        (Google Ads) setzen wir nur, wenn Sie im Cookie-Banner ausdrücklich zustimmen. Unsere eigene
+        Besucherzählung kommt ohne Cookies aus. Schriften werden von unserem eigenen Server geladen.
       </p>
 
       <h2>3. Welche Daten wir verarbeiten und warum</h2>
@@ -97,6 +97,29 @@ async function Privacy() {
         die Einwilligung jederzeit auf Ihrer Bestellseite widerrufen; wir veröffentlichen dann nichts mehr und
         entfernen bereits übergebene Videos.
       </p>
+      <h3>Besucherzählung und Herkunft (ohne Cookies)</h3>
+      <p>
+        Um zu verstehen, welche Werbung und welche Seiten funktionieren, zählen wir Aufrufe der Startseite, der
+        Anlass-Seiten und des Fragebogen-Starts – nur als Tagessummen je Seite und Herkunft (z. B. „Google-Suche“
+        oder „Instagram“). Dabei speichern wir weder Ihre IP-Adresse noch ein Cookie oder eine andere Kennung.
+        Kommen Sie über einen Werbelink, speichern wir die Werbe-Parameter des Links (z. B. Kampagnenname und
+        die Klick-Kennung von Google) und die Adresse der Seite, von der Sie kamen (nur der Domainname), mit
+        Ihrer Bestellung, um auszuwerten, welche Werbung zu Bestellungen führt. Rechtsgrundlage ist unser
+        berechtigtes Interesse an einer wirtschaftlichen Werbung (Art. 6 Abs. 1 lit. f DSGVO). Sie können dem
+        jederzeit widersprechen (Art. 21 DSGVO).
+      </p>
+      <h3>Google Ads (nur mit Einwilligung)</h3>
+      <p>
+        Wenn Sie im Cookie-Banner auf „Akzeptieren“ klicken, laden wir den Google-Tag von Google Ads (Google
+        Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland). Google setzt dann Cookies, um zu
+        erkennen, dass Sie über eine Anzeige zu uns gekommen sind, und wir melden Google einen Kauf mit
+        Bestellnummer und Betrag (Conversion-Messung). Personalisierte Werbung schalten wir dabei nicht frei.
+        Dabei können Daten (u. a. IP-Adresse, Geräte- und Browserangaben, Klick-Kennung) an Google übermittelt
+        und auch in den USA verarbeitet werden; Google ist nach dem EU-US Data Privacy Framework zertifiziert.
+        Rechtsgrundlage ist Ihre Einwilligung (§ 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO). Ohne Zustimmung
+        wird der Google-Tag nicht geladen. Sie können Ihre Einwilligung jederzeit über „Cookie-Einstellungen“
+        unten auf jeder Seite widerrufen. [⚠️ juristisch prüfen, u. a. gemeinsame Verantwortlichkeit mit Google]
+      </p>
       <h3>Partnerprogramm</h3>
       <p>
         Für Partner (Affiliates) verarbeiten wir Name, Anschrift, Bankverbindung und steuerliche Angaben zur
@@ -104,11 +127,17 @@ async function Privacy() {
         gesetzlichen Fristen auf. Partner erhalten von Kunden nur Bestellnummern und Beträge.
       </p>
 
-      <h2>4. Cookies</h2>
+      <h2 id="cookies">4. Cookies</h2>
       <p>
-        Wir setzen nur technisch notwendige Cookies: ein Anmelde-Cookie, damit Sie angemeldet bleiben, und ein
-        Cookie, das Ihren Fragebogen-Entwurf vor der Anmeldung zuordnet (höchstens 30 Tage). Rechtsgrundlage
-        ist § 25 Abs. 2 Nr. 2 TDDDG in Verbindung mit Art. 6 Abs. 1 lit. b und f DSGVO.
+        Technisch notwendig sind: ein Anmelde-Cookie, damit Sie angemeldet bleiben, ein Cookie, das Ihren
+        Fragebogen-Entwurf vor der Anmeldung zuordnet (höchstens 30 Tage), und ein Cookie, das Ihre Wahl im
+        Cookie-Banner speichert (12 Monate). Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG in Verbindung mit Art.
+        6 Abs. 1 lit. b und f DSGVO.
+      </p>
+      <p>
+        Nur mit Ihrer Einwilligung: Cookies von Google Ads (z. B. „_gcl_au“, bis zu 90 Tage) zur Messung, ob
+        unsere Anzeigen zu Käufen führen (siehe „Google Ads“ oben). Ihre Wahl können Sie jederzeit über
+        „Cookie-Einstellungen“ unten auf der Seite ändern.
       </p>
 
       <h2>5. Empfänger und Dienstleister</h2>
@@ -139,6 +168,11 @@ async function Privacy() {
           <strong>Mureka</strong> [⚠️ Betreiber, Sitz und Rechtsgrundlage der Übermittlung prüfen]: Erstellung
           der Musik mit KI. Übermittelt werden der freigegebene Songtext und die Stilbeschreibung, nicht Ihre
           E-Mail-Adresse.
+        </li>
+        <li>
+          <strong>Google Ireland Limited</strong>, Dublin (Irland): nur mit Ihrer Einwilligung – Google Ads
+          Conversion-Messung (siehe oben). Außerdem nutzen wir die Google Search Console; dabei werden keine
+          Daten unserer Besucher an Google übermittelt.
         </li>
         <li>
           <strong>Dropbox</strong> (Dropbox International Unlimited Company, Dublin, Irland) und

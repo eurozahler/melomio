@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { attributionSchema } from "./attribution";
 
 /** Höchstlänge eines selbst geschriebenen Songtexts (E17). */
 export const OWN_LYRICS_MAX_LENGTH = 3000;
@@ -22,6 +23,8 @@ export const draftDataSchema = z.object({
   }),
   /** Zuletzt geöffneter Schritt, damit es nach dem Neuladen an derselben Stelle weitergeht. */
   step: z.string().max(64).nullable(),
+  /** Herkunft des Besuchers beim ersten Speichern (Werbung, Suche …) – wird in die Bestellung übernommen. */
+  attribution: attributionSchema.optional(),
 });
 
 export type DraftData = z.infer<typeof draftDataSchema>;

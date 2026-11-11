@@ -41,3 +41,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* „Cookie-Einstellungen“ nur zeigen, wenn das Cookie-Banner aktiv ist (Google Ads eingeschaltet) */
+html:not([data-consent]) .consent-settings {
+  display: none;
+}

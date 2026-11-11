@@ -27,6 +27,8 @@ import { PublicationStatus } from "./publication-status";
 import { getPublicationByOrder } from "@/publishing/service";
 import { listSongVersions } from "@/jobs/versions";
 import { requireUser } from "@/server/session";
+import { PurchaseConversion } from "@/components/consent";
+import { adsActive, getMarketingConfig } from "@/marketing/config";
 
 const STEPS = ["lyrics", "music", "preview", "payment", "delivery"] as const;
 
@@ -118,10 +120,23 @@ async function OrderContent({
   const choiceDays = await getSetting(db, "version_choice_days");
   const publication = order.paidAt ? await getPublicationByOrder(db, order.id) : null;
   const publicationState = publication?.status ?? (order.paidAt && order.publication ? "consented" : null);
+  // Kauf an Google Ads melden (nur echte Bestellungen; der Baustein prüft die Einwilligung selbst)
+  const marketing = order.paidAt && !order.isTest ? await getMarketingConfig(db) : null;
+  const conversionSnap =
+    marketing && adsActive(marketing) && marketing.purchaseLabel ? await getPriceSnapshot(db, order.id) : null;
 
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh active={working} />
+      {marketing && conversionSnap && conversionSnap.netCents > 0 && (
+        <PurchaseConversion
+          adsId={marketing.googleAdsId}
+          label={marketing.purchaseLabel}
+          transactionId={order.publicRef}
+          valueCents={conversionSnap.netCents}
+          currency={conversionSnap.currency}
+        />
+      )}
       <div>
         <p className="text-sm text-neutral-500">{t("orderRef", { ref: order.publicRef })}</p>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>

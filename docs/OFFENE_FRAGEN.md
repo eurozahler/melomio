@@ -232,3 +232,20 @@ Livegang-Ablauf: `docs/LIVEGANG.md`.
 3. **Steuerberater fragen**: Gutschriften an Affiliates (Pflichtangaben, Privatpersonen ohne Gewerbe).
 4. **Partnerbedingungen** (/partnerbedingungen) sind ein Entwurf – mit den anderen Rechtstexten prüfen lassen.
 5. **Anlass „Abschied“** einblenden, wenn du so weit bist (Admin → Fragebögen → Abschied → „Auf der Startseite anzeigen“).
+6. **Neue Admins**: über Admin → Benutzer einladen (statt `npm run admin:rolle`). Rollen ändern darf nur ein Inhaber.
+
+## Teil G – Marketing (Auftrag 11.11.2026: „Auswertung für Google Ads/SEO, Landingpages – premium“)
+
+| Baustein | Umgesetzt |
+|---|---|
+| Landingpages je Anlass | `/lieder/<adresse>`, Admin → Marketing → Landingpages: Titel/Beschreibung mit Google-Vorschau und Zeichenzähler, Überschrift, Vorteile, Abschnitte, FAQ, Hörbeispiel (MP3), Varianten je Kampagne (`?k=`), KI-Entwurf (Claude, ca. 2–5 Cent pro Klick), Vorschau vor dem Veröffentlichen. Strukturierte Daten (Produkt mit Preis, FAQ, Brotkrumen), Sitemap, robots.txt (Testbetrieb: alles gesperrt) |
+| Auswertung ohne Cookies | Besuche als Tagessummen je Seite und Herkunft; Herkunft (utm, gclid, Suchmaschine, soziales Netz, Partner-Code) wird bis in die Bestellung mitgegeben. Admin → Marketing → Auswertung: Besuche → Fragebogen → Bestellung → Hörprobe → Kauf → Umsatz netto, Werbekosten, Kosten pro Kauf, ROAS; nach Herkunft, Kampagne oder Landingpage |
+| Werbekosten & Link-Baukasten | Kosten je Monat/Quelle/Kampagne eintragen; Links mit utm-Parametern bauen und kopieren |
+| Google Ads | Cookie-Banner (Akzeptieren/Ablehnen gleichwertig), Google-Tag nur nach Zustimmung, Kauf-Conversion mit Nettowert und Bestellnummer (nur echte Bestellungen), Widerruf über „Cookie-Einstellungen“ in der Fußzeile |
+| Search Console | Bestätigungscode im Admin eintragen (Meta-Tag), dann Sitemap einreichen |
+
+### Offen danach
+1. **Google Ads**: Conversion-Aktion „Kauf“ anlegen und ID + Label unter Admin → Marketing → Google eintragen (Anleitung steht dort). Erst im Livebetrieb einschalten.
+2. **Datenschutzerklärung** wurde um Besucherzählung, Google Ads und Cookie-Banner ergänzt – mit den anderen Rechtstexten prüfen lassen (u. a. gemeinsame Verantwortlichkeit mit Google).
+3. **Landingpages schreiben**, sobald alle Anlässe angelegt sind (KI-Entwurf hilft) – und je ein Hörbeispiel hochladen.
+4. **Search Console** erst nach dem Umschalten der Domain einrichten (staging ist für Suchmaschinen gesperrt).

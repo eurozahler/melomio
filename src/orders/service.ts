@@ -134,6 +134,7 @@ export async function createOrderFromDraft(db: Database, boss: PgBoss, input: Cr
           songLanguage: choices.songLanguage,
           customLyrics: choices.customLyrics,
           isTest: input.isTest,
+          attribution: input.draft.attribution ?? null,
         })
         .onConflictDoNothing({ target: orders.publicRef })
         .returning();

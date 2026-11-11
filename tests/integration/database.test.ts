@@ -37,7 +37,7 @@ describe("Migrationen und Beispieldaten (M2)", () => {
     const r = await db.execute<{ n: number }>(
       sql`select count(*)::int as n from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE'`,
     );
-    expect(r.rows[0]?.n).toBe(54); // + affiliates, affiliate_codes, affiliate_attributions, affiliate_commissions, affiliate_payouts, publications // + order_photos (C2) // + vouchers, voucher_redemptions (C5) // users.deleted_at ist nur eine Spalte · + invoices, invoice_counters (Rechnungen) // + dev_mock_payments (M7) // 37 aus M2 + sessions, accounts, verifications, dev_mailbox (M3b) + job_executions (M4)
+    expect(r.rows[0]?.n).toBe(57); // + landing_pages, page_view_stats, ad_costs (Marketing) // + affiliates, affiliate_codes, affiliate_attributions, affiliate_commissions, affiliate_payouts, publications // + order_photos (C2) // + vouchers, voucher_redemptions (C5) // users.deleted_at ist nur eine Spalte · + invoices, invoice_counters (Rechnungen) // + dev_mock_payments (M7) // 37 aus M2 + sessions, accounts, verifications, dev_mailbox (M3b) + job_executions (M4)
   });
 
   it("spielt die Beispieldaten vollständig ein", async () => {
