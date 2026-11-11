@@ -8,7 +8,6 @@ import { getDb } from "@/db/client";
 import type { OrderStatus } from "@/domain/order-status";
 import { getOwnedOrder } from "@/orders/lyrics";
 import { getOpenCheckoutUrl, getPriceSnapshot, syncOrderPayments } from "@/orders/checkout";
-import { splitGross } from "@/payments/types";
 import { getSongPrice } from "@/server/catalog";
 import { getSenderBoss } from "@/server/jobs";
 import { getAppPaymentProvider } from "@/server/payments";
@@ -19,9 +18,14 @@ import { createSignedFilePath } from "@/delivery/signing";
 import { listInvoicesForOrder } from "@/invoices/service";
 import { getDeliveryFiles, getSharePage } from "@/orders/delivery";
 import { CheckoutForm } from "./checkout-form";
+import { isMemorialOrder, publicationOffer } from "@/orders/pricing";
 import { PhotoUploader } from "./photo-uploader";
 import { listPhotos, MAX_PHOTOS } from "@/orders/photos";
 import { ShareControls } from "./share-controls";
+import { VersionChooser } from "./version-chooser";
+import { PublicationStatus } from "./publication-status";
+import { getPublicationByOrder } from "@/publishing/service";
+import { listSongVersions } from "@/jobs/versions";
 import { requireUser } from "@/server/session";
 
 const STEPS = ["lyrics", "music", "preview", "payment", "delivery"] as const;
@@ -93,8 +97,6 @@ async function OrderContent({
   const gross = snapshot?.grossCents ?? current?.grossCents ?? 0;
   const currency = snapshot?.currency ?? current?.currency ?? "EUR";
   const rateBp = snapshot?.taxRateBp ?? current?.taxRateBp ?? 1900;
-  const fmt = (cents: number) =>
-    new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
   const openPayment = order.status === "awaiting_payment" ? await getOpenCheckoutUrl(db, order.id) : null;
 
   // Auslieferung (M9): signierte, kurzlebige Links – nur nach bestätigter Zahlung
@@ -112,6 +114,10 @@ async function OrderContent({
   const hasPreview = ["preview_ready", "awaiting_payment", "paid", "video_rendering", "completed"].includes(
     order.status,
   );
+  const versions = order.status === "awaiting_choice" ? await listSongVersions(db, order.id) : [];
+  const choiceDays = await getSetting(db, "version_choice_days");
+  const publication = order.paidAt ? await getPublicationByOrder(db, order.id) : null;
+  const publicationState = publication?.status ?? (order.paidAt && order.publication ? "consented" : null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -153,8 +159,17 @@ async function OrderContent({
             className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-brand-strong"
             aria-hidden
           />
-          {t("videoRendering")}
+          {order.status === "paid" && (await getSetting(db, "music_extra_candidates_after_purchase")) > 0
+            ? t("paidWorking")
+            : t("videoRendering")}
         </Notice>
+      )}
+      {order.status === "awaiting_choice" && versions.length > 0 && (
+        <VersionChooser
+          publicRef={order.publicRef}
+          versions={versions.map((v) => ({ candidateId: v.candidateId, label: v.label }))}
+          days={choiceDays}
+        />
       )}
       {order.status === "failed" && <Notice kind="error">{t("failed")}</Notice>}
 
@@ -192,11 +207,18 @@ async function OrderContent({
         <section className="rounded-2xl border border-brand/40 p-5" aria-label={t("checkoutTitle")}>
           <CheckoutForm
             publicRef={order.publicRef}
-            grossLabel={fmt(gross)}
-            vatLabel={t("vatNote", {
-              rate: (rateBp / 100).toLocaleString("de-DE"),
-              tax: fmt(splitGross(gross, rateBp).taxCents),
-            })}
+            baseGrossCents={
+              snapshot?.items.find((i) => i.productSlug === "song")?.unitGrossCents ??
+              current?.grossCents ??
+              gross
+            }
+            currency={currency}
+            rateBp={rateBp}
+            publication={{
+              ...(await publicationOffer(db, order.occasionId)),
+              memorial: await isMemorialOrder(db, order.occasionId),
+              hasPhotos: (await listPhotos(db, order.id)).length > 0,
+            }}
           />
         </section>
       )}
@@ -214,7 +236,9 @@ async function OrderContent({
           )}
         </Notice>
       )}
-      {order.paidAt && order.status !== "completed" && <Notice kind="success">{t("paid")}</Notice>}
+      {order.paidAt && order.status !== "completed" && order.status !== "awaiting_choice" && (
+        <Notice kind="success">{t("paid")}</Notice>
+      )}
 
       {order.status === "completed" && songPath && (
         <section
@@ -271,6 +295,8 @@ async function OrderContent({
           <ShareControls publicRef={order.publicRef} shareUrl={shareUrl} qrSvg={qrSvg} />
         </section>
       )}
+
+      {publicationState && <PublicationStatus publicRef={order.publicRef} status={publicationState} />}
 
       {orderInvoices.length > 0 && (
         <section

@@ -6,12 +6,22 @@ import { buildLyricsInput, getActiveSystemPrompt, lyricsSchema, type LyricsProvi
 import type { MediaTools } from "@/media/ffmpeg";
 import type { MusicProvider } from "@/music/types";
 import { createInvoiceForOrder } from "@/invoices/service";
+import { recordCommission } from "@/affiliates/service";
 import { expireOldPreviews } from "@/account/service";
 import { sendAlert } from "@/monitoring/alerts";
 import type { StorageProvider } from "@/storage";
 import { runPreviewMusic } from "./music";
-import { sendOrderConfirmation, sendSongReady } from "./order-paid";
-import { renderCustomerVideo, startVideo } from "./video";
+import { sendOrderConfirmation, sendSongReady, sendVersionChoice } from "./order-paid";
+import { renderCustomerVideo, renderPublicationVideo } from "./video";
+import type { PublishTarget } from "@/publishing/target";
+import {
+  getPublicationByOrder,
+  markAwaitingApproval,
+  markPublicationFailed,
+  startPublication,
+  uploadPublication,
+} from "@/publishing/service";
+import { autoChooseExpired, runExtraVersion, startAfterPayment } from "./versions";
 import { transitionOrder } from "@/orders/service";
 import { enqueue } from "./enqueue";
 import { runIdempotent, StepBusyError, type IdempotentResult } from "./idempotency";
@@ -35,6 +45,8 @@ export type HandlerDeps = {
   baseUrl: string;
   /** Schriftdatei für Videos (optional, sonst Systemschrift). */
   fontFile?: string | null;
+  /** Ziel für Veröffentlichungen (Dropbox oder eigener Speicher). */
+  publishTarget?: PublishTarget;
 };
 
 /** „Läuft schon“ darf einen Auftrag nie still als erledigt markieren – sonst bliebe die Bestellung hängen. */
@@ -184,6 +196,12 @@ export async function handleOrderPaid(deps: HandlerDeps, { orderId }: OrderJobDa
       { attempt },
     ),
   );
+  // Provision für den Affiliate festhalten (falls ein Affiliate-Code verwendet wurde)
+  const commissionKey = `affiliate.commission:${orderId}`;
+  failIfBusy(
+    commissionKey,
+    await runIdempotent(deps.db, commissionKey, () => recordCommission(deps.db, orderId), { attempt }),
+  );
   const mailKey = `email:order-confirmation:${orderId}`;
   failIfBusy(
     mailKey,
@@ -198,11 +216,32 @@ export async function handleOrderPaid(deps: HandlerDeps, { orderId }: OrderJobDa
       { attempt },
     ),
   );
-  const videoKey = `video.start:${orderId}`;
+  // (3) zweite Song-Version anstoßen – oder direkt das Video
+  const nextKey = `video.start:${orderId}`;
   return failIfBusy(
-    videoKey,
-    await runIdempotent(deps.db, videoKey, () => startVideo(deps.db, deps.boss, orderId), { attempt }),
+    nextKey,
+    await runIdempotent(deps.db, nextKey, () => startAfterPayment(deps.db, deps.boss, orderId), { attempt }),
   );
+}
+
+/** music.extra: zweite Version erzeugen → E-Mail „Version wählen“ (oder sofort Video als Ausweichweg). */
+export async function handleMusicExtra(deps: HandlerDeps, { orderId }: OrderJobData, attempt?: string) {
+  const key = `music.extra:${orderId}`;
+  const result = failIfBusy(
+    key,
+    await runIdempotent(deps.db, key, () => runExtraVersion(deps, orderId), { attempt }),
+  );
+  const order = await loadOrder(deps.db, orderId);
+  if (order.status === "awaiting_choice") {
+    const mailKey = `email:version-choice:${orderId}`;
+    failIfBusy(
+      mailKey,
+      await runIdempotent(deps.db, mailKey, () => sendVersionChoice(deps.db, deps.baseUrl, orderId), {
+        attempt,
+      }),
+    );
+  }
+  return result;
 }
 
 /** video.render: Kundenvideo erzeugen, prüfen, speichern → Bestellung „fertig“. */
@@ -221,18 +260,66 @@ export async function handleVideoRender(deps: HandlerDeps, { orderId }: OrderJob
       mailKey,
       await runIdempotent(deps.db, mailKey, () => sendSongReady(deps.db, deps.baseUrl, orderId), { attempt }),
     );
+    // Veröffentlichung vorbereiten (nur mit Zustimmung des Kunden)
+    const pubKey = `publication.start:${orderId}`;
+    failIfBusy(
+      pubKey,
+      await runIdempotent(deps.db, pubKey, () => startPublication(deps.db, deps.boss, orderId), { attempt }),
+    );
   }
   return result;
 }
 
+/** publication.render: eigene Videofassung (ohne Fotos/Titel) → wartet auf Freigabe. */
+export async function handlePublicationRender(deps: HandlerDeps, { orderId }: OrderJobData) {
+  const pub = await getPublicationByOrder(deps.db, orderId);
+  if (pub?.status !== "rendering") return `übersprungen (${pub?.status ?? "keine Veröffentlichung"})`;
+  const order = await loadOrder(deps.db, orderId);
+  if (!order.publication) return "übersprungen (widerrufen)";
+  const videoId = await renderPublicationVideo(deps, orderId, order.publication);
+  await markAwaitingApproval(deps.db, pub.id, videoId, order.publicRef);
+  return "Fassung für die Veröffentlichung fertig – wartet auf Freigabe";
+}
+
+/** publication.upload: nach Freigabe hochladen. */
+export async function handlePublicationUpload(deps: HandlerDeps, { orderId }: OrderJobData) {
+  if (!deps.publishTarget) throw new Error("Kein Ziel für Veröffentlichungen eingerichtet");
+  return uploadPublication({ db: deps.db, storage: deps.storage, target: deps.publishTarget }, orderId);
+}
+
+/** Wie withFinalFailure, aber für Veröffentlichungen: die Bestellung selbst bleibt „fertig“. */
+export async function withPublicationFailure(
+  db: Database,
+  job: JobWithMetadata<OrderJobData>,
+  fn: () => Promise<unknown>,
+): Promise<unknown> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (job.retryCount >= job.retryLimit) {
+      await markPublicationFailed(
+        db,
+        job.data.orderId,
+        `${job.name}: ${error instanceof Error ? error.message : String(error)}`,
+      ).catch((e) => console.error("[worker] Veröffentlichung:", e));
+    }
+    throw error;
+  }
+}
+
 /** Aufräumen (täglich): Fragebogen-Entwürfe nach 30 Tagen und Hörproben ohne Kauf nach Ablauf löschen. */
-export async function handleCleanupDrafts({ db, storage }: Pick<HandlerDeps, "db" | "storage">) {
+export async function handleCleanupDrafts({
+  db,
+  storage,
+  boss,
+}: Pick<HandlerDeps, "db" | "storage" | "boss">) {
   const deleted = await db
     .delete(questionnaireDrafts)
     .where(lt(questionnaireDrafts.expiresAt, new Date()))
     .returning({ id: questionnaireDrafts.id });
   const previews = await expireOldPreviews(db, storage);
-  return `${deleted.length} abgelaufene Entwürfe gelöscht, ${previews.orders} Hörproben ohne Kauf abgelaufen (${previews.files} Dateien)`;
+  const chosen = await autoChooseExpired(db, boss);
+  return `${deleted.length} abgelaufene Entwürfe gelöscht, ${previews.orders} Hörproben ohne Kauf abgelaufen (${previews.files} Dateien), ${chosen} Versionen automatisch gewählt`;
 }
 
 /**

@@ -197,6 +197,7 @@ export async function retryFailedOrder(db: Database, boss: PgBoss, publicRef: st
       case "paid":
         await transitionOrder(tx, order.id, "paid", { actor: actorUserId, reason });
         await tx.delete(jobExecutions).where(eq(jobExecutions.idempotencyKey, `video.start:${order.id}`));
+        await tx.delete(jobExecutions).where(eq(jobExecutions.idempotencyKey, `music.extra:${order.id}`));
         await enqueue(boss, QUEUES.orderPaid, { orderId: order.id }, { tx });
         break;
       case "video_rendering":

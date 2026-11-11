@@ -50,7 +50,14 @@ export async function seed(db: Database) {
     for (const [i, occ] of SEED_OCCASIONS.entries()) {
       await tx
         .insert(occasions)
-        .values({ slug: occ.slug, name: de(occ.name), description: de(occ.description), sort: i })
+        .values({
+          slug: occ.slug,
+          name: de(occ.name),
+          description: de(occ.description),
+          sort: i,
+          active: occ.active ?? true,
+          videoTemplate: occ.videoTemplate ?? null,
+        })
         .onConflictDoNothing({ target: occasions.slug });
       const [occasion] = await tx.select().from(occasions).where(eq(occasions.slug, occ.slug));
       if (!occasion) throw new Error(`Anlass ${occ.slug} fehlt`);

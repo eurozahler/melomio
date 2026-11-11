@@ -14,9 +14,22 @@ const LABELS: Record<SettingKey, { label: string; hint: string }> = {
     hint: "je Kandidat entstehen Anbieterkosten",
   },
   music_extra_candidates_after_purchase: {
-    label: "Zusätzliche Kandidaten nach dem Kauf",
-    hint: "noch ohne Wirkung (später)",
+    label: "Zweite Song-Version nach dem Kauf (0/1)",
+    hint: "Kunde wählt seinen Favoriten · ca. 14 Cent je Kauf",
   },
+  version_choice_days: { label: "Auswahl der Version (Tage)", hint: "danach gilt die Hörproben-Version" },
+  publication_enabled: { label: "Veröffentlichung anbieten (0/1)", hint: "Zustimmung beim Kauf" },
+  publication_discount_pct: {
+    label: "Rabatt für Veröffentlichung (%)",
+    hint: "Standard, je Anlass unter Fragebögen änderbar",
+  },
+  affiliate_discount_pct: { label: "Affiliate: Kundenrabatt (%)", hint: "Standard, je Partner änderbar" },
+  affiliate_commission_pct: {
+    label: "Affiliate: Provision (% vom Netto)",
+    hint: "Standard, je Partner änderbar",
+  },
+  affiliate_hold_days: { label: "Affiliate: Wartezeit bis Auszahlung (Tage)", hint: "wegen Erstattungen" },
+  affiliate_min_payout_cents: { label: "Affiliate: Mindestauszahlung (Cent)", hint: "z. B. 2000 = 20 €" },
   music_retries_after_purchase: {
     label: "Neue Musikversuche nach dem Kauf",
     hint: "noch ohne Wirkung (später)",
@@ -29,7 +42,10 @@ const LABELS: Record<SettingKey, { label: string; hint: string }> = {
   },
   previews_per_account: { label: "Hörproben pro Konto", hint: "Missbrauchsschutz" },
   previews_daily_budget: { label: "Hörproben pro Tag (alle Kunden)", hint: "Kostenbremse" },
-  preview_expiry_days: { label: "Hörprobe läuft ab nach (Tagen)", hint: "Löschung folgt in Phase C" },
+  preview_expiry_days: {
+    label: "Hörprobe läuft ab nach (Tagen)",
+    hint: "danach werden Audio und Fotos gelöscht",
+  },
   download_link_ttl_min: { label: "Gültigkeit der Download-Links (Minuten)", hint: "M9" },
 };
 

@@ -82,9 +82,15 @@ async function Detail({ params }: Pick<PageProps<"/admin/bestellungen/[ref]">, "
         </section>
       )}
 
-      {["preview_ready", "awaiting_payment", "paid", "video_rendering", "completed", "refunded"].includes(
-        order.status,
-      ) && (
+      {[
+        "preview_ready",
+        "awaiting_payment",
+        "paid",
+        "awaiting_choice",
+        "video_rendering",
+        "completed",
+        "refunded",
+      ].includes(order.status) && (
         <section className="flex flex-col gap-3">
           <h2 className="text-xl font-bold">Hörprobe und Video</h2>
           <div>

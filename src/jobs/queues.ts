@@ -13,6 +13,11 @@ export const QUEUES = {
   musicGenerate: "music.generate",
   /** Nach bestätigter Zahlung: Bestellbestätigung per E-Mail (M7), später Video (M8). */
   orderPaid: "order.paid",
+  /** Zweite Song-Version nach dem Kauf (Kunde wählt seinen Favoriten). */
+  musicExtra: "music.extra",
+  /** Veröffentlichung: eigene Videofassung erzeugen bzw. nach Freigabe hochladen (C7). */
+  publicationRender: "publication.render",
+  publicationUpload: "publication.upload",
   /** Kundenvideo erzeugen, prüfen, speichern (M8). */
   videoRender: "video.render",
   /** Aufräumen: abgelaufene Fragebogen-Entwürfe löschen. */
@@ -57,6 +62,22 @@ export const QUEUE_OPTIONS: Record<QueueName, QueueOptions> = {
     retryDelay: 60,
     retryBackoff: true,
     expireInSeconds: 300,
+    heartbeatSeconds: 30,
+  },
+  // kein Wiederholen: bei Fehlern entsteht das Video sofort mit der Hörproben-Version
+  [QUEUES.musicExtra]: { retryLimit: 0, expireInSeconds: 1800, heartbeatSeconds: 30 },
+  [QUEUES.publicationRender]: {
+    retryLimit: 2,
+    retryDelay: 60,
+    retryBackoff: true,
+    expireInSeconds: 1800,
+    heartbeatSeconds: 30,
+  },
+  [QUEUES.publicationUpload]: {
+    retryLimit: 4,
+    retryDelay: 120,
+    retryBackoff: true,
+    expireInSeconds: 900,
     heartbeatSeconds: 30,
   },
   [QUEUES.videoRender]: {

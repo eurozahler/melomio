@@ -18,6 +18,9 @@ export function SiteFooter() {
         <Link href="/widerruf" className={link}>
           Widerrufsbelehrung
         </Link>
+        <Link href="/partner" className={link}>
+          Partnerprogramm
+        </Link>
       </nav>
     </footer>
   );

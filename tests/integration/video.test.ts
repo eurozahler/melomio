@@ -17,6 +17,7 @@ import {
   connectTestDb,
   createUserWithOrder,
   orderWithRealPreview,
+  setSetting,
   TEST_STORAGE_DIR,
   testDeps,
   useShortSongs,
@@ -28,6 +29,8 @@ let boss: PgBoss;
 beforeAll(async () => {
   await seed(db);
   await useShortSongs(db);
+  // ohne zweite Song-Version: Video direkt nach der Zahlung (die zweite Version testet versions.test.ts)
+  await setSetting(db, "music_extra_candidates_after_purchase", 0);
   boss = createBoss(process.env.DATABASE_URL_TEST!, "sender");
   await boss.start();
 });
@@ -170,4 +173,60 @@ describe("Fotos im Video (C2)", () => {
     expect(info).toMatchObject({ width: 1080, height: 1920, videoCodec: "h264", audioCodec: "aac" });
     expect(Math.abs(info.durationMs - 60_000)).toBeLessThanOrEqual(1000);
   }, 240_000);
+});
+
+describe("Abschiedsvideo (C11)", () => {
+  it("ein Foto in Schwarz-Weiß, Name, Daten, Spruch und Aufruf zum Teilen – gültiges Video", async () => {
+    const { mkdtemp, writeFile } = await import("node:fs/promises");
+    const path = await import("node:path");
+    const os = await import("node:os");
+    const { generateTestSong } = await import("@/media/ffmpeg");
+    const { renderStandardVideo, resolveFontFile } = await import("@/media/video");
+    const deps = testDeps(db, boss);
+    const dir = await mkdtemp(path.join(os.tmpdir(), "memorial-"));
+    try {
+      const audio = path.join(dir, "song.mp3");
+      await generateTestSong(deps.tools, audio, { durationS: 20, introS: 2 });
+      const photo = path.join(dir, "foto.jpg");
+      await writeFile(
+        photo,
+        await sharp({ create: { width: 900, height: 1200, channels: 3, background: "#cc3366" } })
+          .jpeg()
+          .toBuffer(),
+      );
+      const out = path.join(dir, "video.mp4");
+      await renderStandardVideo(deps.tools, {
+        workDir: dir,
+        audioFile: audio,
+        outputFile: out,
+        title: "Für Erika",
+        durationMs: 20_000,
+        fontFile: resolveFontFile(process.env.VIDEO_FONT_FILE),
+        testWatermark: false,
+        photos: [photo, photo],
+        memorial: {
+          name: "Erika Muster",
+          dates: "* 03.04.1950   † 01.11.2026",
+          saying: "Du bist nicht mehr da, wo du warst, aber überall, wo wir sind.",
+          share: "Teile dieses Video, um Erika auf eine letzte Reise um die Welt zu schicken.",
+        },
+      });
+      const info = await probeVideo(deps.tools, out);
+      expect(info).toMatchObject({ width: 1080, height: 1920, videoCodec: "h264", audioCodec: "aac" });
+      // Schwarz-Weiß: ein Bild aus der Mitte hat (fast) keine Farbsättigung
+      const frame = path.join(dir, "frame.png");
+      const { execFile } = await import("node:child_process");
+      await new Promise<void>((resolve, reject) =>
+        execFile(deps.tools.ffmpeg, ["-y", "-ss", "5", "-i", out, "-frames:v", "1", frame], (e) =>
+          e ? reject(e) : resolve(),
+        ),
+      );
+      const stats = await sharp(frame).stats();
+      const [r, g, b] = stats.channels.map((c) => c.mean);
+      expect(Math.abs(r! - g!)).toBeLessThan(3);
+      expect(Math.abs(g! - b!)).toBeLessThan(3);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 120_000);
 });

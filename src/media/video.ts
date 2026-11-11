@@ -91,12 +91,22 @@ export function resolveFontFile(configured?: string | null): string {
 
 const hex = (c: string) => `0x${c.replace(/^#/, "")}`;
 
+export type MemorialText = {
+  name: string;
+  /** z. B. „* 03.04.1950  † 01.11.2026“ */
+  dates: string;
+  saying: string;
+  /** wird in den letzten Sekunden statt des Spruchs gezeigt */
+  share: string;
+};
+
 export async function renderStandardVideo(
   tools: MediaTools,
   options: {
     workDir: string;
     audioFile: string;
     outputFile: string;
+    /** Songtitel; leer = ohne Titel (z. B. Veröffentlichung ohne Namen). */
     title: string;
     durationMs: number;
     fontFile: string;
@@ -106,21 +116,28 @@ export async function renderStandardVideo(
     lyrics?: TimedLine[] | null;
     /** Fotos (lokale JPEG-Dateien) für die Slideshow (C2). Ohne: Farbverlauf als Hintergrund. */
     photos?: string[];
+    /** Trauer-Vorlage „Abschiedsvideo“ (C11): ein Foto in Schwarz-Weiß, Name, Daten, Spruch, Aufruf zum Teilen. */
+    memorial?: MemorialText | null;
   },
 ): Promise<void> {
   const { workDir, config = {} } = options;
   const width = config.width ?? 1080;
   const height = config.height ?? 1920;
-  const [c0 = "#fd6f6d", c1 = "#7821cd"] = config.colors ?? [];
+  const memorial = options.memorial ?? null;
+  const [c0 = memorial ? "#141414" : "#fd6f6d", c1 = memorial ? "#4a4a4a" : "#7821cd"] = memorial
+    ? []
+    : (config.colors ?? []);
   const seconds = Math.ceil(options.durationMs / 1000) + 1;
 
   // Schrift und Texte in den Arbeitsordner – FFmpeg läuft dort mit relativen Pfaden
   await copyFile(options.fontFile, path.join(workDir, "font.ttf"));
   const withLyrics = !!options.lyrics?.length;
-  const photos = (options.photos ?? []).slice(0, 20);
-  // Mit Songtext oder Fotos: Titel klein oben. Sonst: Titel groß in der Bildmitte.
-  const compact = withLyrics || photos.length > 0;
-  const lines = compact ? wrapTitle(options.title, 22, 2) : wrapTitle(options.title);
+  // Trauer: genau ein Foto (Schwarz-Weiß)
+  const photos = (options.photos ?? []).slice(0, memorial ? 1 : 20);
+  // Mit Songtext, Fotos oder Trauer-Vorlage: Titel klein oben. Sonst: Titel groß in der Bildmitte.
+  const compact = withLyrics || photos.length > 0 || !!memorial;
+  const heading = memorial ? memorial.name : options.title.trim();
+  const lines = !heading ? [] : compact ? wrapTitle(heading, 22, 2) : wrapTitle(heading);
   const fontSize = compact ? 68 : lines.length <= 2 ? 104 : 88;
   const lineHeight = Math.round(fontSize * 1.25);
   const blockTop = compact ? 220 : Math.round(height / 2 - (lines.length * lineHeight) / 2);
@@ -137,6 +154,28 @@ export async function renderStandardVideo(
       `drawtext=fontfile=font.ttf:textfile=line${i}.txt:fontcolor=white:fontsize=${fontSize}:` +
         `x=(w-text_w)/2:y=${blockTop + i * lineHeight}:shadowcolor=black@0.35:shadowx=4:shadowy=4`,
     );
+  }
+  if (memorial) {
+    const datesY = blockTop + lines.length * lineHeight + 10;
+    await writeFile(path.join(workDir, "dates.txt"), memorial.dates, "utf8");
+    filters.push(
+      `drawtext=fontfile=font.ttf:textfile=dates.txt:fontcolor=white@0.92:fontsize=50:x=(w-text_w)/2:y=${datesY}:shadowcolor=black@0.4:shadowx=3:shadowy=3`,
+    );
+    // Spruch unten; in den letzten 12 Sekunden ersetzt durch den Aufruf zum Teilen
+    const switchAt = Math.max(0, seconds - 12);
+    for (const [kind, text, enable] of [
+      ["saying", memorial.saying, String.raw`lt(t\,${switchAt})`],
+      ["share", memorial.share, String.raw`gte(t\,${switchAt})`],
+    ] as const) {
+      const wrapped = wrapTitle(text, 30, 3);
+      for (const [i, line] of wrapped.entries()) {
+        await writeFile(path.join(workDir, `${kind}${i}.txt`), line, "utf8");
+        filters.push(
+          `drawtext=fontfile=font.ttf:textfile=${kind}${i}.txt:fontcolor=white:fontsize=46:` +
+            `x=(w-text_w)/2:y=h-${560 - i * 60}:shadowcolor=black@0.5:shadowx=3:shadowy=3:enable=${enable}`,
+        );
+      }
+    }
   }
   await writeFile(path.join(workDir, "brand.txt"), "melomio", "utf8");
   filters.push(
@@ -165,12 +204,13 @@ export async function renderStandardVideo(
   if (photos.length) {
     const seg = seconds / photos.length;
     const fade = Math.min(0.6, seg / 4);
+    const gray = memorial ? ",hue=s=0" : "";
     background = photos.flatMap((p) => ["-loop", "1", "-t", seg.toFixed(3), "-i", path.resolve(p)]);
     const parts = photos.map(
       (_, i) =>
         `[${i + 1}:v]split[a${i}][b${i}];` +
-        `[a${i}]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:4,eq=brightness=-0.12[bg${i}];` +
-        `[b${i}]scale=${width}:${height}:force_original_aspect_ratio=decrease[fg${i}];` +
+        `[a${i}]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:4,eq=brightness=-0.12${gray}[bg${i}];` +
+        `[b${i}]scale=${width}:${height}:force_original_aspect_ratio=decrease${gray}[fg${i}];` +
         `[bg${i}][fg${i}]overlay=(W-w)/2:(H-h)/2,setsar=1,fps=25,format=yuv420p,` +
         `fade=t=in:st=0:d=${fade.toFixed(2)},fade=t=out:st=${(seg - fade).toFixed(3)}:d=${fade.toFixed(2)}[p${i}]`,
     );

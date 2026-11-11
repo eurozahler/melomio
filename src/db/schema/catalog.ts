@@ -15,6 +15,12 @@ export const occasions = pgTable("occasions", {
   description: jsonb().$type<LocalizedText>(),
   active: boolean().notNull().default(true),
   sort: integer().notNull().default(0),
+  /** Dropbox-Ordner für Veröffentlichungen dieses Anlasses (null = Standardordner aus den Einstellungen). */
+  publicationFolder: text(),
+  /** Rabatt in Prozent für die Zustimmung zur Veröffentlichung (null = Standard aus den Einstellungen). */
+  publicationDiscountPct: integer(),
+  /** Videovorlage (z. B. "memorial" für Trauer; null = Standardvorlage). */
+  videoTemplate: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 

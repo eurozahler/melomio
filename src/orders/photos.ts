@@ -19,7 +19,13 @@ import type { StorageProvider } from "@/storage";
 
 export const MAX_PHOTOS = 10;
 export const MAX_BYTES = 15 * 1024 * 1024;
-const EDITABLE = ["lyrics_review", "lyrics_approved", "music_generating", "preview_ready", "awaiting_payment"];
+const EDITABLE = [
+  "lyrics_review",
+  "lyrics_approved",
+  "music_generating",
+  "preview_ready",
+  "awaiting_payment",
+];
 
 export class PhotoError extends Error {
   constructor(public readonly code: "not_found" | "locked" | "too_many" | "too_large" | "not_image") {
@@ -65,7 +71,10 @@ export async function addPhoto(
   file: Buffer,
 ) {
   const order = await ownedEditableOrder(db, publicRef, userId);
-  const [existing] = await db.select({ n: count() }).from(orderPhotos).where(eq(orderPhotos.orderId, order.id));
+  const [existing] = await db
+    .select({ n: count() })
+    .from(orderPhotos)
+    .where(eq(orderPhotos.orderId, order.id));
   if ((existing?.n ?? 0) >= MAX_PHOTOS) throw new PhotoError("too_many");
   const clean = await sanitizeImage(file);
   const id = randomUUID();
@@ -80,7 +89,14 @@ export async function addPhoto(
   }
   const [row] = await db
     .insert(orderPhotos)
-    .values({ id, orderId: order.id, storageKey, width: clean.width, height: clean.height, sort: existing?.n ?? 0 })
+    .values({
+      id,
+      orderId: order.id,
+      storageKey,
+      width: clean.width,
+      height: clean.height,
+      sort: existing?.n ?? 0,
+    })
     .returning();
   return row!;
 }
@@ -103,5 +119,9 @@ export async function removePhoto(
 }
 
 export async function listPhotos(db: Database, orderId: string) {
-  return db.select().from(orderPhotos).where(eq(orderPhotos.orderId, orderId)).orderBy(asc(orderPhotos.sort), asc(orderPhotos.createdAt));
+  return db
+    .select()
+    .from(orderPhotos)
+    .where(eq(orderPhotos.orderId, orderId))
+    .orderBy(asc(orderPhotos.sort), asc(orderPhotos.createdAt));
 }

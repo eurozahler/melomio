@@ -14,6 +14,14 @@ export type BillingAddress = {
   vatId: string;
 };
 
+/** Wahl des Kunden zur freiwilligen Veröffentlichung (C7), beim Kauf festgelegt. */
+export type PublicationChoice = {
+  /** Fotos dürfen ins veröffentlichte Video (Kunde bestätigt die Einwilligung der Abgebildeten). */
+  photos: boolean;
+  /** Songtitel (enthält oft Namen) wird im veröffentlichten Video gezeigt. */
+  title: boolean;
+};
+
 export const orders = pgTable(
   "orders",
   {
@@ -42,6 +50,8 @@ export const orders = pgTable(
     paidAt: timestamp({ withTimezone: true }),
     /** Rechnungsanschrift für Firmenkunden (optional, beim Kauf angegeben). */
     billing: jsonb().$type<BillingAddress | null>(),
+    /** Zustimmung zur Veröffentlichung (null = keine Veröffentlichung). */
+    publication: jsonb().$type<PublicationChoice | null>(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

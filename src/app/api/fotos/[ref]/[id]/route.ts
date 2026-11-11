@@ -9,7 +9,8 @@ import { getSessionUser } from "@/server/session";
 export async function GET(_request: Request, { params }: RouteContext<"/api/fotos/[ref]/[id]">) {
   const { ref, id } = await params;
   const user = await getSessionUser();
-  if (!user?.emailVerified || !/^[0-9a-f-]{36}$/i.test(id)) return new Response("Nicht gefunden", { status: 404 });
+  if (!user?.emailVerified || !/^[0-9a-f-]{36}$/i.test(id))
+    return new Response("Nicht gefunden", { status: 404 });
   const db = getDb();
   const order = await getOwnedOrder(db, ref, user.id);
   if (!order) return new Response("Nicht gefunden", { status: 404 });
@@ -18,5 +19,9 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/foto
     .from(orderPhotos)
     .where(and(eq(orderPhotos.id, id), eq(orderPhotos.orderId, order.id)));
   if (!photo) return new Response("Nicht gefunden", { status: 404 });
-  return fileResponse(photo.storageKey, { contentType: "image/jpeg", filename: `foto-${id.slice(0, 8)}.jpg`, download: false });
+  return fileResponse(photo.storageKey, {
+    contentType: "image/jpeg",
+    filename: `foto-${id.slice(0, 8)}.jpg`,
+    download: false,
+  });
 }

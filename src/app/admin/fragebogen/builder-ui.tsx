@@ -169,6 +169,67 @@ export function OccasionSettings({
   );
 }
 
+/** Veröffentlichung und Video je Anlass: Dropbox-Ordner, Rabatt, Vorlage. */
+export function OccasionPublishing({
+  initial,
+  defaults,
+  save,
+}: {
+  initial: { folder: string; discountPct: string; videoTemplate: "standard" | "memorial" };
+  defaults: { folder: string; discountPct: number };
+  save: (input: unknown) => Promise<AdminResult>;
+}) {
+  const [values, setValues] = useState(initial);
+  const [pending, start] = useTransition();
+  const [result, setResult] = useState<AdminResult | null>(null);
+  return (
+    <form
+      className="grid gap-3 sm:grid-cols-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        start(async () => setResult(await save(values)));
+      }}
+    >
+      <Field label="Dropbox-Ordner">
+        <input
+          className={input}
+          value={values.folder}
+          placeholder={`${defaults.folder} (Standard)`}
+          data-testid="occasion-folder"
+          onChange={(e) => setValues({ ...values, folder: e.target.value })}
+        />
+      </Field>
+      <Field label="Rabatt für Veröffentlichung (%)">
+        <input
+          className={input}
+          value={values.discountPct}
+          inputMode="numeric"
+          placeholder={`${defaults.discountPct} (Standard)`}
+          data-testid="occasion-discount"
+          onChange={(e) => setValues({ ...values, discountPct: e.target.value })}
+        />
+      </Field>
+      <Field label="Videovorlage">
+        <select
+          className={input}
+          value={values.videoTemplate}
+          data-testid="occasion-template"
+          onChange={(e) => setValues({ ...values, videoTemplate: e.target.value as "standard" | "memorial" })}
+        >
+          <option value="standard">Standard (Farbverlauf/Fotos)</option>
+          <option value="memorial">Trauer: Abschiedsvideo (Foto s/w, Daten, Spruch)</option>
+        </select>
+      </Field>
+      <div className="flex items-center gap-3 sm:col-span-3">
+        <button type="submit" disabled={pending} className={small}>
+          Speichern
+        </button>
+        <Status result={result} />
+      </div>
+    </form>
+  );
+}
+
 const emptyQuestion = (n: number): DraftQuestion => ({
   key: `frage_${n}`,
   type: "textarea",

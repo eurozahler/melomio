@@ -10,8 +10,11 @@ import {
   saveDraftAction,
   startDraftAction,
   updateOccasionAction,
+  updateOccasionPublishingAction,
 } from "../actions";
-import { OccasionSettings, QuestionnaireEditor, StartDraftButton } from "../builder-ui";
+import { OccasionPublishing, OccasionSettings, QuestionnaireEditor, StartDraftButton } from "../builder-ui";
+import { getSetting } from "@/db/settings-store";
+import { getDefaultFolder } from "@/publishing/target";
 
 export default function AdminQuestionnaireEditor({ params }: PageProps<"/admin/fragebogen/[slug]">) {
   return (
@@ -24,7 +27,8 @@ export default function AdminQuestionnaireEditor({ params }: PageProps<"/admin/f
 async function Editor({ params }: Pick<PageProps<"/admin/fragebogen/[slug]">, "params">) {
   const { slug } = await params;
   await requireAdmin(`/admin/fragebogen/${encodeURIComponent(slug)}`);
-  const data = await getQuestionnaireEditor(getDb(), slug);
+  const db = getDb();
+  const data = await getQuestionnaireEditor(db, slug);
   if (!data) notFound();
   const { occasion, draft, published } = data;
   const date = (d: Date) =>
@@ -66,6 +70,27 @@ async function Editor({ params }: Pick<PageProps<"/admin/fragebogen/[slug]">, "p
             active: occasion.active,
           }}
           save={updateOccasionAction.bind(null, occasion.slug)}
+        />
+      </section>
+
+      <section className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+        <h2 className="mb-1 text-xl font-bold">Veröffentlichung und Video</h2>
+        <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-300">
+          Leer lassen = Standard aus „Veröffentlichungen“ bzw. „Einstellungen“. Jeder Ordner kann einem
+          eigenen TikTok-Kanal in EasyGMV entsprechen.
+        </p>
+        <OccasionPublishing
+          initial={{
+            folder: occasion.publicationFolder ?? "",
+            discountPct:
+              occasion.publicationDiscountPct === null ? "" : String(occasion.publicationDiscountPct),
+            videoTemplate: occasion.videoTemplate === "memorial" ? "memorial" : "standard",
+          }}
+          defaults={{
+            folder: await getDefaultFolder(db),
+            discountPct: await getSetting(db, "publication_discount_pct"),
+          }}
+          save={updateOccasionPublishingAction.bind(null, occasion.slug)}
         />
       </section>
 

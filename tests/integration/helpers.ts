@@ -84,3 +84,11 @@ export async function orderWithRealPreview(db: Database, boss: import("pg-boss")
   await runPreviewMusic(deps, order.id);
   return { userId, order };
 }
+
+/** Einstellung für einen Test setzen (Testdatenbank). */
+export async function setSetting(db: Database, key: string, value: unknown) {
+  await db
+    .insert(appSettings)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: appSettings.key, set: { value } });
+}

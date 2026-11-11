@@ -10,6 +10,7 @@ const PREVIEW_STATUSES = new Set([
   "preview_ready",
   "awaiting_payment",
   "paid",
+  "awaiting_choice",
   "video_rendering",
   "completed",
 ]);

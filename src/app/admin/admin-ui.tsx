@@ -51,13 +51,16 @@ export function SaveField({
   inputMode = "numeric",
   testId,
   save,
+  wide = false,
 }: {
   label: string;
   hint?: string;
   defaultValue: string;
-  inputMode?: "numeric" | "decimal";
+  inputMode?: "numeric" | "decimal" | "text";
   testId?: string;
   save: (value: string) => Promise<AdminResult>;
+  /** breites Feld für Texte (z. B. Ordnerpfade) */
+  wide?: boolean;
 }) {
   const [value, setValue] = useState(defaultValue);
   const [pending, start] = useTransition();
@@ -77,7 +80,7 @@ export function SaveField({
             value={value}
             inputMode={inputMode}
             onChange={(e) => setValue(e.target.value)}
-            className="w-32 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-normal dark:border-neutral-700 dark:bg-neutral-900"
+            className={`${wide ? "w-64" : "w-32"} rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-normal dark:border-neutral-700 dark:bg-neutral-900`}
             data-testid={testId}
           />
           <button

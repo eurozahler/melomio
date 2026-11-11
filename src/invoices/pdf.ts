@@ -25,6 +25,17 @@ export type InvoicePdfData = {
   paymentNote: string | null;
   reason?: string | null;
   isTest: boolean;
+  /** Abweichende Beschriftungen für Gutschriften/Provisionsabrechnungen (Affiliates). */
+  labels?: {
+    title: string;
+    number: string;
+    ref: string;
+    intro: string;
+    testMark: string;
+    /** Ersetzt die Zeile „zzgl. Umsatzsteuer …“, z. B. bei Kleinunternehmern */
+    taxLine?: string | null;
+    footnote: string;
+  };
 };
 
 const BRAND = rgb(0.486, 0.227, 0.929);
@@ -64,7 +75,7 @@ async function loadLogo(): Promise<Uint8Array | null> {
 
 export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const title = data.kind === "cancellation" ? "Stornorechnung" : "Rechnung";
+  const title = data.labels?.title ?? (data.kind === "cancellation" ? "Stornorechnung" : "Rechnung");
   doc.setTitle(`${title} ${data.number}`);
   doc.setAuthor(data.seller.name);
   doc.setCreator("melomio");
@@ -114,7 +125,7 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array
   }
 
   if (data.isTest) {
-    draw(page, "TESTRECHNUNG – keine gültige Rechnung", right, y - 4, {
+    draw(page, data.labels?.testMark ?? "TESTRECHNUNG – keine gültige Rechnung", right, y - 4, {
       size: 11,
       font: bold,
       color: RED,
@@ -138,11 +149,13 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array
 
   // Rechnungsangaben rechts
   const meta: Array<[string, string]> = [
-    [data.kind === "cancellation" ? "Storno-Nr." : "Rechnungs-Nr.", data.number],
+    [data.labels?.number ?? (data.kind === "cancellation" ? "Storno-Nr." : "Rechnungs-Nr."), data.number],
     ...(data.cancelsNumber ? ([["zu Rechnung", data.cancelsNumber]] as Array<[string, string]>) : []),
-    ["Rechnungsdatum", dateFmt.format(data.issuedAt)],
-    ["Leistungsdatum", dateFmt.format(data.serviceDate)],
-    ["Bestellnummer", data.orderRef],
+    [data.labels ? "Datum" : "Rechnungsdatum", dateFmt.format(data.issuedAt)],
+    data.labels
+      ? ["Zeitraum bis", dateFmt.format(data.serviceDate)]
+      : ["Leistungsdatum", dateFmt.format(data.serviceDate)],
+    [data.labels?.ref ?? "Bestellnummer", data.orderRef],
   ];
   let my = 700;
   for (const [k, v] of meta) {
@@ -167,7 +180,15 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array
       { size: 10 },
     );
   } else {
-    draw(page, "Vielen Dank für deine Bestellung bei melomio. Wir berechnen dir:", left, y, { size: 10 });
+    draw(
+      page,
+      data.labels?.intro ?? "Vielen Dank für deine Bestellung bei melomio. Wir berechnen dir:",
+      left,
+      y,
+      {
+        size: 10,
+      },
+    );
   }
 
   // Tabelle
@@ -214,7 +235,11 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array
   const rate = data.lines[0]?.taxRateBp ?? 0;
   const sums: Array<[string, number, boolean]> = [
     ["Summe netto", data.netCents, false],
-    [`zzgl. Umsatzsteuer ${formatRate(rate)}`, data.taxCents, false],
+    ...(data.labels?.taxLine
+      ? []
+      : ([[`zzgl. Umsatzsteuer ${formatRate(rate)}`, data.taxCents, false]] as Array<
+          [string, number, boolean]
+        >)),
     ["Gesamtbetrag", data.grossCents, true],
   ];
   for (const [label, cents, strong] of sums) {
@@ -232,10 +257,18 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Uint8Array
     draw(page, data.paymentNote, left, y, { size: 10 });
     y -= 14;
   }
-  draw(page, "Das Leistungsdatum entspricht dem Tag der Bereitstellung des digitalen Inhalts.", left, y, {
-    size: 9,
-    color: GREY,
-  });
+  if (data.labels?.taxLine) {
+    draw(page, data.labels.taxLine, left, y, { size: 10 });
+    y -= 14;
+  }
+  draw(
+    page,
+    data.labels?.footnote ??
+      "Das Leistungsdatum entspricht dem Tag der Bereitstellung des digitalen Inhalts.",
+    left,
+    y,
+    { size: 9, color: GREY },
+  );
 
   // Fußzeile mit Firmenangaben
   const s = data.seller;

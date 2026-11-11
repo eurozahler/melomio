@@ -14,6 +14,18 @@ export const CONSENT_TEXTS = {
     version: "2026-11-08-entwurf",
     text: "Ich verlange ausdrücklich, dass melomio sofort mit der Ausführung beginnt, und weiß, dass ich dadurch mein Widerrufsrecht verliere.",
   },
+  publication: {
+    version: "2026-11-11-entwurf",
+    text: "Ich bin einverstanden, dass melomio das Video meines Songs auf eigenen Kanälen in sozialen Netzwerken (z. B. TikTok) veröffentlicht. Ich kann das jederzeit im Kundenkonto widerrufen.",
+  },
+  publication_photos: {
+    version: "2026-11-11-entwurf",
+    text: "Meine Fotos dürfen im veröffentlichten Video erscheinen. Alle abgebildeten Personen sind damit einverstanden.",
+  },
+  publication_memorial: {
+    version: "2026-11-11-entwurf",
+    text: "Ich beauftrage melomio ausdrücklich, das Abschiedsvideo zu veröffentlichen. Ich bin berechtigt, darüber zu entscheiden, und die nächsten Angehörigen sind einverstanden.",
+  },
 } as const;
 
 export type CheckoutConsentType = keyof typeof CONSENT_TEXTS;

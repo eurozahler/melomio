@@ -66,10 +66,10 @@ async function Privacy() {
       </p>
       <h3>Fotos für das Video</h3>
       <p>
-        Wenn Sie Fotos hochladen, verwenden wir sie nur für Ihr Video. Beim Hochladen entfernen wir automatisch
-        Metadaten wie Standort (GPS) und Kameradaten. Fotos werden nicht an KI-Anbieter übermittelt. Sie werden
-        zusammen mit der Hörprobe gelöscht, wenn Sie nicht kaufen, und sonst mit Ihrem Konto. Bitte laden Sie nur
-        Fotos hoch, die Sie verwenden dürfen.
+        Wenn Sie Fotos hochladen, verwenden wir sie nur für Ihr Video. Beim Hochladen entfernen wir
+        automatisch Metadaten wie Standort (GPS) und Kameradaten. Fotos werden nicht an KI-Anbieter
+        übermittelt. Sie werden zusammen mit der Hörprobe gelöscht, wenn Sie nicht kaufen, und sonst mit Ihrem
+        Konto. Bitte laden Sie nur Fotos hoch, die Sie verwenden dürfen.
       </p>
       <h3>Bestellung, Zahlung und Rechnung</h3>
       <p>

@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, isNotNull, isNull, max } from "drizzle-orm";
 import { z } from "zod";
+import { normalizeFolder } from "@/publishing/dropbox";
 import type { Database } from "@/db/client";
 import { auditLogs, occasions, orders, questionOptions, questionnaireVersions, questions } from "@/db/schema";
 import type { QuestionDef, QuestionType } from "@/domain/questionnaire";
@@ -374,4 +375,50 @@ export async function discardDraft(db: Database, slug: string, actorUserId: stri
 /** Für die Vorschau im Admin: Entwurf im Format des Kunden-Fragebogens. */
 export function toQuestionDefs(qs: DraftQuestion[]): QuestionDef[] {
   return qs.map((q) => ({ ...q, help: q.help || null, placeholder: q.placeholder || null }));
+}
+
+/**
+ * Veröffentlichung und Video je Anlass: Dropbox-Ordner (leer = Standardordner), Rabatt für die
+ * Zustimmung (leer = Standard aus den Einstellungen) und Videovorlage („memorial“ = Trauer).
+ */
+export async function updateOccasionPublishing(
+  db: Database,
+  slug: string,
+  input: unknown,
+  actorUserId: string,
+) {
+  const parsed = z
+    .object({
+      folder: z.string().trim().max(200),
+      discountPct: z
+        .string()
+        .trim()
+        .regex(/^(\d{1,2})?$/, { error: "Rabatt: 0–50 oder leer" }),
+      videoTemplate: z.enum(["standard", "memorial"]),
+    })
+    .safeParse(input);
+  if (!parsed.success)
+    throw new QuestionnaireError(
+      "invalid",
+      parsed.error.issues.map((i) => i.message),
+    );
+  const [occasion] = await db.select().from(occasions).where(eq(occasions.slug, slug));
+  if (!occasion) throw new QuestionnaireError("not_found");
+  let folder: string | null = null;
+  if (parsed.data.folder) {
+    try {
+      folder = normalizeFolder(parsed.data.folder);
+    } catch {
+      throw new QuestionnaireError("invalid", ["Ordner ungültig (z. B. /Liebe oder /TikTok/Geburtstag)"]);
+    }
+  }
+  const pct = parsed.data.discountPct === "" ? null : Number(parsed.data.discountPct);
+  if (pct !== null && pct > 50) throw new QuestionnaireError("invalid", ["Rabatt höchstens 50 %"]);
+  const value = {
+    publicationFolder: folder,
+    publicationDiscountPct: pct,
+    videoTemplate: parsed.data.videoTemplate === "memorial" ? "memorial" : null,
+  };
+  await db.update(occasions).set(value).where(eq(occasions.id, occasion.id));
+  await audit(db, actorUserId, "occasion.publishing", occasion.id, value);
 }

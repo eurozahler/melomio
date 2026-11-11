@@ -58,7 +58,11 @@ async function main() {
         ],
       },
       { startMs: t(5.2), endMs: t(8), text: "die Sonne lacht nur für dich allein." },
-      { startMs: t(8.2), endMs: t(12), text: "Jürgen hält die Karte falsch herum {und} lacht, bis der Bus hält" },
+      {
+        startMs: t(8.2),
+        endMs: t(12),
+        text: "Jürgen hält die Karte falsch herum {und} lacht, bis der Bus hält",
+      },
     ],
   });
   console.log(`✓ ${output}`);

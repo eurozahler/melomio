@@ -31,7 +31,12 @@ export type Invoice = typeof invoices.$inferSelect;
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
-async function nextNumber(tx: Tx, series: "RE" | "ST", isTest: boolean, year: number): Promise<string> {
+export async function nextNumber(
+  tx: Tx,
+  series: "RE" | "ST" | "GS",
+  isTest: boolean,
+  year: number,
+): Promise<string> {
   const key = `${isTest ? "TEST-" : ""}${series}`;
   const [row] = await tx
     .insert(invoiceCounters)
@@ -44,11 +49,11 @@ async function nextNumber(tx: Tx, series: "RE" | "ST", isTest: boolean, year: nu
   return `${key}-${year}-${String(row!.last).padStart(5, "0")}`;
 }
 
-function berlinYear(d: Date) {
+export function berlinYear(d: Date) {
   return Number(new Intl.DateTimeFormat("de-DE", { year: "numeric", timeZone: "Europe/Berlin" }).format(d));
 }
 
-async function storePdf(storage: StorageProvider, key: string, bytes: Uint8Array) {
+export async function storePdf(storage: StorageProvider, key: string, bytes: Uint8Array) {
   const dir = await mkdtemp(path.join(tmpdir(), "melomio-invoice-"));
   try {
     const file = path.join(dir, `${randomUUID()}.pdf`);
@@ -129,9 +134,7 @@ export async function createInvoiceForOrder(
     restNet -= netCents;
     restTax -= taxCents;
     const description =
-      item.productSlug === "voucher"
-        ? item.name
-        : `${item.name} (digitaler Inhalt, Bestellung ${order.publicRef})`;
+      item.unitGrossCents < 0 ? item.name : `${item.name} (digitaler Inhalt, Bestellung ${order.publicRef})`;
     return {
       description,
       quantity: item.quantity,

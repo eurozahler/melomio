@@ -23,7 +23,16 @@ ausdrückliche Freigabe.** ⚠️ = von mir nicht geprüft, bitte bestätigen.
 - [ ] **Mollie:** Firmenprüfung abgeschlossen, Website-Profil freigegeben, **Live-Schlüssel** (`live_…`).
 - [ ] **Mureka:** Paket für den Livebetrieb kaufen (Basic: 5 gleichzeitige Aufträge).
 - [ ] **Anthropic:** eigener Schlüssel für den Livebetrieb, Ausgabenlimit in der Konsole setzen.
-- [ ] **Hetzner Object Storage:** Bucket `melomio-live` (privat) und Zugangsschlüssel anlegen.
+- [ ] **Hetzner Object Storage** (entschieden 11.11.): Bucket `melomio-live` (privat) und Zugangsschlüssel
+  anlegen, `STORAGE_PROVIDER=s3` (ca. 5 €/Monat inkl. 1 TB ≈ 30.000 Bestellungen à 25–40 MB).
+- [ ] **Hetzner Storage Box** (entschieden 11.11.) für Sicherungen außer Haus; `BACKUP_REMOTE` setzen.
+- [ ] **UptimeRobot** (entschieden 11.11., kostenlos): Monitor „HTTP(s)“ auf `https://melomio.de/api/health`,
+  Intervall 5 Min., Alarm an info@eurozahler.de.
+- [ ] **Dropbox-App** für EasyGMV: https://www.dropbox.com/developers/apps → „Create app“ → „Full Dropbox“
+  (oder „App folder“, wenn EasyGMV dort lesen kann) → Rechte `files.content.write`,
+  `files.content.read`, `account_info.read` → Redirect-URI `https://melomio.de/api/admin/dropbox/callback`.
+  App key/secret als `DROPBOX_APP_KEY`/`DROPBOX_APP_SECRET`, `PUBLISH_PROVIDER=dropbox`; danach im Admin
+  unter „Veröffentlichungen“ auf „Mit Dropbox verbinden“ klicken und je Anlass den Ordner eintragen.
 - [ ] **Strato:** DKIM aktivieren; klären, ob das Postfach für größere E-Mail-Mengen freigeschaltet
   werden muss.
 
@@ -43,7 +52,7 @@ Empfehlung: **eigener Server** für den Livebetrieb (Testserver bleibt für Test
 10. [ ] **Sicherung:** `infra/backup/backup.sh` + `cron-einrichten.sh`, einmal
     `restore-test.sh` ausführen. Außer-Haus-Kopie (Storage Box) einrichten.
 11. [ ] **Überwachung:** externen Uptime-Dienst auf `https://melomio.de/api/health` richten
-    (meldet 503, wenn Datenbank oder Worker ausfallen). `ALERT_EMAIL` setzen.
+    (meldet 503, wenn Datenbank oder Worker ausfallen). `ALERT_EMAIL=info@eurozahler.de` setzen.
 
 ## D. Umschalten (Domain)
 

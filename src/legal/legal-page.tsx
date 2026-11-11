@@ -8,7 +8,7 @@ import { getCompanyProfile, type CompanyProfile } from "@/invoices/company";
  * („Firma“), damit sie an einer Stelle gepflegt werden.
  */
 
-export const LEGAL_VERSION = "2026-11-10-entwurf";
+export const LEGAL_VERSION = "2026-11-11-entwurf";
 
 /** Firmendaten mit sichtbaren Platzhaltern, solange im Admin noch nichts eingetragen ist. */
 export async function companyForLegal(): Promise<CompanyProfile & { complete: boolean }> {

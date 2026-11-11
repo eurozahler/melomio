@@ -43,7 +43,7 @@ export class QualityCheckFailedError extends Error {
   }
 }
 
-async function buildMusicInput(db: Database, orderId: string): Promise<MusicInput> {
+export async function buildMusicInput(db: Database, orderId: string): Promise<MusicInput> {
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
   if (!order) throw new Error(`Bestellung ${orderId} nicht gefunden`);
   const [approved] = await db
@@ -66,6 +66,73 @@ async function buildMusicInput(db: Database, orderId: string): Promise<MusicInpu
     language: "de",
     targetDurationS: await getSetting(db, "song_target_duration_s"),
   };
+}
+
+/**
+ * Erzeugt EINEN Kandidaten beim Musikanbieter, prüft ihn technisch und speichert ihn.
+ * Kosten werden am Musikauftrag (und vor dem Kauf zusätzlich am Hörproben-Protokoll) vermerkt.
+ */
+export async function generateCandidate(
+  { db, music, storage, tools }: MusicDeps,
+  p: {
+    jobId: string;
+    orderId: string;
+    input: MusicInput;
+    workDir: string;
+    targetDurationS: number;
+    countPreviewUsage: boolean;
+  },
+) {
+  const result = await music.generate(p.input, p.workDir);
+  const cost = music.estimateCostCents(p.input);
+  if (cost > 0) {
+    await db
+      .update(musicJobs)
+      .set({ costEstimateCents: sql`coalesce(${musicJobs.costEstimateCents}, 0) + ${cost}` })
+      .where(eq(musicJobs.id, p.jobId));
+    if (p.countPreviewUsage) {
+      await db
+        .update(previewUsage)
+        .set({ costEstimateCents: sql`coalesce(${previewUsage.costEstimateCents}, 0) + ${cost}` })
+        .where(eq(previewUsage.orderId, p.orderId));
+    }
+  }
+  let probe: Awaited<ReturnType<typeof probeAudio>> | null = null;
+  try {
+    probe = await probeAudio(tools, result.file);
+  } catch {
+    probe = null;
+  }
+  const silences = probe ? await detectSilence(tools, result.file) : [];
+  const qc = evaluateQuality({
+    decodable: probe !== null,
+    durationMs: probe?.durationMs ?? 0,
+    silences,
+    targetDurationS: p.targetDurationS,
+  });
+  const candidateId = randomUUID();
+  const storageKey = `songs/${p.orderId}/${candidateId}.mp3`;
+  await storage.putFile(storageKey, result.file);
+  const [row] = await db
+    .insert(musicCandidates)
+    .values({
+      id: candidateId,
+      jobId: p.jobId,
+      storageKey,
+      durationMs: probe?.durationMs ?? 0,
+      format: result.format,
+      qcStatus: qc.status,
+      qcResult: {
+        reasons: qc.reasons,
+        silences: silences.map((s) => ({ ...s, endMs: Number.isFinite(s.endMs) ? s.endMs : null })),
+        model: result.model,
+      },
+      sections: result.sections,
+      lyricsTiming: result.lines ?? null,
+    })
+    .returning();
+  if (!row) throw new Error("Kandidat konnte nicht gespeichert werden");
+  return { row, qc };
 }
 
 /** Führt den Musik-Schritt aus. Gibt eine kurze Beschreibung des Ergebnisses zurück. */
@@ -114,54 +181,10 @@ export async function runPreviewMusic(
     if (passed.length === 0) {
       const input = await buildMusicInput(db, orderId);
       for (let i = 0; i < wanted && passed.length === 0; i++) {
-        const result = await music.generate(input, workDir);
-        // Kosten festhalten (Dashboard, Tagesbudget) – je erzeugtem Kandidaten
-        const cost = music.estimateCostCents(input);
-        if (cost > 0) {
-          await db
-            .update(musicJobs)
-            .set({ costEstimateCents: sql`coalesce(${musicJobs.costEstimateCents}, 0) + ${cost}` })
-            .where(eq(musicJobs.id, job.id));
-          await db
-            .update(previewUsage)
-            .set({ costEstimateCents: sql`coalesce(${previewUsage.costEstimateCents}, 0) + ${cost}` })
-            .where(eq(previewUsage.orderId, orderId));
-        }
-        let probe: Awaited<ReturnType<typeof probeAudio>> | null = null;
-        try {
-          probe = await probeAudio(tools, result.file);
-        } catch {
-          probe = null;
-        }
-        const silences = probe ? await detectSilence(tools, result.file) : [];
-        const qc = evaluateQuality({
-          decodable: probe !== null,
-          durationMs: probe?.durationMs ?? 0,
-          silences,
-          targetDurationS,
-        });
-        const candidateId = randomUUID();
-        const storageKey = `songs/${orderId}/${candidateId}.mp3`;
-        await storage.putFile(storageKey, result.file);
-        const [row] = await db
-          .insert(musicCandidates)
-          .values({
-            id: candidateId,
-            jobId: job.id,
-            storageKey,
-            durationMs: probe?.durationMs ?? 0,
-            format: result.format,
-            qcStatus: qc.status,
-            qcResult: {
-              reasons: qc.reasons,
-              silences: silences.map((s) => ({ ...s, endMs: Number.isFinite(s.endMs) ? s.endMs : null })),
-              model: result.model,
-            },
-            sections: result.sections,
-            lyricsTiming: result.lines ?? null,
-          })
-          .returning();
-        if (!row) throw new Error("Kandidat konnte nicht gespeichert werden");
+        const { row, qc } = await generateCandidate(
+          { db, music, storage, tools },
+          { jobId: job.id, orderId, input, workDir, targetDurationS, countPreviewUsage: true },
+        );
         if (qc.status === "passed") passed.push(row);
         else if (qc.status === "manual") manual.push(row);
         reasons.push(...qc.reasons);

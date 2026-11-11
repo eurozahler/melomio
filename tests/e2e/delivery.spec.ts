@@ -13,6 +13,14 @@ async function buy(page: Page, ref: string) {
   await page.getByRole("button", { name: "Zahlungspflichtig bestellen" }).click();
   await page.getByRole("button", { name: "Zahlung erfolgreich" }).click();
   await expect(page).toHaveURL(new RegExp(`/bestellung/${ref}[?]zahlung=zurueck`));
+  // Zweite Song-Version: beide anhören, Version 2 wählen
+  const chooser = page.getByTestId("version-chooser").filter({ visible: true });
+  await expect(chooser).toBeVisible({ timeout: 120_000 });
+  await expect(chooser.getByTestId("version-audio-1")).toBeVisible();
+  const v2 = await page.request.get(`/api/version/${ref}/2`);
+  expect(v2.status()).toBe(200);
+  expect(v2.headers()["content-type"]).toBe("audio/mpeg");
+  await chooser.getByRole("button", { name: "Version 2 nehmen" }).click();
   await expect(status(page)).toHaveText("Fertig", { timeout: 120_000 });
 }
 

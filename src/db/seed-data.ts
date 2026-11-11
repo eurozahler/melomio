@@ -18,7 +18,15 @@ type SeedQuestion = {
   options?: Array<[value: string, label: string]>;
 };
 
-type SeedOccasion = { slug: string; name: string; description: string; questions: SeedQuestion[] };
+type SeedOccasion = {
+  slug: string;
+  name: string;
+  description: string;
+  questions: SeedQuestion[];
+  /** Standard: sichtbar. Trauer startet ausgeblendet (Admin schaltet ein). */
+  active?: boolean;
+  videoTemplate?: "memorial";
+};
 
 const de = (text: string): LocalizedText => ({ de: text });
 export { de };
@@ -190,6 +198,57 @@ export const SEED_OCCASIONS: SeedOccasion[] = [
         maxLength: 1000,
       },
       { key: "wishes", type: "textarea", label: "Was wünschst du dem Paar?", maxLength: 600 },
+    ],
+  },
+  {
+    slug: "trauer",
+    name: "Abschied",
+    description: "Ein Abschiedslied mit Video – zur Erinnerung an einen geliebten Menschen.",
+    active: false,
+    videoTemplate: "memorial",
+    questions: [
+      {
+        key: "deceased_name",
+        type: "text",
+        label: "An wen möchtest du erinnern?",
+        placeholder: "Vor- und Nachname",
+        required: true,
+        maxLength: 80,
+      },
+      {
+        key: "relationship",
+        type: "single_choice",
+        label: "Wer war diese Person für dich?",
+        required: true,
+        options: [
+          ["eltern", "Mutter/Vater"],
+          ["grosseltern", "Oma/Opa"],
+          ["partner", "Partner/in"],
+          ["kind", "Kind"],
+          ["geschwister", "Bruder/Schwester"],
+          ["freund", "Freund/in"],
+          ["anderes", "Jemand anderes"],
+        ],
+      },
+      { key: "born", type: "date", label: "Geburtsdatum", help: "Erscheint im Video (optional)." },
+      { key: "died", type: "date", label: "Sterbedatum", required: true },
+      {
+        key: "saying",
+        type: "text",
+        label: "Ein Spruch für das Video",
+        placeholder: "z. B. Du bist nicht mehr da, wo du warst, aber überall, wo wir sind.",
+        help: "Erscheint im Video. Ohne Angabe: „In liebevoller Erinnerung“.",
+        maxLength: 120,
+      },
+      {
+        key: "memories",
+        type: "textarea",
+        label: "Woran erinnerst du dich besonders gern?",
+        help: "Erlebnisse, Eigenheiten, typische Sätze. Du kannst auch diktieren.",
+        required: true,
+        maxLength: 1200,
+      },
+      { key: "message", type: "textarea", label: "Was möchtest du ihr/ihm noch sagen?", maxLength: 600 },
     ],
   },
 ];

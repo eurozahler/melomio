@@ -7,6 +7,7 @@
  * erneut versucht, und der Idempotenzschlüssel verhindert doppelte Ausführung.
  */
 import { loadEnvConfig } from "@next/env";
+import { getPublishTarget } from "@/publishing/target";
 import type { JobWithMetadata } from "pg-boss";
 import { EnvError, getEnv } from "../src/config/env";
 import { createDb } from "../src/db/client";
@@ -53,6 +54,7 @@ async function main() {
     tools,
     baseUrl: env.APP_BASE_URL,
     fontFile: env.VIDEO_FONT_FILE,
+    publishTarget: getPublishTarget(db, env, storage),
   };
 
   function logResult(job: OrderJob, result: unknown) {
@@ -101,6 +103,25 @@ async function main() {
     const result = await handlers.handleOrderPaid(deps, job.data, `${job.id}:${job.retryCount}`);
     logResult(job, result);
   });
+
+  await boss.work(QUEUES.musicExtra, { includeMetadata: true, batchSize: 1 }, async ([job]: OrderJob[]) => {
+    if (!job) return;
+    const result = await handlers.withFinalFailure(db, job, () =>
+      handlers.handleMusicExtra(deps, job.data, `${job.id}:${job.retryCount}`),
+    );
+    logResult(job, result);
+  });
+
+  for (const [queue, handler] of [
+    [QUEUES.publicationRender, handlers.handlePublicationRender],
+    [QUEUES.publicationUpload, handlers.handlePublicationUpload],
+  ] as const) {
+    await boss.work(queue, { includeMetadata: true, batchSize: 1 }, async ([job]: OrderJob[]) => {
+      if (!job) return;
+      const result = await handlers.withPublicationFailure(db, job, () => handler(deps, job.data));
+      console.log(`[worker] ${job.name} ${job.data.orderId.slice(0, 8)}: ${String(result)}`);
+    });
+  }
 
   await boss.work(QUEUES.videoRender, { includeMetadata: true, batchSize: 1 }, async ([job]: OrderJob[]) => {
     if (!job) return;

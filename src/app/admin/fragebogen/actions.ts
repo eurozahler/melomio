@@ -10,6 +10,7 @@ import {
   saveDraft,
   startDraft,
   updateOccasion,
+  updateOccasionPublishing,
 } from "@/admin/questionnaire";
 import { getDb } from "@/db/client";
 import { getAdminUser } from "@/server/admin";
@@ -87,5 +88,12 @@ export async function discardDraftAction(slug: unknown) {
     if (typeof slug !== "string") throw new QuestionnaireError("not_found");
     await discardDraft(getDb(), slug, userId);
     return "Entwurf verworfen.";
+  });
+}
+
+export async function updateOccasionPublishingAction(slug: unknown, input: unknown) {
+  return run(async (userId) => {
+    if (typeof slug !== "string") throw new QuestionnaireError("not_found");
+    await updateOccasionPublishing(getDb(), slug, input, userId);
   });
 }

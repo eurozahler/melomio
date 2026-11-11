@@ -1,11 +1,13 @@
 import { and, count, desc, eq, inArray, lte } from "drizzle-orm";
 import { getCompanyProfile } from "@/invoices/company";
 import { billingSchema, type BillingAddress } from "./billing";
-import { discountFor, findValidVoucher, type Voucher } from "./vouchers";
+import { buildPriceItems, publicationOffer, resolveCode, type AppliedCode } from "./pricing";
 import type { PgBoss } from "pg-boss";
 import type { Database } from "@/db/client";
 import {
+  affiliateAttributions,
   consents,
+  occasions,
   orderItems,
   orders,
   paymentEvents,
@@ -16,7 +18,7 @@ import {
   taxRates,
   voucherRedemptions,
 } from "@/db/schema";
-import { CONSENT_TEXTS } from "@/domain/consents";
+import { CONSENT_TEXTS, type CheckoutConsentType } from "@/domain/consents";
 import { enqueue } from "@/jobs/enqueue";
 import { QUEUES } from "@/jobs/queues";
 import { FAILED_PAYMENT_STATUSES, splitGross, type PaymentProvider } from "@/payments/types";
@@ -37,7 +39,8 @@ export type CheckoutErrorCode =
   | "no_price"
   | "seller_incomplete"
   | "billing_invalid"
-  | "voucher_invalid";
+  | "voucher_invalid"
+  | "publication_invalid";
 
 export class CheckoutError extends Error {
   constructor(public readonly code: CheckoutErrorCode) {
@@ -48,20 +51,17 @@ export class CheckoutError extends Error {
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
-/** Preis-Snapshot der Bestellung – beim ersten Checkout aus dem aktuellen Preis erzeugt. */
-async function ensurePriceSnapshot(tx: Tx, orderId: string, voucher: Voucher | null = null) {
+/**
+ * Preis-Snapshot der Bestellung – beim ersten Checkout aus dem aktuellen Preis erzeugt.
+ * Ändert der Kunde vor der Zahlung Code oder Veröffentlichung, wird der Snapshot neu erzeugt –
+ * der einmal eingefrorene Grundpreis bleibt dabei erhalten.
+ */
+async function ensurePriceSnapshot(
+  tx: Tx,
+  orderId: string,
+  opts: { publicationPct: number | null; code: AppliedCode | null },
+) {
   const [existing] = await tx.select().from(priceSnapshots).where(eq(priceSnapshots.orderId, orderId));
-  if (existing) {
-    const [redemption] = await tx
-      .select()
-      .from(voucherRedemptions)
-      .where(eq(voucherRedemptions.orderId, orderId));
-    if ((redemption?.voucherId ?? null) === (voucher?.id ?? null)) return existing;
-    // Gutschein geändert (vor der Zahlung): Preis neu einfrieren
-    await tx.delete(voucherRedemptions).where(eq(voucherRedemptions.orderId, orderId));
-    await tx.delete(priceSnapshots).where(eq(priceSnapshots.orderId, orderId));
-    await tx.delete(orderItems).where(eq(orderItems.orderId, orderId));
-  }
   // Aktuell gültiger Preis des Songs (neuester mit validFrom ≤ jetzt)
   const [row] = await tx
     .select({ price: prices, product: products, tax: taxRates })
@@ -72,42 +72,64 @@ async function ensurePriceSnapshot(tx: Tx, orderId: string, voucher: Voucher | n
     .orderBy(desc(prices.validFrom))
     .limit(1);
   if (!row) throw new CheckoutError("no_price");
-  const { price, product, tax } = row;
-  const discount = voucher ? discountFor(price.grossCents, voucher) : 0;
-  const gross = price.grossCents - discount;
-  const { netCents, taxCents } = splitGross(gross, tax.rateBp);
+  const frozen = existing?.items.find((i) => i.productSlug === "song");
+  const base = frozen
+    ? { productSlug: frozen.productSlug, name: frozen.name, unitGrossCents: frozen.unitGrossCents }
+    : { productSlug: row.product.slug, name: row.product.name.de, unitGrossCents: row.price.grossCents };
+  const taxRateBp = existing?.taxRateBp ?? row.tax.rateBp;
+  const currency = existing?.currency ?? row.price.currency;
+  const breakdown = buildPriceItems(base, opts);
+
+  if (existing) {
+    if (JSON.stringify(existing.items) === JSON.stringify(breakdown.items)) return existing;
+    // Rabatte geändert (vor der Zahlung): Preis neu einfrieren
+    await tx.delete(voucherRedemptions).where(eq(voucherRedemptions.orderId, orderId));
+    await tx.delete(affiliateAttributions).where(eq(affiliateAttributions.orderId, orderId));
+    await tx.delete(priceSnapshots).where(eq(priceSnapshots.orderId, orderId));
+    await tx.delete(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+  const { netCents, taxCents } = splitGross(breakdown.grossCents, taxRateBp);
   await tx
     .insert(orderItems)
-    .values({ orderId, productId: product.id, quantity: 1, unitGrossCents: price.grossCents });
+    .values({ orderId, productId: row.product.id, quantity: 1, unitGrossCents: base.unitGrossCents });
   const [snapshot] = await tx
     .insert(priceSnapshots)
     .values({
       orderId,
-      items: [
-        { productSlug: product.slug, name: product.name.de, quantity: 1, unitGrossCents: price.grossCents },
-        ...(voucher && discount > 0
-          ? [
-              {
-                productSlug: "voucher",
-                name: `Gutschein ${voucher.code}`,
-                quantity: 1,
-                unitGrossCents: -discount,
-              },
-            ]
-          : []),
-      ],
+      items: breakdown.items,
       netCents,
       taxCents,
-      grossCents: gross,
-      taxRateBp: tax.rateBp,
-      currency: price.currency,
+      grossCents: breakdown.grossCents,
+      taxRateBp,
+      currency,
     })
     .returning();
   if (!snapshot) throw new CheckoutError("no_price");
-  if (voucher && discount > 0) {
-    await tx.insert(voucherRedemptions).values({ voucherId: voucher.id, orderId, discountCents: discount });
+  if (opts.code?.type === "voucher" && breakdown.codeDiscountCents > 0) {
+    await tx
+      .insert(voucherRedemptions)
+      .values({ voucherId: opts.code.voucher.id, orderId, discountCents: breakdown.codeDiscountCents });
+  }
+  if (opts.code?.type === "affiliate") {
+    await tx
+      .insert(affiliateAttributions)
+      .values({ codeId: opts.code.codeId, orderId, discountCents: breakdown.codeDiscountCents });
   }
   return snapshot;
+}
+
+/** Wahl zur Veröffentlichung aus dem Formular prüfen (null = keine Veröffentlichung). */
+export function parsePublication(
+  raw: unknown,
+): { photos: boolean; title: boolean; memorial: boolean } | null | "invalid" {
+  if (raw === null || raw === undefined || raw === false) return null;
+  if (typeof raw !== "object") return "invalid";
+  const r = raw as Record<string, unknown>;
+  if (r.consent !== true) return null;
+  for (const k of ["photos", "title", "memorial"]) {
+    if (r[k] !== undefined && typeof r[k] !== "boolean") return "invalid";
+  }
+  return { photos: r.photos === true, title: r.title === true, memorial: r.memorial === true };
 }
 
 export type StartCheckoutInput = {
@@ -119,8 +141,10 @@ export type StartCheckoutInput = {
   webhookUrl: string | null;
   /** Optionale Rechnungsanschrift (Firmenkunden); null/undefined = Rechnung an das Konto. */
   billing?: unknown;
-  /** Optionaler Gutscheincode. */
+  /** Optionaler Code: Gutschein oder Affiliate-Code. */
   voucherCode?: string | null;
+  /** Zustimmung zur Veröffentlichung (optional, mit Rabatt). */
+  publication?: unknown;
   /** Warteschlange – nur nötig, wenn ein 100-%-Gutschein die Zahlung überspringt. */
   boss?: PgBoss;
 };
@@ -161,15 +185,44 @@ export async function startCheckout(db: Database, provider: PaymentProvider, inp
   // Ohne vollständige Firmendaten keine echte Rechnung – dann auch kein echter Verkauf
   if (!order.isTest && !(await getCompanyProfile(db)).complete) throw new CheckoutError("seller_incomplete");
 
-  // Gutschein (optional)
-  const voucher = input.voucherCode?.trim() ? await findValidVoucher(db, input.voucherCode) : null;
-  if (input.voucherCode?.trim() && !voucher) throw new CheckoutError("voucher_invalid");
+  // Code (optional): Gutschein oder Affiliate-Code
+  const code = input.voucherCode?.trim()
+    ? await resolveCode(db, input.voucherCode, { userId: input.userId })
+    : null;
+  if (input.voucherCode?.trim() && !code) throw new CheckoutError("voucher_invalid");
+
+  // Veröffentlichung (optional)
+  const offer = await publicationOffer(db, order.occasionId);
+  const publication = parsePublication(input.publication);
+  if (publication === "invalid" || (publication && !offer.enabled))
+    throw new CheckoutError("publication_invalid");
+  const [occasion] = await db
+    .select({ videoTemplate: occasions.videoTemplate })
+    .from(occasions)
+    .where(eq(occasions.id, order.occasionId));
+  const memorial = occasion?.videoTemplate === "memorial";
+  // Trauer: Veröffentlichung nur mit ausdrücklicher Beauftragung (E15)
+  if (publication && memorial && !publication.memorial) throw new CheckoutError("publication_invalid");
+  await db
+    .update(orders)
+    .set({ publication: publication ? { photos: publication.photos, title: publication.title } : null })
+    .where(eq(orders.id, order.id));
+  const consentTypes: CheckoutConsentType[] = [
+    "terms_privacy",
+    "withdrawal_waiver",
+    ...(publication ? (["publication"] as const) : []),
+    ...(publication?.photos ? (["publication_photos"] as const) : []),
+    ...(publication && memorial ? (["publication_memorial"] as const) : []),
+  ];
 
   // Preis einfrieren und Einwilligungen festhalten
   const snapshot = await db.transaction(async (tx) => {
-    const snap = await ensurePriceSnapshot(tx, order.id, voucher);
+    const snap = await ensurePriceSnapshot(tx, order.id, {
+      publicationPct: publication ? offer.discountPct : null,
+      code,
+    });
     await tx.insert(consents).values(
-      (["terms_privacy", "withdrawal_waiver"] as const).map((type) => ({
+      consentTypes.map((type) => ({
         userId: input.userId,
         orderId: order.id,
         type,

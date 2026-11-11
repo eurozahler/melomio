@@ -21,7 +21,13 @@ export async function POST(request: Request, { params }: RouteContext<"/api/foto
   }
   if (!file) return Response.json({ error: "not_image" }, { status: 400 });
   try {
-    const photo = await addPhoto(getDb(), getStorage(getEnv()), ref, user.id, Buffer.from(await file.arrayBuffer()));
+    const photo = await addPhoto(
+      getDb(),
+      getStorage(getEnv()),
+      ref,
+      user.id,
+      Buffer.from(await file.arrayBuffer()),
+    );
     return Response.json({ id: photo.id });
   } catch (error) {
     if (error instanceof PhotoError) {

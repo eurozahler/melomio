@@ -39,6 +39,15 @@ Du brauchst drei Fenster im Projektordner `C:\dev\songgen`:
   - **Gutscheine:** Codes mit Prozent- oder Festbetrag-Rabatt, Ablaufdatum und Limit; 100 % = Gratis-Song.
   - **Rechnungen:** alle Rechnungen als PDF, Stornieren, CSV-Export für den Steuerberater.
   - **Firma:** Firmendaten für Rechnungen und Rechtstexte.
+  - **Veröffentlichungen (neu):** Videos mit Kunden-Zustimmung ansehen, freigeben oder ablehnen; Dropbox
+    verbinden, Standardordner. Im Testbetrieb landen freigegebene Videos nur im eigenen Speicher.
+  - **Fragebögen → Anlass (neu):** Dropbox-Ordner, Rabatt für Veröffentlichung, Videovorlage (Trauer).
+    Der Anlass „Abschied“ (Trauer) ist angelegt, aber ausgeblendet.
+  - **Affiliates (neu):** Bewerbungen freischalten, Rabatt/Provision je Partner, Gutschrift erstellen,
+    Überweisung als erledigt markieren.
+- **Partnerprogramm (neu):** /partner (Link unten auf jeder Seite) – bewerben, Codes erzeugen, Provisionen sehen.
+- **Nach dem Kauf (neu):** Es entsteht eine zweite Song-Version; der Kunde hört beide und wählt. Abschaltbar
+  unter Einstellungen „Zweite Song-Version nach dem Kauf“ (0).
 - **Kundenkonto (neu):** „Meine Daten herunterladen“ und „Konto löschen“.
 - **Bestellseite (neu):** bis zu 10 Fotos für das Video hochladen, Gutscheincode, Rechnung auf eine Firma.
 - **Vorschau des Videos ohne Kosten:** `npx tsx scripts/video/vorschau.ts --fotos` (Ergebnis im Ordner `hoertest/video-vorschau`).

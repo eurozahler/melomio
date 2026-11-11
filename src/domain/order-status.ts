@@ -14,6 +14,7 @@ export const ORDER_STATUSES = [
   "preview_expired",
   "awaiting_payment",
   "paid",
+  "awaiting_choice",
   "video_rendering",
   "completed",
   "refunded",
@@ -38,7 +39,9 @@ export const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   preview_expired: [],
   // Zahlung fehlgeschlagen oder abgebrochen → zurück zur Hörprobe
   awaiting_payment: ["paid", "preview_ready", "canceled"],
-  paid: ["video_rendering", "refunded", "failed"],
+  // nach dem Kauf: zweite Version erzeugt → Kunde wählt (oder direkt Video, wenn keine zweite Version)
+  paid: ["awaiting_choice", "video_rendering", "refunded", "failed"],
+  awaiting_choice: ["video_rendering", "refunded", "failed"],
   video_rendering: ["completed", "failed"],
   // Neuversuch der Musik nach dem Kauf (Limit aus den Einstellungen)
   completed: ["music_generating", "refunded"],
@@ -50,6 +53,7 @@ export const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
     "lyrics_approved",
     "music_generating",
     "paid",
+    "awaiting_choice",
     "video_rendering",
     "canceled",
     // bezahlte Bestellung, die nicht fertig wird → Geld zurück
@@ -80,7 +84,7 @@ export const OPEN_UNPAID_STATUSES: readonly OrderStatus[] = [
 ];
 
 /** Diese Ziele setzen eine bestätigte Zahlung voraus (E12: Video erst nach der Zahlung). */
-const REQUIRES_PAYMENT: readonly OrderStatus[] = ["paid", "video_rendering", "completed"];
+const REQUIRES_PAYMENT: readonly OrderStatus[] = ["paid", "awaiting_choice", "video_rendering", "completed"];
 
 export class IllegalTransitionError extends Error {
   constructor(

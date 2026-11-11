@@ -15,6 +15,8 @@ export const LYRICS_PROVIDERS = ["mock", "anthropic"] as const;
 export const MUSIC_PROVIDERS = ["mock", "elevenlabs", "lyria", "mureka", "acestep"] as const;
 export const EMAIL_PROVIDERS = ["console", "smtp"] as const;
 export const STORAGE_PROVIDERS = ["local", "s3"] as const;
+/** Ziel für Veröffentlichungen: "storage" = nur im eigenen Speicher ablegen (Test), "dropbox" = EasyGMV-Ordner. */
+export const PUBLISH_PROVIDERS = ["storage", "dropbox"] as const;
 
 /** Adapter-Werte, die nur für den Testbetrieb gedacht sind. */
 const TEST_ONLY_VALUES = new Set(["mock", "console", "local"]);
@@ -32,6 +34,10 @@ const baseSchema = z.object({
   MUSIC_PROVIDER: z.enum(MUSIC_PROVIDERS).default("mock"),
   EMAIL_PROVIDER: z.enum(EMAIL_PROVIDERS).default("console"),
   STORAGE_PROVIDER: z.enum(STORAGE_PROVIDERS).default("local"),
+  PUBLISH_PROVIDER: z.enum(PUBLISH_PROVIDERS).default("storage"),
+  /** Dropbox-App (App-Konsole): Schlüssel und Geheimnis für „Mit Dropbox verbinden“. */
+  DROPBOX_APP_KEY: optionalString,
+  DROPBOX_APP_SECRET: optionalString,
 
   DATABASE_URL: z
     .string({ error: "fehlt" })
@@ -131,6 +137,11 @@ const REQUIRED_BY_ADAPTER: Array<{
     when: (e) => e.EMAIL_PROVIDER === "smtp",
     label: "EMAIL_PROVIDER=smtp",
     keys: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"],
+  },
+  {
+    when: (e) => e.PUBLISH_PROVIDER === "dropbox",
+    label: "PUBLISH_PROVIDER=dropbox",
+    keys: ["DROPBOX_APP_KEY", "DROPBOX_APP_SECRET"],
   },
   {
     when: (e) => e.STORAGE_PROVIDER === "s3",

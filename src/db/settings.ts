@@ -10,8 +10,10 @@ export const SETTINGS = {
   lyrics_ai_revisions_free: { schema: z.number().int().min(0).max(10), default: 1 },
   /** Musik-Kandidaten vor der Zahlung (Hörprobe). */
   music_candidates_before_purchase: { schema: z.number().int().min(1).max(4), default: 1 },
-  /** Zusätzliche Kandidaten nach der Zahlung (E4: insgesamt 2). */
-  music_extra_candidates_after_purchase: { schema: z.number().int().min(0).max(4), default: 1 },
+  /** Zweite Song-Version nach der Zahlung, Kunde wählt seinen Favoriten (0 = aus, 1 = an). */
+  music_extra_candidates_after_purchase: { schema: z.number().int().min(0).max(1), default: 1 },
+  /** Nach so vielen Tagen ohne Auswahl wird automatisch die Version der Hörprobe genommen. */
+  version_choice_days: { schema: z.number().int().min(1).max(30), default: 7 },
   /** Neue Musikversuche nach dem Kauf (F-18). */
   music_retries_after_purchase: { schema: z.number().int().min(0).max(5), default: 1 },
   /** Ziel-Songlänge in Sekunden (E4: etwa 3 Minuten). */
@@ -28,6 +30,18 @@ export const SETTINGS = {
   preview_expiry_days: { schema: z.number().int().min(1).max(90), default: 14 },
   /** Laufzeit signierter Download-Links in Minuten. */
   download_link_ttl_min: { schema: z.number().int().min(5).max(1440), default: 60 },
+  /** Veröffentlichung anbieten (0 = aus, 1 = an). */
+  publication_enabled: { schema: z.number().int().min(0).max(1), default: 1 },
+  /** Rabatt in % für die Zustimmung zur Veröffentlichung (Standard; je Anlass überschreibbar). */
+  publication_discount_pct: { schema: z.number().int().min(0).max(50), default: 0 },
+  /** Affiliate: Standard-Kundenrabatt in % (je Partner überschreibbar). */
+  affiliate_discount_pct: { schema: z.number().int().min(0).max(50), default: 10 },
+  /** Affiliate: Standard-Provision in % vom Nettobetrag (je Partner überschreibbar). */
+  affiliate_commission_pct: { schema: z.number().int().min(0).max(50), default: 15 },
+  /** Affiliate: Provision wird so viele Tage nach dem Kauf auszahlbar (Erstattungen abwarten). */
+  affiliate_hold_days: { schema: z.number().int().min(0).max(90), default: 30 },
+  /** Affiliate: Mindestbetrag für eine Auszahlung in Cent. */
+  affiliate_min_payout_cents: { schema: z.number().int().min(0).max(100000), default: 2000 },
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;

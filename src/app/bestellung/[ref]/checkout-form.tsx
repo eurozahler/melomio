@@ -4,20 +4,34 @@ import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Notice } from "@/components/auth-ui";
-import { previewVoucherAction, startCheckoutAction } from "./actions";
+import { splitGross } from "@/payments/types";
+import { previewPriceAction, startCheckoutAction } from "./actions";
+
+export type PublicationOfferProps = {
+  enabled: boolean;
+  discountPct: number;
+  /** Trauer: ausdrückliche Beauftragung nötig (E15) */
+  memorial: boolean;
+  hasPhotos: boolean;
+};
 
 /**
  * Kaufformular (E16): Preis inkl. MwSt., zwei Pflicht-Haken (NICHT vorangekreuzt),
- * Button „Zahlungspflichtig bestellen“ (§ 312j BGB).
+ * Button „Zahlungspflichtig bestellen“ (§ 312j BGB) – bei 0 € „Kostenlos bestellen“.
+ * Freiwillig: Veröffentlichung (mit Rabatt), Gutschein- oder Affiliate-Code, Firmenrechnung.
  */
 export function CheckoutForm({
   publicRef,
-  grossLabel,
-  vatLabel,
+  baseGrossCents,
+  currency,
+  rateBp,
+  publication,
 }: {
   publicRef: string;
-  grossLabel: string;
-  vatLabel: string;
+  baseGrossCents: number;
+  currency: string;
+  rateBp: number;
+  publication: PublicationOfferProps;
 }) {
   const t = useTranslations("Order");
   const id = useId();
@@ -25,31 +39,64 @@ export function CheckoutForm({
   const [waiver, setWaiver] = useState(false);
   const [business, setBusiness] = useState(false);
   const [code, setCode] = useState("");
-  const [voucher, setVoucher] = useState<{ code: string; discount: string; gross: string } | null>(null);
-  const [voucherError, setVoucherError] = useState(false);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState(false);
+  const [publish, setPublish] = useState(false);
+  const [publishPhotos, setPublishPhotos] = useState(false);
+  const [publishTitle, setPublishTitle] = useState(true);
+  const [memorial, setMemorial] = useState(false);
+  const [price, setPrice] = useState<{ lines: Array<{ label: string; cents: number }>; gross: number }>({
+    lines: [],
+    gross: baseGrossCents,
+  });
   const euro = (cents: number) =>
-    new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100);
+    new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
   const [billing, setBilling] = useState({
     company: "",
     contact: "",
     street: "",
     postalCode: "",
     city: "",
-    country: "Deutschland",
     vatId: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  /** Preis neu berechnen (Code und/oder Veröffentlichung). */
+  const recalc = (nextCode: string | null, nextPublish: boolean) =>
+    startTransition(async () => {
+      const r = await previewPriceAction(publicRef, nextCode ?? "", nextPublish);
+      if (!r.ok) return;
+      if (r.codeValid === false) {
+        setCodeError(true);
+        setAppliedCode(null);
+        const again = await previewPriceAction(publicRef, "", nextPublish);
+        if (again.ok) setPrice({ lines: again.lines, gross: again.grossCents });
+        return;
+      }
+      setCodeError(false);
+      setAppliedCode(r.codeValid ? (nextCode ?? "").trim().toUpperCase() : null);
+      setPrice({ lines: r.lines, gross: r.grossCents });
+    });
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!terms || !waiver) return setError(t("consentsMissing"));
+    if (publish && publication.memorial && !memorial) return setError(t("errors.publication_invalid"));
     startTransition(async () => {
       const result = await startCheckoutAction(
         publicRef,
         { termsPrivacy: terms, withdrawalWaiver: waiver },
-        business ? billing : null,
-        voucher?.code ?? null,
+        business ? { ...billing, country: "Deutschland" } : null,
+        appliedCode,
+        publish
+          ? {
+              consent: true,
+              photos: publication.hasPhotos && publishPhotos,
+              title: publishTitle,
+              memorial: publication.memorial && memorial,
+            }
+          : null,
       );
       if (result.ok) window.location.assign(result.checkoutUrl);
       else setError(t(`errors.${result.error}`));
@@ -57,6 +104,7 @@ export function CheckoutForm({
   };
 
   const checkbox = "mt-1 h-5 w-5 shrink-0 accent-brand-strong";
+  const free = price.gross === 0;
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <h2 className="text-xl font-bold">{t("checkoutTitle")}</h2>
@@ -64,15 +112,91 @@ export function CheckoutForm({
       <div>
         <p className="text-sm text-neutral-500">{t("priceLabel")}</p>
         <p className="text-3xl font-bold" data-testid="checkout-price">
-          {voucher ? voucher.gross : grossLabel}
+          {euro(price.gross)}
         </p>
-        {voucher && (
-          <p className="text-sm text-green-700 dark:text-green-400" data-testid="voucher-applied">
-            {t("voucherApplied", { code: voucher.code, discount: voucher.discount })}
-          </p>
+        {price.lines.length > 0 && (
+          <ul className="text-sm text-green-700 dark:text-green-400" data-testid="price-lines">
+            <li className="text-neutral-500 line-through">{euro(baseGrossCents)}</li>
+            {price.lines.map((l) => (
+              <li key={l.label}>
+                {l.label}: {euro(l.cents)}
+              </li>
+            ))}
+          </ul>
         )}
-        <p className="text-sm text-neutral-500">{vatLabel}</p>
+        <p className="text-sm text-neutral-500">
+          {t("vatNote", {
+            rate: (rateBp / 100).toLocaleString("de-DE"),
+            tax: euro(splitGross(price.gross, rateBp).taxCents),
+          })}
+        </p>
       </div>
+
+      {publication.enabled && (
+        <fieldset
+          className="flex flex-col gap-3 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800"
+          data-testid="publication"
+        >
+          <legend className="px-1 text-sm font-semibold">{t("publishTitle")}</legend>
+          <label htmlFor={`${id}-publish`} className="flex gap-3 text-sm">
+            <input
+              id={`${id}-publish`}
+              type="checkbox"
+              className={checkbox}
+              checked={publish}
+              onChange={(e) => {
+                setPublish(e.target.checked);
+                recalc(appliedCode, e.target.checked);
+              }}
+            />
+            <span>
+              {t("publishConsent")}{" "}
+              {publication.discountPct > 0 && (
+                <strong>{t("publishDiscount", { pct: publication.discountPct })}</strong>
+              )}
+            </span>
+          </label>
+          {publish && (
+            <div className="ml-8 flex flex-col gap-3">
+              {publication.memorial && (
+                <label htmlFor={`${id}-memorial`} className="flex gap-3 text-sm">
+                  <input
+                    id={`${id}-memorial`}
+                    type="checkbox"
+                    className={checkbox}
+                    checked={memorial}
+                    onChange={(e) => setMemorial(e.target.checked)}
+                  />
+                  <span>{t("publishMemorial")}</span>
+                </label>
+              )}
+              {publication.hasPhotos && (
+                <label htmlFor={`${id}-photos`} className="flex gap-3 text-sm">
+                  <input
+                    id={`${id}-photos`}
+                    type="checkbox"
+                    className={checkbox}
+                    checked={publishPhotos}
+                    onChange={(e) => setPublishPhotos(e.target.checked)}
+                  />
+                  <span>{t("publishPhotos")}</span>
+                </label>
+              )}
+              <label htmlFor={`${id}-title`} className="flex gap-3 text-sm">
+                <input
+                  id={`${id}-title`}
+                  type="checkbox"
+                  className={checkbox}
+                  checked={publishTitle}
+                  onChange={(e) => setPublishTitle(e.target.checked)}
+                />
+                <span>{t("publishTitleShown")}</span>
+              </label>
+              <p className="text-xs text-neutral-500">{t("publishHint")}</p>
+            </div>
+          )}
+        </fieldset>
+      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor={`${id}-voucher`} className="text-sm font-semibold">
@@ -87,7 +211,7 @@ export function CheckoutForm({
             data-testid="voucher-code"
             onChange={(e) => {
               setCode(e.target.value);
-              setVoucherError(false);
+              setCodeError(false);
             }}
             className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 uppercase dark:border-neutral-700 dark:bg-neutral-900"
           />
@@ -95,27 +219,12 @@ export function CheckoutForm({
             type="button"
             disabled={!code.trim() || pending}
             className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-semibold disabled:opacity-50 dark:border-neutral-700"
-            onClick={() =>
-              startTransition(async () => {
-                const r = await previewVoucherAction(code);
-                if (r.ok) {
-                  setVoucher({
-                    code: code.trim().toUpperCase(),
-                    discount: euro(r.discountCents),
-                    gross: euro(r.grossCents),
-                  });
-                  setVoucherError(false);
-                } else {
-                  setVoucher(null);
-                  setVoucherError(true);
-                }
-              })
-            }
+            onClick={() => recalc(code, publish)}
           >
             {t("voucherApply")}
           </button>
         </div>
-        {voucherError && (
+        {codeError && (
           <p role="alert" className="text-sm text-red-700 dark:text-red-300">
             {t("errors.voucher_invalid")}
           </p>
@@ -176,7 +285,6 @@ export function CheckoutForm({
               ["street", "billingStreet", "street-address"],
               ["postalCode", "billingPostalCode", "postal-code"],
               ["city", "billingCity", "address-level2"],
-              ["country", "billingCountry", "country-name"],
               ["vatId", "billingVatId", "off"],
             ] as const
           ).map(([key, label, autoComplete]) => (
@@ -200,7 +308,7 @@ export function CheckoutForm({
         disabled={pending}
         className="w-full rounded-full bg-brand-strong px-6 py-3 font-semibold text-white hover:bg-brand-strong-hover disabled:opacity-60"
       >
-        {t("submit")}
+        {free ? t("submitFree") : t("submit")}
       </button>
     </form>
   );

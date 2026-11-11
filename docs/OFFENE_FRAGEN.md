@@ -200,3 +200,35 @@ Livegang-Ablauf: `docs/LIVEGANG.md`.
 - Nur ein Steuersatz (19 %).
 - Rechtstexte sind Entwürfe nach gängigen Mustern – **juristische Prüfung vor dem Livegang nötig**.
 - Ältere Testbestellungen (vor dem 11.11.) haben keine Zeilenzeiten – deren Videos zeigen nur den Titel.
+
+
+## Teil F – Antworten vom 11.11.2026 und was daraus gebaut wurde
+
+| Nr. | Antwort | Umgesetzt |
+|---|---|---|
+| E-3 | Alarme an info@eurozahler.de | Testserver: per `schluessel-eintragen.sh ALERT_EMAIL` (siehe unten) |
+| E-4 | Nutzungsrechte ohne Einschränkung | AGB § 8: privat und kommerziell, auch Streaming. ⚠️ Mureka-Lizenz für kommerzielle Nutzung durch Kunden prüfen (bezahltes Paket nötig) |
+| E-5 | Unter 18 mit Zustimmung der Eltern | AGB § 2 |
+| E-6 | Dateigrößen? | Gemessen: Song 6 MB, Video 13 MB, mit Fotos 25–40 MB je Bestellung. Server-Festplatte (19 GB frei) ≈ 600 Bestellungen → Object Storage |
+| E-7 | 14 Tage Hörprobe | bleibt |
+| E-8 | Zweite Version, Kunde wählt | gebaut: nach dem Kauf Version 2 (≈ 14 Cent), Kunde hört beide und wählt; ohne Wahl nach 7 Tagen Version 1; schlägt Version 2 fehl → sofort Video mit Version 1 |
+| E-9 | Firmenkunden nur Deutschland | gebaut (PLZ 5-stellig, USt-IdNr. DE…) |
+| E-10 | „Kostenlos bestellen“ bei 0 € | gebaut |
+| E-11 | ohne Virenscanner | bleibt |
+| E-12 | Hetzner Object Storage | in LIVEGANG.md |
+| E-13 | Storage Box | in LIVEGANG.md |
+| E-14 | UptimeRobot | in LIVEGANG.md (Konto legst du an) |
+| E-15 | Modelle erstmal nicht vergleichen | – |
+| E-16 | EasyGMV läuft selbständig | Upload per Dropbox-API in frei wählbare Ordner |
+| E-17 | Pfad je Anlass im Admin | gebaut: Fragebögen → Anlass → „Dropbox-Ordner“ (leer = Standardordner) |
+| E-18 | Kunde wählt, was veröffentlicht wird | gebaut: Zustimmung freiwillig beim Kauf; Fotos ja/nein, Titel ja/nein; eigene Videofassung; jede Veröffentlichung gibt der Admin frei; Widerruf jederzeit auf der Bestellseite |
+| E-19 | Trauer ohne juristische Prüfung | gebaut: Anlass „Abschied“ (ausgeblendet), Vorlage s/w-Foto, Name, Daten, Spruch, Aufruf zum Teilen; Veröffentlichung nur mit ausdrücklicher Beauftragung + Admin-Freigabe. ⚠️ Risiko § 22 KUG / Persönlichkeitsrecht Verstorbener bleibt bei dir |
+| E-20 | Rabatt für Veröffentlichung im Admin, je Anlass | gebaut: Einstellungen (Standard, derzeit 0 %) und je Anlass |
+| neu | Affiliate-Rolle | gebaut: Bewerbung unter /partner, Freigabe im Admin, Codes (max. 10), Kundenrabatt + Provision (Standard 10 % / 15 % vom Netto, je Partner änderbar), Provision fällig nach 30 Tagen, Erstattung storniert sie, monatliche Auszahlung mit Gutschrift (GS-JJJJ-NNNNN, 19 % USt. bei umsatzsteuerpflichtigen Partnern), nur ein Code pro Bestellung, eigener Code ausgeschlossen |
+
+### Offene Punkte danach
+1. **Rabatt für Veröffentlichung**: Standard steht auf 0 % – im Admin unter Einstellungen bzw. je Anlass eintragen.
+2. **Dropbox-App anlegen** (Anleitung LIVEGANG.md, Abschnitt B) – erst dann landen Videos wirklich bei EasyGMV.
+3. **Steuerberater fragen**: Gutschriften an Affiliates (Pflichtangaben, Privatpersonen ohne Gewerbe).
+4. **Partnerbedingungen** (/partnerbedingungen) sind ein Entwurf – mit den anderen Rechtstexten prüfen lassen.
+5. **Anlass „Abschied“** einblenden, wenn du so weit bist (Admin → Fragebögen → Abschied → „Auf der Startseite anzeigen“).

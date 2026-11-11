@@ -9,14 +9,19 @@ export const billingSchema = z.object({
   company: z.string().trim().min(2).max(120),
   contact: z.string().trim().max(120).default(""),
   street: z.string().trim().min(3).max(120),
-  postalCode: z.string().trim().min(3).max(12),
+  // Firmenrechnungen vorerst nur in Deutschland (EU-Ausland bräuchte „Reverse Charge“)
+  postalCode: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{5}$/, { error: "PLZ ungültig" }),
   city: z.string().trim().min(2).max(80),
-  country: z.string().trim().min(2).max(60).default("Deutschland"),
+  country: z.literal("Deutschland").default("Deutschland"),
   vatId: z
     .string()
     .trim()
     .max(20)
-    .regex(/^([A-Z]{2}[0-9A-Z]{2,13})?$/, { error: "USt-IdNr. ungültig" })
+    .transform((v) => v.replace(/\s/g, "").toUpperCase())
+    .pipe(z.string().regex(/^(DE[0-9]{9})?$/, { error: "USt-IdNr. ungültig" }))
     .default(""),
 });
 

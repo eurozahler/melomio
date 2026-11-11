@@ -1,6 +1,10 @@
 import { and, desc, eq } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import { auditLogs, invoices, orders, payments, refunds, sharePages } from "@/db/schema";
+import { cancelCommissionForOrder } from "@/affiliates/service";
+import { getEnv } from "@/config/env";
+import { withdrawPublication } from "@/publishing/service";
+import { getPublishTarget } from "@/publishing/target";
 import { cancelInvoice } from "@/invoices/service";
 import type { PaymentProvider } from "@/payments/types";
 import type { StorageProvider } from "@/storage";
@@ -20,7 +24,7 @@ export class RefundError extends Error {
   }
 }
 
-const REFUNDABLE = ["paid", "completed", "failed"] as const;
+const REFUNDABLE = ["paid", "awaiting_choice", "completed", "failed"] as const;
 
 export async function refundOrder(
   db: Database,
@@ -85,6 +89,9 @@ export async function refundOrder(
     reason: `Erstattet${cleanReason ? `: ${cleanReason}` : ""}`,
   });
   await db.update(sharePages).set({ active: false }).where(eq(sharePages.orderId, order.id));
+  // Keine Provision für erstattete Bestellungen, keine Veröffentlichung mehr
+  await cancelCommissionForOrder(db, order.id);
+  await withdrawPublication(db, getPublishTarget(db, getEnv(), storage), order.id, "system");
   await db.insert(auditLogs).values({
     actorUserId,
     action: "order.refund",

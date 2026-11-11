@@ -1,11 +1,18 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import { consents, orders, priceSnapshots, users } from "@/db/schema";
-import { CONSENT_TEXTS } from "@/domain/consents";
+import { CONSENT_TEXTS, type CheckoutConsentType } from "@/domain/consents";
+
+const CONSENT_TYPES = Object.keys(CONSENT_TEXTS) as CheckoutConsentType[];
 import { readInvoicePdf, type Invoice } from "@/invoices/service";
 import { sendEmail } from "@/server/email";
 import type { StorageProvider } from "@/storage";
-import { orderConfirmationTemplate, songReadyTemplate } from "@/server/email/templates";
+import {
+  orderConfirmationTemplate,
+  songReadyTemplate,
+  versionChoiceTemplate,
+} from "@/server/email/templates";
+import { getSetting } from "@/db/settings-store";
 
 /**
  * Nach bestätigter Zahlung (M7): Bestellbestätigung per E-Mail mit Vertragsinhalt und den
@@ -29,10 +36,10 @@ export async function sendOrderConfirmation(
   const given = await db
     .select()
     .from(consents)
-    .where(and(eq(consents.orderId, orderId), inArray(consents.type, ["terms_privacy", "withdrawal_waiver"])))
+    .where(and(eq(consents.orderId, orderId), inArray(consents.type, CONSENT_TYPES)))
     .orderBy(desc(consents.grantedAt));
   // je Art die zuletzt bestätigte Fassung
-  const latest = (["terms_privacy", "withdrawal_waiver"] as const).flatMap((type) => {
+  const latest = CONSENT_TYPES.flatMap((type) => {
     const c = given.find((x) => x.type === type);
     if (!c) return [];
     const known = CONSENT_TEXTS[type];
@@ -109,4 +116,32 @@ export async function sendSongReady(db: Database, baseUrl: string, orderId: stri
     db,
   );
   return "E-Mail „Song fertig“ verschickt";
+}
+
+/** E-Mail „Wähle deine Version“ (zweite Song-Version nach dem Kauf). */
+export async function sendVersionChoice(db: Database, baseUrl: string, orderId: string): Promise<string> {
+  const [row] = await db
+    .select({ order: orders, user: users })
+    .from(orders)
+    .innerJoin(users, eq(orders.userId, users.id))
+    .where(eq(orders.id, orderId));
+  if (!row) throw new Error(`Bestellung ${orderId} nicht gefunden`);
+  if (row.order.status !== "awaiting_choice") return "übersprungen (keine Auswahl offen)";
+  await sendEmail(
+    {
+      to: row.user.email,
+      userId: row.user.id,
+      orderId,
+      template: "version-choice",
+      ...versionChoiceTemplate({
+        name: row.user.name,
+        publicRef: row.order.publicRef,
+        orderUrl: `${baseUrl}/bestellung/${row.order.publicRef}`,
+        days: await getSetting(db, "version_choice_days"),
+        isTest: row.order.isTest,
+      }),
+    },
+    db,
+  );
+  return "E-Mail „Version wählen“ verschickt";
 }

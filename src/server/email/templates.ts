@@ -151,3 +151,78 @@ export function songReadyTemplate(p: {
     html: layout(subject, lines, { label: "Zu deinem Song", url: p.orderUrl }, footer),
   };
 }
+
+/** Zweite Song-Version ist da – Kunde wählt seinen Favoriten, danach entsteht das Video. */
+export function versionChoiceTemplate(p: {
+  name?: string | null;
+  publicRef: string;
+  orderUrl: string;
+  days: number;
+  isTest: boolean;
+}): Rendered {
+  const subject = `${p.isTest ? "[TEST] " : ""}Zwei Versionen deines Songs – welche gefällt dir besser?`;
+  const lines = [
+    greeting(p.name),
+    "danke für deinen Kauf! Wir haben deinen Song in einer zweiten, anders klingenden Version erstellt.",
+    "Hör dir beide Versionen an und wähle deinen Favoriten. Danach erstellen wir dein Video.",
+    `Wenn du nicht innerhalb von ${p.days} Tagen wählst, nehmen wir die Version aus deiner Hörprobe.`,
+    `Bestellnummer: ${p.publicRef}`,
+  ];
+  const footer = "Zum Anhören meldest du dich mit deinem melomio-Konto an.";
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nVersion wählen: ${p.orderUrl}\n\n${footer}`,
+    html: layout(subject, lines, { label: "Version wählen", url: p.orderUrl }, footer),
+  };
+}
+
+/** Affiliate: Bewerbung freigeschaltet / abgelehnt. */
+export function affiliateDecisionTemplate(p: {
+  name: string;
+  approved: boolean;
+  partnerUrl: string;
+  isTest: boolean;
+}): Rendered {
+  const subject = `${p.isTest ? "[TEST] " : ""}${p.approved ? "Willkommen im melomio-Partnerprogramm" : "Deine Bewerbung als melomio-Partner"}`;
+  const lines = p.approved
+    ? [
+        greeting(p.name),
+        "deine Bewerbung als melomio-Partner ist freigeschaltet. 🎉",
+        "In deinem Partnerbereich erstellst du jetzt deine Rabattcodes und siehst deine Verkäufe und Provisionen.",
+      ]
+    : [
+        greeting(p.name),
+        "danke für dein Interesse am melomio-Partnerprogramm. Leider können wir deine Bewerbung derzeit nicht annehmen.",
+      ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nPartnerbereich: ${p.partnerUrl}`,
+    html: layout(
+      subject,
+      lines,
+      { label: p.approved ? "Zum Partnerbereich" : "Partnerprogramm", url: p.partnerUrl },
+      "",
+    ),
+  };
+}
+
+/** Affiliate: neue Gutschrift / Auszahlung. */
+export function affiliatePayoutTemplate(p: {
+  name: string;
+  number: string;
+  amount: string;
+  partnerUrl: string;
+  isTest: boolean;
+}): Rendered {
+  const subject = `${p.isTest ? "[TEST] " : ""}Deine Provision: Gutschrift ${p.number}`;
+  const lines = [
+    greeting(p.name),
+    `wir haben deine fälligen Provisionen abgerechnet: ${p.amount}.`,
+    "Die Gutschrift findest du im Anhang und in deinem Partnerbereich. Die Überweisung folgt in den nächsten Tagen.",
+  ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nPartnerbereich: ${p.partnerUrl}`,
+    html: layout(subject, lines, { label: "Zum Partnerbereich", url: p.partnerUrl }, ""),
+  };
+}

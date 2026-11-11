@@ -28,6 +28,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "preview_expired",
   "awaiting_payment",
   "paid",
+  "awaiting_choice",
   "video_rendering",
   "completed",
   "refunded",
